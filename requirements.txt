@@ -1,0 +1,13 @@
+streamlit>=1.40
+pandas>=2.0
+numpy>=1.26
+plotly>=5.20
+pypdf>=5.0
+xgboost>=2.0
+scikit-learn>=1.4
+openpyxl>=3.1
+sqlalchemy>=2.0
+psycopg2-binary>=2.9
+yfinance>=0.2.30
+matplotlib>=3.8
+seaborn>=0.13

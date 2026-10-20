@@ -1,0 +1,35 @@
+{
+  "altman_coefficients": {
+    "X1": 6.56,
+    "X2": 3.26,
+    "X3": 6.72,
+    "X4": 1.05
+  },
+  "altman_thresholds": {
+    "distress": 1.81,
+    "grey": 2.99,
+    "distress_alt": 1.1,
+    "grey_alt": 2.6,
+    "selected_standard": "bab3_standard"
+  },
+  "mda_coefficients": {
+    "X1": 6.112,
+    "X2": 3.2776,
+    "X3": 4.8373,
+    "X4": 0.043
+  },
+  "mda_threshold": 0.3844,
+  "mda_thresholds": {
+    "distress": 0.0,
+    "grey": 1.0,
+    "cutoff": 0.3844
+  },
+  "xgb_threshold": 0.5,
+  "xgb_thresholds": {
+    "safe": 0.35,
+    "distress": 0.65,
+    "cutoff": 0.5
+  },
+  "system_announcement": "Sistem aktif. Klasifikasi 3 Kategori Operasional (Safe Zone, Grey Area, Distress Zone) telah diaktifkan secara komprehensif.",
+  "allow_user_analysis": true
+}

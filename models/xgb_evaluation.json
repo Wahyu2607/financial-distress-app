@@ -1,0 +1,562 @@
+{
+  "status": "success",
+  "output_path": "models/xgb_model.json",
+  "features": [
+    "X1",
+    "X2",
+    "X3",
+    "X4"
+  ],
+  "train_samples": 563,
+  "test_samples": 141,
+  "total_samples": 704,
+  "accuracy": 0.9149,
+  "roc_auc": 0.9426,
+  "specificity": 0.916,
+  "youden_j": 0.8251,
+  "classification_report": {
+    "0": {
+      "precision": 0.982,
+      "recall": 0.916,
+      "f1-score": 0.9478,
+      "support": 119
+    },
+    "1": {
+      "precision": 0.6667,
+      "recall": 0.9091,
+      "f1-score": 0.7692,
+      "support": 22
+    },
+    "accuracy": 0.9149,
+    "macro avg": {
+      "precision": 0.8243,
+      "recall": 0.9125,
+      "f1-score": 0.8585,
+      "support": 141
+    },
+    "weighted avg": {
+      "precision": 0.9328,
+      "recall": 0.9149,
+      "f1-score": 0.92,
+      "support": 141
+    }
+  },
+  "confusion_matrix": [
+    [
+      109,
+      10
+    ],
+    [
+      2,
+      20
+    ]
+  ],
+  "cm_details": {
+    "tn": 109,
+    "fp": 10,
+    "fn": 2,
+    "tp": 20
+  },
+  "roc_curve": {
+    "fpr": [
+      0.0,
+      0.0,
+      0.0084,
+      0.0168,
+      0.0252,
+      0.042,
+      0.0672,
+      0.1008,
+      0.1512,
+      0.21,
+      1.0
+    ],
+    "tpr": [
+      0.0,
+      0.6364,
+      0.8182,
+      0.8636,
+      0.9091,
+      0.9545,
+      0.9545,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "thresholds": [
+      1.9,
+      0.85,
+      0.7,
+      0.55,
+      0.5,
+      0.35,
+      0.2,
+      0.1,
+      0.05,
+      0.01,
+      0.0
+    ]
+  },
+  "multi_model_benchmark": [
+    {
+      "model_name": "\ud83e\udd16 XGBoost Classifier (Machine Learning)",
+      "data_scope": "Data Uji Hold-out (141 Sampel / 20%)",
+      "tp": 20,
+      "tn": 109,
+      "fp": 10,
+      "fn": 2,
+      "accuracy": 0.9149,
+      "roc_auc": 0.9426,
+      "specificity": 0.916,
+      "precision": 0.6667,
+      "recall": 0.9091,
+      "f1_score": 0.7692,
+      "youden_j": 0.8251,
+      "type1_error": 0.084,
+      "type2_error": 0.0909,
+      "catatan": "Model non-linear ensemble tree dengan generalisasi superior dan Type II error terendah"
+    },
+    {
+      "model_name": "\ud83d\udcca Z''-Score Koefisien Baru (MDA Empiris BEI)",
+      "data_scope": "Data Uji Hold-out (141 Sampel / 20%)",
+      "tp": 18,
+      "tn": 104,
+      "fp": 15,
+      "fn": 4,
+      "accuracy": 0.8652,
+      "roc_auc": 0.8875,
+      "specificity": 0.8739,
+      "precision": 0.5455,
+      "recall": 0.8182,
+      "f1_score": 0.6545,
+      "youden_j": 0.6921,
+      "type1_error": 0.1261,
+      "type2_error": 0.1818,
+      "catatan": "Model diskriminan linear kalibrasi BEI dengan titik potong centroid 0.3844"
+    },
+    {
+      "model_name": "\ud83d\udcd0 Model Altman Z''-Score Asli (1995/2017)",
+      "data_scope": "Data Uji Hold-out (141 Sampel / 20%)",
+      "tp": 15,
+      "tn": 99,
+      "fp": 20,
+      "fn": 7,
+      "accuracy": 0.8085,
+      "roc_auc": 0.832,
+      "specificity": 0.8319,
+      "precision": 0.4286,
+      "recall": 0.6818,
+      "f1_score": 0.5263,
+      "youden_j": 0.5137,
+      "type1_error": 0.1681,
+      "type2_error": 0.3182,
+      "catatan": "Model 4 variabel baku emerging market Altman dengan cut-off Z'' <= 1.10"
+    }
+  ],
+  "models_evaluation": {
+    "xgboost": {
+      "model_name": "\ud83e\udd16 XGBoost Classifier (Machine Learning)",
+      "accuracy": 0.9149,
+      "roc_auc": 0.9426,
+      "specificity": 0.916,
+      "youden_j": 0.8251,
+      "precision": 0.6667,
+      "recall": 0.9091,
+      "f1_score": 0.7692,
+      "classification_report": {
+        "0": {
+          "precision": 0.982,
+          "recall": 0.916,
+          "f1-score": 0.9478,
+          "support": 119
+        },
+        "1": {
+          "precision": 0.6667,
+          "recall": 0.9091,
+          "f1-score": 0.7692,
+          "support": 22
+        },
+        "accuracy": 0.9149,
+        "macro avg": {
+          "precision": 0.8243,
+          "recall": 0.9125,
+          "f1-score": 0.8585,
+          "support": 141
+        },
+        "weighted avg": {
+          "precision": 0.9328,
+          "recall": 0.9149,
+          "f1-score": 0.92,
+          "support": 141
+        }
+      },
+      "confusion_matrix": [
+        [
+          109,
+          10
+        ],
+        [
+          2,
+          20
+        ]
+      ],
+      "cm_details": {
+        "tn": 109,
+        "fp": 10,
+        "fn": 2,
+        "tp": 20
+      },
+      "roc_curve": {
+        "fpr": [
+          0.0,
+          0.0,
+          0.0084,
+          0.0168,
+          0.0252,
+          0.042,
+          0.0672,
+          0.1008,
+          0.1512,
+          0.21,
+          1.0
+        ],
+        "tpr": [
+          0.0,
+          0.6364,
+          0.8182,
+          0.8636,
+          0.9091,
+          0.9545,
+          0.9545,
+          1.0,
+          1.0,
+          1.0,
+          1.0
+        ],
+        "thresholds": [
+          1.9,
+          0.85,
+          0.7,
+          0.55,
+          0.5,
+          0.35,
+          0.2,
+          0.1,
+          0.05,
+          0.01,
+          0.0
+        ]
+      },
+      "cut_off": 0.5,
+      "formula": "p = 1 / (1 + e^-y\u0302) sigmoid ensemble"
+    },
+    "altman": {
+      "model_name": "\ud83d\udcd0 Model Altman Z''-Score Asli (1995/2017)",
+      "accuracy": 0.8085,
+      "roc_auc": 0.832,
+      "specificity": 0.8319,
+      "youden_j": 0.5137,
+      "precision": 0.4286,
+      "recall": 0.6818,
+      "f1_score": 0.5263,
+      "classification_report": {
+        "0": {
+          "precision": 0.934,
+          "recall": 0.8319,
+          "f1-score": 0.88,
+          "support": 119
+        },
+        "1": {
+          "precision": 0.4286,
+          "recall": 0.6818,
+          "f1-score": 0.5263,
+          "support": 22
+        },
+        "accuracy": 0.8085,
+        "macro avg": {
+          "precision": 0.6813,
+          "recall": 0.7569,
+          "f1-score": 0.7032,
+          "support": 141
+        },
+        "weighted avg": {
+          "precision": 0.8551,
+          "recall": 0.8085,
+          "f1-score": 0.8248,
+          "support": 141
+        }
+      },
+      "confusion_matrix": [
+        [
+          99,
+          20
+        ],
+        [
+          7,
+          15
+        ]
+      ],
+      "cm_details": {
+        "tn": 99,
+        "fp": 20,
+        "fn": 7,
+        "tp": 15
+      },
+      "roc_curve": {
+        "fpr": [
+          0.0,
+          0.0336,
+          0.084,
+          0.1344,
+          0.1681,
+          0.2437,
+          0.3529,
+          0.4705,
+          1.0
+        ],
+        "tpr": [
+          0.0,
+          0.4091,
+          0.5455,
+          0.6818,
+          0.7273,
+          0.7727,
+          0.8636,
+          0.9091,
+          1.0
+        ],
+        "thresholds": [
+          5.0,
+          3.5,
+          2.6,
+          2.0,
+          1.5,
+          1.1,
+          0.5,
+          0.0,
+          -2.0
+        ]
+      },
+      "cut_off": 1.1,
+      "formula": "Z'' = 6.56*X1 + 3.26*X2 + 6.72*X3 + 1.05*X4"
+    },
+    "mda": {
+      "model_name": "\ud83d\udcca Z''-Score Koefisien Baru (MDA Empiris BEI)",
+      "accuracy": 0.8652,
+      "roc_auc": 0.8875,
+      "specificity": 0.8739,
+      "youden_j": 0.6921,
+      "precision": 0.5455,
+      "recall": 0.8182,
+      "f1_score": 0.6545,
+      "classification_report": {
+        "0": {
+          "precision": 0.963,
+          "recall": 0.8739,
+          "f1-score": 0.9163,
+          "support": 119
+        },
+        "1": {
+          "precision": 0.5455,
+          "recall": 0.8182,
+          "f1-score": 0.6545,
+          "support": 22
+        },
+        "accuracy": 0.8652,
+        "macro avg": {
+          "precision": 0.7542,
+          "recall": 0.8461,
+          "f1-score": 0.7854,
+          "support": 141
+        },
+        "weighted avg": {
+          "precision": 0.8978,
+          "recall": 0.8652,
+          "f1-score": 0.8754,
+          "support": 141
+        }
+      },
+      "confusion_matrix": [
+        [
+          104,
+          15
+        ],
+        [
+          4,
+          18
+        ]
+      ],
+      "cm_details": {
+        "tn": 104,
+        "fp": 15,
+        "fn": 4,
+        "tp": 18
+      },
+      "roc_curve": {
+        "fpr": [
+          0.0,
+          0.0168,
+          0.042,
+          0.0756,
+          0.1092,
+          0.1596,
+          0.2268,
+          0.3109,
+          1.0
+        ],
+        "tpr": [
+          0.0,
+          0.5,
+          0.6818,
+          0.7727,
+          0.8182,
+          0.8636,
+          0.9091,
+          0.9545,
+          1.0
+        ],
+        "thresholds": [
+          4.0,
+          2.5,
+          1.8,
+          1.0,
+          0.5,
+          0.3844,
+          0.1,
+          -0.5,
+          -2.0
+        ]
+      },
+      "cut_off": 0.3844,
+      "formula": "Z' = 6.1120*X1 + 3.2776*X2 + 4.8373*X3 + 0.0430*X4"
+    }
+  },
+  "combined_roc_curves": {
+    "xgboost": {
+      "name": "XGBoost Classifier (AUC = 0.9426)",
+      "fpr": [
+        0.0,
+        0.0,
+        0.0084,
+        0.0168,
+        0.0252,
+        0.042,
+        0.0672,
+        0.1008,
+        0.1512,
+        0.21,
+        1.0
+      ],
+      "tpr": [
+        0.0,
+        0.6364,
+        0.8182,
+        0.8636,
+        0.9091,
+        0.9545,
+        0.9545,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "auc": 0.9426,
+      "color": "#6366f1"
+    },
+    "mda": {
+      "name": "Z'' Koef. Baru MDA (AUC = 0.8875)",
+      "fpr": [
+        0.0,
+        0.0168,
+        0.042,
+        0.0756,
+        0.1092,
+        0.1596,
+        0.2268,
+        0.3109,
+        1.0
+      ],
+      "tpr": [
+        0.0,
+        0.5,
+        0.6818,
+        0.7727,
+        0.8182,
+        0.8636,
+        0.9091,
+        0.9545,
+        1.0
+      ],
+      "auc": 0.8875,
+      "color": "#10b981"
+    },
+    "altman": {
+      "name": "Altman Z''-Score (AUC = 0.8320)",
+      "fpr": [
+        0.0,
+        0.0336,
+        0.084,
+        0.1344,
+        0.1681,
+        0.2437,
+        0.3529,
+        0.4705,
+        1.0
+      ],
+      "tpr": [
+        0.0,
+        0.4091,
+        0.5455,
+        0.6818,
+        0.7273,
+        0.7727,
+        0.8636,
+        0.9091,
+        1.0
+      ],
+      "auc": 0.832,
+      "color": "#0ea5e9"
+    }
+  },
+  "feature_importances": {
+    "X1": 0.1845,
+    "X2": 0.362,
+    "X3": 0.2815,
+    "X4": 0.172
+  },
+  "hyperparameters": {
+    "n_estimators": 50,
+    "max_depth": 2,
+    "learning_rate": 0.3,
+    "random_state": 42,
+    "test_size": 0.2
+  },
+  "active_sample_evaluation": {
+    "has_data": true,
+    "ratios": {
+      "X1": 0.0,
+      "X2": 0.0,
+      "X3": 0.0,
+      "X4": 0.0
+    },
+    "altman": {
+      "z_score": 0.0,
+      "classification": "distress",
+      "is_distress": true,
+      "cut_off": 1.1
+    },
+    "mda": {
+      "mda_score": 0.0,
+      "classification": "distress",
+      "is_distress": true,
+      "cut_off": 0.3844
+    },
+    "xgboost": {
+      "probability": 0.6657460331916809,
+      "label": 1,
+      "status": "DISTRESS",
+      "cut_off": 0.5
+    }
+  }
+}

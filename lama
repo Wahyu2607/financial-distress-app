@@ -1,0 +1,665 @@
+from __future__ import annotations
+
+import io
+import json
+import math
+from pathlib import Path
+import sqlite3
+
+import pandas as pd
+import streamlit as st
+
+# st.set_page_config HARUS DI BARIS PERTAMA SEBELUM PERINTAH STREAMLIT LAINNYA
+st.set_page_config(
+    page_title="Financial Distress Prediction System",
+    page_icon="📉",
+    layout="wide",
+)
+
+from src.calculations import (
+    altman_classification,
+    altman_z_score,
+    mda_score,
+    mda_classification,
+    xgboost_predict,
+    build_features_from_financials,
+)
+from src.io_utils import (
+    FINANCIAL_FIELDS,
+    VARIABLE_SCHEMA,
+    complete_financial_values,
+    read_csv_file,
+    extract_pdf_pages,
+    extract_financial_values_from_pages,
+    parse_financial_number,
+)
+from src.styles import inject_css
+from src.ui import (
+    sidebar_brand,
+    metric_card,
+    section_title,
+    info_table,
+    probability_badge,
+    conclusion_box,
+    render_gauge,
+)
+
+BASE_DIR = Path(__file__).resolve().parent
+CONFIG_PATH = BASE_DIR / "config.json"
+MODEL_PATH = BASE_DIR / "models" / "xgb_model.json"
+DB_PATH = BASE_DIR / "financial_distress.db"
+
+inject_css()
+
+# ---------- Database Setup (SQLite) ----------
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    # Tabel Pengguna (Users)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            username TEXT PRIMARY KEY,
+            password TEXT,
+            role TEXT
+        )
+    """)
+    # Masukkan akun default jika belum ada
+    cursor.execute("INSERT OR IGNORE INTO users VALUES ('admin', 'admin123', 'admin')")
+    cursor.execute("INSERT OR IGNORE INTO users VALUES ('user', 'user123', 'user')")
+
+    # Tabel Riwayat Prediksi
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS predictions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT,
+            company TEXT,
+            ticker TEXT,
+            year INTEGER,
+            z_score REAL,
+            z_cls TEXT,
+            mda_score REAL,
+            mda_cls TEXT,
+            xgb_prob REAL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+init_db()
+
+def verify_user(username, password):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT role FROM users WHERE username = ? AND password = ?", (username, password))
+    res = cursor.fetchone()
+    conn.close()
+    return res[0] if res else None
+
+def save_prediction_to_db(username, company, ticker, year, z, z_cls, mda, mda_cls, xgb_prob):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO predictions (username, company, ticker, year, z_score, z_cls, mda_score, mda_cls, xgb_prob)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (username, company, ticker, year, z, z_cls, mda, mda_cls, xgb_prob))
+    conn.commit()
+    conn.close()
+
+# ---------- Session State Defaults ----------
+defaults = {
+    "logged_in": False,
+    "username": "",
+    "role": "user",
+    "page": "Dashboard",
+    "company": "PT Contoh Perusahaan Tbk",
+    "ticker": "BBCA",
+    "sector": "Perbankan / Keuangan",
+    "year": 2024,
+    "analysis_date": "2026-06-06",
+    "source_mode": "Input Manual",
+    "financials": {},
+    "ratios": {"X1": 0.0, "X2": 0.0, "X3": 0.0, "X4": 0.0, "X5": 0.0},
+    "sidebar_visible": True,
+    "xgb_probability": None,
+}
+for k, v in defaults.items():
+    st.session_state.setdefault(k, v)
+
+# ---------- Halaman Login Jika Belum Masuk ----------
+if not st.session_state.logged_in:
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    col1, col2, col3 = st.columns([1, 1.2, 1])
+    with col2:
+        with st.container(border=True):
+            st.markdown("### 🔐 Login Sistem")
+            st.caption("Silakan masuk untuk mengakses perangkat analisis Financial Distress.")
+            
+            input_user = st.text_input("Username")
+            input_pass = st.text_input("Password", type="password")
+            
+            if st.button("Masuk", type="primary", use_container_width=True):
+                role = verify_user(input_user, input_pass)
+                if role:
+                    st.session_state.logged_in = True
+                    st.session_state.username = input_user
+                    st.session_state.role = role
+                    st.success("Login berhasil!")
+                    st.rerun()
+                else:
+                    st.error("Username atau password salah!")
+            
+            st.markdown("---")
+            st.caption("💡 **Akun Uji Coba:**\n* Admin: `admin` / `admin123`\n* User: `user` / `user123`")
+    st.stop()
+
+# ---------- Configuration File Load ----------
+if "config" not in st.session_state:
+    with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+        st.session_state.config = json.load(f)
+
+config = st.session_state.config
+
+# ============================================================
+# CUSTOM SIDEBAR: HIDE / SHOW & MENU UTAMA
+# ============================================================
+
+MENU_ITEMS = [
+    "Dashboard",
+    "Data Perusahaan",
+    "Laporan Keuangan",
+    "Rasio Keuangan",
+    "Hasil Prediksi",
+    "Perbandingan Hasil",
+]
+
+# Admin mendapat tambahan menu Pengaturan Model
+if st.session_state.role == "admin":
+    MENU_ITEMS.append("Pengaturan Model")
+
+MENU_LABELS = {
+    "Dashboard": "🏠  Dashboard",
+    "Data Perusahaan": "🏢  Data Perusahaan",
+    "Laporan Keuangan": "📄  Laporan Keuangan",
+    "Rasio Keuangan": "📊  Rasio Keuangan",
+    "Hasil Prediksi": "🎯  Hasil Prediksi",
+    "Perbandingan Hasil": "📈  Perbandingan Hasil",
+    "Pengaturan Model": "⚙️  Pengaturan Model",
+}
+
+if st.session_state.sidebar_visible:
+    sidebar_col, content_col = st.columns([0.95, 3.05], gap="medium")
+
+    with sidebar_col:
+        with st.container(border=True):
+            st.markdown("**FINANCIAL DISTRESS**")
+            st.caption(f"Role: {st.session_state.role.upper()} ({st.session_state.username})")
+            st.markdown("---")
+            st.caption("**MENU**")
+
+            # Validasi jika halaman aktif saat ini tidak ada di menu (misal habis logout/ganti role)
+            if st.session_state.page not in MENU_ITEMS:
+                st.session_state.page = "Dashboard"
+
+            selected_page = st.radio(
+                "MENU",
+                MENU_ITEMS,
+                index=MENU_ITEMS.index(st.session_state.page),
+                format_func=lambda item: MENU_LABELS[item],
+                label_visibility="collapsed",
+                key="custom_page_menu",
+            )
+
+            if selected_page != st.session_state.page:
+                st.session_state.page = selected_page
+                st.rerun()
+
+            st.markdown("---")
+
+            if st.button("🚪 Keluar (Logout)", use_container_width=True):
+                st.session_state.logged_in = False
+                st.session_state.username = ""
+                st.rerun()
+
+            if st.button("✕  Sembunyikan Menu", key="custom_hide_sidebar", use_container_width=True):
+                st.session_state.sidebar_visible = False
+                st.rerun()
+
+            st.caption("Financial Distress Research Prototype")
+            st.caption("Python + Streamlit + SQLite")
+
+else:
+    show_col, content_col = st.columns([0.22, 3.78], gap="small")
+    with show_col:
+        if st.button("☰", key="custom_show_sidebar", help="Tampilkan menu"):
+            st.session_state.sidebar_visible = True
+            st.rerun()
+
+page = st.session_state.page
+
+# ---------- Helpers ----------
+def set_ratios_from_financials(fin):
+    ratios = build_features_from_financials(complete_financial_values(fin))
+    if not isinstance(ratios, dict):
+        raise ValueError("Fitur rasio keuangan tidak berhasil dihitung.")
+    required = ("X1", "X2", "X3", "X4", "X5")
+    missing = [key for key in required if key not in ratios]
+    if missing:
+        raise ValueError(f"Fitur rasio belum lengkap: {', '.join(missing)}")
+    st.session_state.ratios = {key: float(ratios[key]) for key in required}
+
+def current_results():
+    r = st.session_state.ratios
+    z = altman_z_score(r, config["altman_coefficients"])
+    z_cls = altman_classification(z, config["altman_thresholds"])
+    mda = mda_score(r, config["mda_coefficients"])
+    mda_cls = mda_classification(mda, config["mda_threshold"])
+    xgb_prob, xgb_label = xgboost_predict(
+        r,
+        str(MODEL_PATH) if MODEL_PATH.exists() else None,
+        threshold=config["xgb_threshold"],
+    )
+    return z, z_cls, mda, mda_cls, xgb_prob, xgb_label
+
+def altman_formula(coefficients, latex=False):
+    terms = []
+    for key in ("X1", "X2", "X3", "X4"):
+        ratio = f"X_{{{key[1:]}}}" if latex else key
+        terms.append(f"{float(coefficients[key]):.2f}{ratio}")
+    formula = " + ".join(terms)
+    return rf"Z^{{\prime\prime}} = {formula}" if latex else f"Z'' = {formula}"
+
+# ============================================================
+# AREA UTAMA APLIKASI
+# ============================================================
+
+with content_col:
+    st.title("Aplikasi Financial Distress")
+
+    if page == "Data Perusahaan":
+        section_title("Data Perusahaan", "Identitas perusahaan yang dianalisis")
+        c1, c2 = st.columns(2)
+        with c1:
+            st.session_state.company = st.text_input("Nama Perusahaan", st.session_state.company)
+            st.session_state.ticker = st.text_input("Kode Perusahaan", st.session_state.ticker)
+            st.session_state.sector = st.text_input("Sektor", st.session_state.sector)
+        with c2:
+            st.session_state.year = st.number_input("Tahun Analisis", 2000, 2100, int(st.session_state.year) if str(st.session_state.year).isdigit() else 2024)
+            st.session_state.analysis_date = st.text_input("Tanggal Analisis", st.session_state.analysis_date)
+
+        st.success("Data perusahaan tersimpan pada sesi aplikasi.")
+        st.info("Data ini terhubung dengan sesi aktif dan siap disimpan ke riwayat basis data saat kalkulasi prediksi dilakukan.")
+
+    elif page == "Laporan Keuangan":
+        section_title("Input Laporan Keuangan", "Unggah CSV/PDF atau masukkan angka secara manual")
+        with st.expander("Kamus variabel input (Standar BEI/IDX)", expanded=False):
+            st.dataframe(
+                pd.DataFrame([
+                    {
+                        "Kode": item["code"],
+                        "Nama Variabel": item["label"],
+                        "Kolom CSV": item["csv"],
+                        "Digunakan untuk": item["used_by"],
+                    }
+                    for item in VARIABLE_SCHEMA
+                ]),
+                use_container_width=True,
+                hide_index=True,
+            )
+
+        mode = st.radio("Sumber Data", ["Input Manual", "CSV", "PDF"], horizontal=True)
+        st.session_state.source_mode = mode
+
+        if mode == "CSV":
+            uploaded = st.file_uploader("Upload CSV laporan keuangan", type=["csv"])
+            if uploaded:
+                try:
+                    df = read_csv_file(uploaded)
+                    st.dataframe(df.head(50), use_container_width=True)
+                    st.caption(f"{len(df):,} baris terbaca.")
+                    st.session_state["uploaded_df"] = df
+                except Exception as e:
+                    st.error(f"CSV tidak dapat dibaca: {e}")
+
+                st.markdown("### Pemetaan variabel")
+                df = st.session_state.get("uploaded_df")
+                if df is not None and not df.empty:
+                    cols = list(df.columns)
+                    mapping = {}
+                    for key, label in FINANCIAL_FIELDS:
+                        options = ["-- tidak digunakan --"] + cols
+                        chosen = st.selectbox(label, options, key=f"map_{key}")
+                        if chosen != options[0]:
+                            mapping[key] = chosen
+                    if st.button("Gunakan Data CSV", type="primary"):
+                        fin = {}
+                        for k, col in mapping.items():
+                            value = df[col].iloc[0]
+                            if k == "ticker":
+                                if pd.notna(value):
+                                    fin[k] = str(value).strip().upper()
+                            elif k == "report_year":
+                                year = parse_financial_number(value)
+                                if year is not None:
+                                    fin[k] = int(year)
+                            else:
+                                val = parse_financial_number(value)
+                                if val is not None:
+                                    fin[k] = val
+                        fin = complete_financial_values(fin)
+                        st.session_state.financials = fin
+                        try:
+                            set_ratios_from_financials(fin)
+                            st.success("Nilai finansial berhasil dipetakan dari baris pertama CSV.")
+                        except Exception as e:
+                            st.warning(f"Data CSV dipetakan, tetapi rasio belum dihitung: {e}")
+
+        elif mode == "PDF":
+            uploaded = st.file_uploader("Upload PDF laporan tahunan/laporan keuangan", type=["pdf"])
+            if uploaded:
+                target_year = st.number_input(
+                    "Tahun kolom yang diekstrak dari PDF",
+                    min_value=1900,
+                    max_value=2100,
+                    value=int(st.session_state.year) if str(st.session_state.year).isdigit() else 2024,
+                    step=1,
+                )
+                pages = extract_pdf_pages(uploaded)
+                text = "\n\n".join(pages)
+                st.session_state["pdf_text"] = text
+                st.success(f"Teks PDF berhasil diekstrak: {len(text):,} karakter.")
+
+                parsed, extraction_evidence = extract_financial_values_from_pages(pages, int(target_year))
+                st.markdown("### Hasil ekstraksi awal")
+                schema_by_key = {item["key"]: item for item in VARIABLE_SCHEMA}
+                st.dataframe(pd.DataFrame(
+                    [{
+                        "Kode": schema_by_key[k]["code"],
+                        "Nama Variabel": schema_by_key[k]["label"],
+                        "Nilai": parsed.get(k),
+                        "Status": extraction_evidence.get(k, {}).get("status", "Tidak ditemukan"),
+                    } for k in schema_by_key if k in schema_by_key]
+                ), use_container_width=True)
+
+                if st.button("Gunakan hasil ekstraksi PDF", type="primary"):
+                    st.session_state.financials = parsed
+                    try:
+                        set_ratios_from_financials(parsed)
+                        st.success("Hasil ekstraksi dimasukkan ke model.")
+                    except Exception as e:
+                        st.warning(f"Gagal menghitung rasio otomatis: {e}")
+
+        st.markdown("### Input Manual / Koreksi")
+        st.caption("Format kolom: kode variabel — nama variabel | nama kolom standar untuk CSV.")
+        fin0 = st.session_state.get("financials", {})
+        fields = FINANCIAL_FIELDS
+        cols = st.columns(2)
+        for i, (key, label) in enumerate(fields):
+            with cols[i % 2]:
+                if key == "ticker":
+                    fin0[key] = st.text_input(
+                        label,
+                        value=str(fin0.get(key, st.session_state.ticker) or ""),
+                        placeholder="Contoh: BBCA"
+                    ).upper()
+                elif key == "report_year":
+                    fin0[key] = st.number_input(
+                        label,
+                        min_value=1900,
+                        max_value=2100,
+                        value=int(fin0.get(key, st.session_state.year) if str(fin0.get(key, st.session_state.year)).isdigit() else 2024),
+                        step=1,
+                    )
+                else:
+                    # Menggunakan text_input agar kolom bisa dikosongkan/dihapus dengan bebas tanpa kendala
+                    current_val = fin0.get(key)
+                    str_val = "" if current_val in (None, "", 0.0) else str(current_val)
+                    
+                    txt_input = st.text_input(
+                        label,
+                        value=str_val,
+                        placeholder="Contoh: 1500000000",
+                        key=f"manual_{key}",
+                        help="Masukkan nilai sesuai laporan keuangan. Kolom dapat dihapus atau dikosongkan.",
+                    )
+                    # Konversi kembali teks yang diinput menjadi angka secara aman
+                    parsed_val = parse_financial_number(txt_input)
+                    fin0[key] = parsed_val if parsed_val is not None else 0.0
+                    
+        current_assets = float(fin0.get("current_assets", 0.0) or 0.0)
+        current_liabilities = float(fin0.get("current_liabilities", 0.0) or 0.0)
+        calculated_working_capital = current_assets - current_liabilities
+        use_calculated_working_capital = st.checkbox("Gunakan Working Capital otomatis (Current Assets − Current Liabilities)", value=True)
+        if use_calculated_working_capital:
+            fin0["working_capital"] = calculated_working_capital
+        st.session_state.financials = fin0
+
+        if st.button("Hitung Rasio X1–X5", type="primary"):
+            try:
+                set_ratios_from_financials(fin0)
+                if fin0.get("ticker"):
+                    st.session_state.ticker = fin0["ticker"]
+                if fin0.get("report_year"):
+                    st.session_state.year = int(fin0["report_year"])
+                
+                # Otomatis simpan ke database riwayat
+                z, z_cls, mda, mda_cls, xgb_prob, _ = current_results()
+                save_prediction_to_db(
+                    st.session_state.username,
+                    st.session_state.company,
+                    st.session_state.ticker,
+                    int(st.session_state.year),
+                    z, z_cls, mda, mda_cls, xgb_prob or 0.0
+                )
+                st.success("Rasio berhasil dihitung dan riwayat analisis disimpan ke database!")
+            except Exception as e:
+                st.error(str(e))
+
+    elif page == "Rasio Keuangan":
+        section_title("Rasio Keuangan (Input Model)", "Rasio X1–X4 dan X5 (X5 untuk XGBoost)")
+        r = st.session_state.ratios
+        cols = st.columns(4)
+        labels = {
+            "X1": "Working Capital / Total Assets (WC/TA)",
+            "X2": "Retained Earnings / Total Assets (RE/TA)",
+            "X3": "EBIT / Total Assets (EBIT/TA)",
+            "X4": "Common Stock Equity / Total Liabilities (CSE/TL)",
+        }
+        for col, key in zip(cols, ["X1", "X2", "X3", "X4"]):
+            with col:
+                r[key] = st.number_input(key, value=float(r.get(key, 0.0)), format="%.4f", help=labels[key])
+                st.caption(labels[key])
+        st.session_state.ratios = r
+        st.markdown("---")
+        st.dataframe(pd.DataFrame([{"Kode": k, "Rasio": v, "Makna": labels.get(k, "X5 Tambahan XGBoost")} for k, v in r.items()]), use_container_width=True, hide_index=True)
+
+    elif page == "Pengaturan Model":
+        if st.session_state.role != "admin":
+            st.error("Akses ditolak! Halaman ini khusus untuk akun berhak akses Admin.")
+            st.stop()
+            
+        section_title("Pengaturan Model", "Parameter metode dan koefisien penelitian")
+        st.warning("Pengaturan di bawah ini mengubah parameter perhitungan model secara global.")
+        
+        st.markdown("### Altman Z''-Score")
+        a = config["altman_coefficients"]
+        cols = st.columns(4)
+        for col, key in zip(cols, ["X1", "X2", "X3", "X4"]):
+            with col:
+                a[key] = st.number_input(f"Koefisien {key}", value=float(a[key]), format="%.4f")
+        config["altman_thresholds"]["distress"] = st.number_input("Batas distress (<)", value=float(config["altman_thresholds"]["distress"]), format="%.4f")
+        config["altman_thresholds"]["grey"] = st.number_input("Batas grey (<)", value=float(config["altman_thresholds"]["grey"]), format="%.4f")
+
+        st.markdown("### MDA / Z-Score dengan Koefisien Baru")
+        m_coef = config["mda_coefficients"]
+        mcols = st.columns(5)
+        m_coef["intercept"] = mcols[0].number_input("Intercept", value=float(m_coef.get("intercept", 0.0)), format="%.6f")
+        for idx, key in enumerate(["X1", "X2", "X3", "X4"], start=1):
+            m_coef[key] = mcols[idx].number_input(f"β {key}", value=float(m_coef.get(key, 0.0)), format="%.6f")
+        config["mda_threshold"] = st.number_input("Cut-off MDA", value=float(config["mda_threshold"]), format="%.4f")
+
+        st.markdown("### XGBoost")
+        config["xgb_threshold"] = st.number_input("Probabilitas cut-off", 0.0, 1.0, float(config["xgb_threshold"]), 0.01)
+
+        if st.button("Simpan Konfigurasi", type="primary"):
+            with open(CONFIG_PATH, "w", encoding="utf-8") as f:
+                json.dump(config, f, indent=2)
+            st.success("Konfigurasi disimpan.")
+
+        # Tampilkan Riwayat Database untuk Admin
+        st.markdown("---")
+        st.markdown("### 📊 Riwayat Prediksi Tersimpan (Database)")
+        conn = sqlite3.connect(DB_PATH)
+        df_hist = pd.read_sql_query("SELECT * FROM predictions ORDER BY id DESC", conn)
+        conn.close()
+        st.dataframe(df_hist, use_container_width=True, hide_index=True)
+
+    elif page == "Hasil Prediksi":
+        section_title("Hasil Prediksi", "Analisis lengkap berdasarkan data perusahaan")
+        z, z_cls, mda, mda_cls, xgb_prob, xgb_label = current_results()
+
+        c = st.columns(4)
+        metric_card(c[0], "ALTMAN Z''-SCORE", f"{z:.2f}", f"Z'' < {config['altman_thresholds']['distress']:.2f} ({z_cls.upper()})", "blue")
+        metric_card(c[1], "Z-SCORE KOEF. BARU", f"{mda:.2f}", f"Cut-off {config['mda_threshold']:.2f} ({mda_cls.upper()})", "green")
+        if xgb_prob is None:
+            metric_card(c[2], "PREDIKSI XGBOOST", "N/A", "Model belum tersedia", "purple")
+            xgb_status = "MODEL BELUM TERSEDIA"
+        else:
+            metric_card(c[2], "PREDIKSI XGBOOST", f"{xgb_prob:.2f}", f"Probabilitas {xgb_prob*100:.0f}%", "purple")
+            xgb_status = "DISTRESS" if xgb_label == 1 else "NON-DISTRESS"
+        overall = "DISTRESS" if z_cls == "distress" and mda_cls == "distress" else ("DISTRESS" if xgb_label == 1 else "NON-DISTRESS")
+        metric_card(c[3], "HASIL AKHIR (MAJORITY)", overall, "Risiko Tinggi" if overall == "DISTRESS" else "Risiko Lebih Rendah", "red")
+
+        st.markdown("###")
+        left, mid, right = st.columns([1.1, 1.5, 1.1])
+
+        with left:
+            section_title("Data Perusahaan")
+            info_table([
+                ("Nama Perusahaan", st.session_state.company),
+                ("Kode Perusahaan", st.session_state.ticker),
+                ("Sektor", st.session_state.sector),
+                ("Tahun Analisis", str(st.session_state.year)),
+                ("Tanggal Analisis", st.session_state.analysis_date),
+            ])
+
+        with mid:
+            section_title("Rasio Keuangan (Input Model)")
+            info_table([(k, f"{v:.4f}") for k, v in st.session_state.ratios.items() if k in ["X1", "X2", "X3", "X4"]])
+
+        with right:
+            section_title("Status Financial Distress")
+            render_gauge(z, config["altman_thresholds"])
+            st.markdown(f"<div style='text-align:center;font-weight:800;color:#e31b23;font-size:18px;'>{z_cls.upper()}</div>", unsafe_allow_html=True)
+
+        st.markdown("###")
+        t1, t2, t3 = st.tabs(["Σ 1. ALTMAN Z''-SCORE", "Σ' 2. Z-SCORE KOEFISIEN BARU", "③ 3. PREDIKSI XGBOOST (MACHINE LEARNING)"])
+
+        with t1:
+            st.markdown("**Metode Statistik Tradisional (Altman Z''-Score Model)**")
+            st.latex(altman_formula(config["altman_coefficients"], latex=True))
+            st.dataframe(pd.DataFrame([[
+                z,
+                z_cls.upper(),
+                f"< {config['altman_thresholds']['distress']:.2f}" if z_cls == "distress" else "di atas batas"
+            ]], columns=["Z-Score", "Klasifikasi", "Kriteria"]), use_container_width=True, hide_index=True)
+
+        with t2:
+            st.markdown("**Metode Analisis Diskriminan Multivariat (MDA Empiris)**")
+            coeff = config["mda_coefficients"]
+            formula = (
+                f"Z' = {coeff.get('intercept',0):.4f} + "
+                f"({coeff.get('X1',0):.4f}×X1) + ({coeff.get('X2',0):.4f}×X2) + "
+                f"({coeff.get('X3',0):.4f}×X3) + ({coeff.get('X4',0):.4f}×X4)"
+            )
+            if "X5" in coeff:
+                formula += f" + ({coeff.get('X5',0):.4f}×X5)"
+            
+            st.code(formula, language="text")
+            st.dataframe(pd.DataFrame([[
+                mda, mda_cls.upper(), f"{config['mda_threshold']:.4f}"
+            ]], columns=["Z-Score Baru", "Klasifikasi", "Cut-off Objektif"]), use_container_width=True, hide_index=True)
+        
+        with t3:
+            st.markdown("### Metode Kecerdasan Buatan (XGBoost Classifier)")
+            st.markdown(
+                "XGBoost memproses data rasio keuangan ($X_1$ hingga $X_5$) menggunakan algoritma "
+                "pohon keputusan berjenjang (*Gradient Boosting*) berdasarkan fungsi objektif berikut:"
+            )
+            
+            # Menampilkan rumus fungsi objektif XGBoost
+            st.latex(r"\mathcal{L}^{(t)} = \sum_{i=1}^{n} l\left(y_i, \hat{y}_i^{(t-1)} + f_t(x_i)\right) + \Omega(f_t)")
+            
+            st.markdown(
+                "Dengan regularisasi pohon $\Omega(f_t) = \gamma T + \\frac{1}{2} \\lambda \\sum w_j^2$ "
+                "untuk mengontrol kompleksitas model dan mencegah *overfitting*."
+            )
+
+            if xgb_prob is None:
+                st.warning(
+                    "Model XGBoost belum tersedia. Pastikan file model terlatih "
+                    "tersimpan di `models/xgb_model.json` agar prediksi machine learning dapat berjalan[cite: 8]."
+                )
+            else:
+                probability_badge(xgb_prob, xgb_status)
+                st.caption("Model mengevaluasi matriks fitur rasio keuangan secara mandiri.")
+                st.dataframe(pd.DataFrame([[
+                    xgb_prob, 1-xgb_prob, xgb_status
+                ]], columns=["Probabilitas Distress", "Probabilitas Non-Distress", "Prediksi Model"]),
+                use_container_width=True, hide_index=True)
+
+        st.markdown("###")
+        section_title("Perbandingan Kinerja Model Penelitian")
+        comparison = pd.DataFrame([
+            ["Altman Z''-Score (Benchmark)", f"{z:.2f}", config["altman_thresholds"]["distress"], z_cls.upper(), "Model Teoretis Klasik"],
+            ["MDA (Koefisien Baru)", f"{mda:.2f}", config["mda_threshold"], mda_cls.upper(), "Model Penyesuaian Empiris"],
+            ["XGBoost Machine Learning", "N/A" if xgb_prob is None else f"{xgb_prob:.2f} ({xgb_prob*100:.0f}%)", config["xgb_threshold"], "BELUM ADA MODEL" if xgb_prob is None else xgb_status, "Model Non-Linear AI"],
+        ], columns=["Pendekatan Model", "Nilai / Probabilitas", "Cut-off / Threshold", "Hasil Klasifikasi", "Keterangan Penelitian"])
+        st.dataframe(comparison, use_container_width=True, hide_index=True)
+
+        conclusion_box(
+            "Kesimpulan Analisis Komparatif",
+            f"Sistem menampilkan perbandingan independen dari tiga pendekatan. Mayoritas model menghasilkan status <b>{overall}</b>. "
+            "Hasil ini dapat Anda jadikan bahan analisis pembahasan di bab hasil skripsi untuk membandingkan tingkat akurasi antara metode statistik konvensional dan algoritma Machine Learning."
+        )
+        
+    elif page == "Perbandingan Hasil":
+        section_title("Perbandingan Hasil", "Perbandingan nilai skor dan klasifikasi antar metode")
+        z, z_cls, mda, mda_cls, xgb_prob, xgb_label = current_results()
+        df = pd.DataFrame({
+            "Pendekatan": ["Altman Z''-Score", "MDA / Koefisien Baru", "XGBoost"],
+            "Nilai": [z, mda, None if xgb_prob is None else xgb_prob],
+            "Cut-off": [config["altman_thresholds"]["distress"], config["mda_threshold"], config["xgb_threshold"]],
+            "Hasil": [z_cls.upper(), mda_cls.upper(), "BELUM ADA MODEL" if xgb_prob is None else ("DISTRESS" if xgb_label == 1 else "NON-DISTRESS")],
+        })
+        st.dataframe(df, use_container_width=True, hide_index=True)
+        st.bar_chart(df.set_index("Pendekatan")["Nilai"].fillna(0))
+
+    else:
+        section_title("Dashboard Prediksi Financial Distress", "Perbandingan Altman Z''-Score, Z-Score Koefisien Baru, dan XGBoost")
+        z, z_cls, mda, mda_cls, xgb_prob, xgb_label = current_results()
+        overall = "DISTRESS" if (z_cls == "distress" and mda_cls == "distress") or xgb_label == 1 else "NON-DISTRESS"
+
+        c = st.columns(4)
+        metric_card(c[0], "ALTMAN Z''-SCORE", f"{z:.2f}", f"Z'' < {config['altman_thresholds']['distress']:.2f} ({z_cls.upper()})", "blue")
+        metric_card(c[1], "Z-SCORE KOEF. BARU", f"{mda:.2f}", f"Z' < {config['mda_threshold']:.2f} ({mda_cls.upper()})", "green")
+        metric_card(c[2], "PREDIKSI XGBOOST", "N/A" if xgb_prob is None else f"{xgb_prob:.2f}", "Model belum tersedia" if xgb_prob is None else f"{xgb_prob*100:.0f}% distress", "purple")
+        metric_card(c[3], "HASIL AKHIR (MAJORITY)", overall, "Risiko Tinggi" if overall == "DISTRESS" else "Risiko Lebih Rendah", "red")
+
+        left, mid, right = st.columns([1.0, 1.5, 1.05])
+        with left:
+            section_title("Data Perusahaan")
+            info_table([
+                ("Nama Perusahaan", st.session_state.company),
+                ("Kode Perusahaan", st.session_state.ticker),
+                ("Sektor", st.session_state.sector),
+                ("Tahun Analisis", str(st.session_state.year)),
+                ("Tanggal Analisis", st.session_state.analysis_date),
+            ])
+        with mid:
+            section_title("Rasio Keuangan (Input Model)")
+            info_table([(k, f"{v:.2f}") for k, v in st.session_state.ratios.items() if k in ["X1", "X2", "X3", "X4"]])
+        with right:
+            section_title("Status Financial Distress")
+            render_gauge(z, config["altman_thresholds"])
+            st.markdown(f"<div style='text-align:center;font-weight:800;color:#e31b23;'>{z_cls.upper()}</div>", unsafe_allow_html=True)

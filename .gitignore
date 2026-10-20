@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+
+# Streamlit secrets & config
+.streamlit/secrets.toml
+.streamlit/*.local.toml
+
+# Database & SQLite files (mencegah data kredensial / prediksi lokal bocor ke Git)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+financial_distress.db
+
+# Environment variables
+.env
+.env.*
+
+# OS files
+.DS_Store
+Thumbs.db
