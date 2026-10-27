@@ -378,7 +378,7 @@ def metric_card(container, title=None, value=None, note="", tone="blue", trend=N
     with container:
         st.markdown(
             f"""
-            <div class="hud-metric-card" draggable="false" style="background:{t['bg']} !important; border:1.5px solid {t['border']} !important; box-shadow:{t['glow']}; height:165px !important; min-height:165px !important; max-height:165px !important; user-select:none; -webkit-user-select:none; cursor:default; border-radius:16px;">
+            <div class="hud-metric-card" draggable="false" style="background:{t['bg']} !important; border:1.5px solid {t['border']} !important; box-shadow:{t['glow']}; min-height:135px; height:auto; box-sizing:border-box; margin-bottom:16px; user-select:none; -webkit-user-select:none; cursor:default; border-radius:16px;">
               <div class="metric-card-top" draggable="false">
                 <div class="metric-icon-square" draggable="false" style="background:{t['icon_bg']}; color:{t['icon_color']};">{t['icon']}</div>
                 <div class="metric-arrow" draggable="false" style="color:{t['arrow']}; font-weight:800;">↗</div>
@@ -482,7 +482,7 @@ def probability_badge(probability, label=None, threshold: float | dict | None = 
 
     st.markdown(
         f"""
-        <div style="background:{bg};border:1.5px solid {border};border-radius:20px;padding:22px 18px;text-align:center;box-shadow:0 8px 28px {shadow};">
+        <div style="background:{bg};border:1.5px solid {border};border-radius:20px;padding:22px 18px;text-align:center;box-shadow:0 8px 28px {shadow};margin-bottom:16px;">
             <div style="font-size:11.5px;font-weight:850;color:{fg};margin-bottom:6px;letter-spacing:1px;text-transform:uppercase;">{risk_title}</div>
             <div style="font-size:42px;font-weight:900;color:{fg};line-height:1;letter-spacing:-1px;font-family:'JetBrains Mono', monospace;">{pct:.1f}%</div>
             <div style="font-size:12px;font-weight:800;color:{sub_col} !important;margin-top:10px;letter-spacing:0.8px;text-transform:uppercase;">KLASIFIKASI: {html.escape(display_label)}</div>
@@ -1300,7 +1300,7 @@ def render_equity_investor_dashboard(eq: dict):
     c1, c2 = st.columns(2)
     with c1:
         div_html = (
-            f'<div style="background:{card_bg};border:1.5px solid {card_border};border-radius:16px;padding:18px;height:100%;box-shadow:{card_shadow};">'
+            f'<div style="background:{card_bg};border:1.5px solid {card_border};border-radius:16px;padding:18px;height:100%;margin-bottom:16px;box-shadow:{card_shadow};">'
             f'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'
             f'<span style="font-size:13.5px;font-weight:850;color:{title_col} !important;">💰 1. Kelangsungan Dividen</span>'
             f'<span style="font-size:11px;font-weight:800;padding:3px 10px;border-radius:12px;background:{badge_bg};border:1px solid {badge_border};color:{badge_txt} !important;">{div.get("badge", "-")}</span>'
@@ -1321,7 +1321,7 @@ def render_equity_investor_dashboard(eq: dict):
         shortfall_text = f"Rp {int(dil.get('equity_shortfall', 0)):,}" if dil.get('equity_shortfall', 0) > 0 else "Rp 0 (Memadai)"
         dil_color = ("#dc2626" if is_light else "#fb7185") if dil.get("risk_pct", 0) >= 70 else (("#d97706" if is_light else "#fbbf24") if dil.get("risk_pct", 0) >= 40 else ("#059669" if is_light else "#2dd4bf"))
         dil_html = (
-            f'<div style="background:{card_bg};border:1.5px solid {card_border};border-radius:16px;padding:18px;height:100%;box-shadow:{card_shadow};">'
+            f'<div style="background:{card_bg};border:1.5px solid {card_border};border-radius:16px;padding:18px;height:100%;margin-bottom:16px;box-shadow:{card_shadow};">'
             f'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'
             f'<span style="font-size:13.5px;font-weight:850;color:{title_col} !important;">⚠️ 2. Risiko Dilusi (Rights Issue/Debt Swap)</span>'
             f'<span style="font-size:11px;font-weight:800;padding:3px 10px;border-radius:12px;background:{badge_bg};border:1px solid {badge_border};color:{badge_txt} !important;">{dil.get("badge", "-")}</span>'
@@ -1413,7 +1413,7 @@ def render_lender_creditor_dashboard(len_data: dict):
     with c1:
         covenant_rules_html = "".join([f"<li style='margin-bottom:6px;color:{body_txt} !important;'>{r}</li>" for r in cov.get("rules", [])])
         cov_html = (
-            f'<div style="background:{card_bg};border:1.5px solid {card_border};border-radius:16px;padding:18px;height:100%;box-shadow:{card_shadow};">'
+            f'<div style="background:{card_bg};border:1.5px solid {card_border};border-radius:16px;padding:18px;height:100%;margin-bottom:16px;box-shadow:{card_shadow};">'
             f'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'
             f'<span style="font-size:13.5px;font-weight:850;color:{title_col} !important;">📑 1. Pengetatan Covenant & Uji DSCR</span>'
             f'<span style="font-size:11px;font-weight:800;padding:3px 10px;border-radius:12px;background:{badge_bg};border:1px solid {badge_border};color:{badge_txt} !important;">{cov.get("dscr_badge", "-")}</span>'
@@ -1441,7 +1441,7 @@ def render_lender_creditor_dashboard(len_data: dict):
     with c2:
         sweep_rules_html = "".join([f"<li style='margin-bottom:6px;color:{body_txt} !important;'>{w}</li>" for w in col.get("cash_sweep_rules", [])])
         col_html = (
-            f'<div style="background:{card_bg};border:1.5px solid {card_border};border-radius:16px;padding:18px;height:100%;box-shadow:{card_shadow};">'
+            f'<div style="background:{card_bg};border:1.5px solid {card_border};border-radius:16px;padding:18px;height:100%;margin-bottom:16px;box-shadow:{card_shadow};">'
             f'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">'
             f'<span style="font-size:13.5px;font-weight:850;color:{title_col} !important;">🔒 2. Cash Sweep & Nilai Agunan (LTV)</span>'
             f'<span style="font-size:11px;font-weight:800;padding:3px 10px;border-radius:12px;background:{badge_bg};border:1px solid {badge_border};color:{badge_txt} !important;">{col.get("ltv_badge", "-")}</span>'
@@ -2808,7 +2808,7 @@ def render_warning_factors_checklist(factors: dict):
 
             st.markdown(
                 f"""
-                <div style="background:{c_bg}; border:1.5px solid {c_border}; border-radius:12px; padding:10px 12px; text-align:center; height:100%; box-shadow:0 2px 6px rgba(15,23,42,0.04);">
+                <div style="background:{c_bg}; border:1.5px solid {c_border}; border-radius:12px; padding:10px 12px; text-align:center; height:100%; box-shadow:0 2px 6px rgba(15,23,42,0.04); margin-bottom:12px;">
                     <div style="font-size:13px; font-weight:850; color:{c_text} !important; font-family:monospace;">{cond}</div>
                     <div style="font-size:11.5px; color:{lbl_color} !important; font-weight:750; margin-top:2px;">{label}</div>
                     <div style="font-size:11.5px; font-weight:900; color:{c_text} !important; margin-top:6px;">{icon}</div>
@@ -2848,7 +2848,7 @@ def render_concordance_badge(concordance: dict):
 
     st.markdown(
         f"""
-        <div style="background:{bg}; border:1.5px solid {border}; border-radius:12px; padding:10px 16px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; box-shadow:0 2px 6px rgba(15,23,42,0.03);">
+        <div style="background:{bg}; border:1.5px solid {border}; border-radius:12px; padding:10px 16px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; box-shadow:0 2px 6px rgba(15,23,42,0.03);">
             <div style="display:flex; align-items:center; gap:10px;">
                 <span style="font-size:18px;">{icon}</span>
                 <div>
@@ -2941,7 +2941,7 @@ def _render_styled_table(headers: list[str], rows: list[list[str]], is_light: bo
                     num_cols.add(c_idx)
 
     html_code = f"""
-    <table style="width:100%; border-collapse:collapse; font-size:12px; font-family:'Plus Jakarta Sans',sans-serif; margin:4px 0 6px 0; border:1px solid {border_col}; border-radius:8px; overflow:hidden;">
+    <table style="width:100%; border-collapse:collapse; font-size:12px; font-family:'Plus Jakarta Sans',sans-serif; margin:8px 0 16px 0; border:1px solid {border_col}; border-radius:8px; overflow:hidden;">
         <thead>
             <tr style="background:{th_bg}; border-bottom:1.5px solid {border_col};">
     """

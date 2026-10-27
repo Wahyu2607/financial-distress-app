@@ -181,69 +181,86 @@ def inject_css(theme: str | None = None):
             width: 100% !important;
         }
 
-        div[data-testid="stHorizontalBlock"]:has(.sidebar-vault-container) {
-            display: flex !important;
-            flex-direction: row !important;
-            flex-wrap: nowrap !important;
-            align-items: stretch !important;
-            gap: 0 !important;
-            width: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
+        /* ========================================================================== */
+        /* 1. DESKTOP VIEWPORT (MIN-WIDTH: 992PX): FIXED EDGE-TO-EDGE LEFT SIDEBAR    */
+        /* ========================================================================== */
+        @media (min-width: 992px) {
+            div[data-testid="stHorizontalBlock"]:has(.sidebar-vault-container) {
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                align-items: stretch !important;
+                gap: 0 !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
 
-        /* Sidebar Menempel Rapat Tanpa Celah di Sisi Paling Kiri Layar (Edge-to-Edge) */
-        div[data-testid="column"]:has(.sidebar-vault-container),
-        div[data-testid="stColumn"]:has(.sidebar-vault-container) {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            bottom: 0 !important;
-            height: 100vh !important;
-            min-height: 100vh !important;
-            max-height: 100vh !important;
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
-            z-index: 9999 !important;
-            scrollbar-width: none !important;
-            -ms-overflow-style: none !important;
+            /* Sidebar Menempel Rapat Tanpa Celah di Sisi Paling Kiri Layar (Edge-to-Edge) */
+            div[data-testid="column"]:has(.sidebar-vault-container),
+            div[data-testid="stColumn"]:has(.sidebar-vault-container) {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                bottom: 0 !important;
+                height: 100vh !important;
+                min-height: 100vh !important;
+                max-height: 100vh !important;
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+                z-index: 9999 !important;
+                scrollbar-width: none !important;
+                -ms-overflow-style: none !important;
 
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: flex-start !important;
-            align-items: stretch !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: flex-start !important;
+                align-items: stretch !important;
 
-            /* Sidebar Permanen Terbuka: Lebar Tetap 270px, Menempel Sisi Kiri & Warna Abu-abu Gelap Kebiruan Elegan */
-            flex: 0 0 270px !important;
-            width: 270px !important;
-            min-width: 270px !important;
-            max-width: 270px !important;
-            padding: 14px 14px 14px 14px !important;
-            padding-top: 14px !important;
-            margin-top: 0 !important;
-            box-sizing: border-box !important;
+                /* Sidebar Permanen Terbuka: Lebar Tetap 270px, Menempel Sisi Kiri & Warna Abu-abu Gelap Kebiruan Elegan */
+                flex: 0 0 270px !important;
+                width: 270px !important;
+                min-width: 270px !important;
+                max-width: 270px !important;
+                padding: 14px 14px 14px 14px !important;
+                padding-top: 14px !important;
+                margin-top: 0 !important;
+                box-sizing: border-box !important;
 
-            /* Latar Belakang Khusus: Abu-abu Gelap Kebiruan yang Elegan (Refined Deep Slate Navy) */
-            background: #141726 !important;
-            background-color: #141726 !important;
-            border: none !important;
-            border-right: 1.5px solid rgba(148, 163, 184, 0.16) !important;
-            border-radius: 0 !important;
-            box-shadow: 6px 0 28px rgba(0, 0, 0, 0.5) !important;
-        }
+                /* Latar Belakang Khusus: Abu-abu Gelap Kebiruan yang Elegan (Refined Deep Slate Navy) */
+                background: #141726 !important;
+                background-color: #141726 !important;
+                border: none !important;
+                border-right: 1.5px solid rgba(148, 163, 184, 0.16) !important;
+                border-radius: 0 !important;
+                box-shadow: 6px 0 28px rgba(0, 0, 0, 0.5) !important;
+                transform: translateX(0) !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+                pointer-events: auto !important;
+            }
 
-        /* Kolom Konten Utama di Sebelah Kanan Mengisi Sisa Lebar Layar (margin-left: 270px) */
-        div[data-testid="column"]:has(.sidebar-vault-container) ~ div[data-testid="column"],
-        div[data-testid="stColumn"]:has(.sidebar-vault-container) ~ div[data-testid="stColumn"],
-        div[data-testid="column"]:has(.sidebar-vault-container) + div[data-testid="column"],
-        div[data-testid="stColumn"]:has(.sidebar-vault-container) + div[data-testid="stColumn"] {
-            margin-left: 270px !important;
-            flex: 1 1 calc(100% - 270px) !important;
-            min-width: 0 !important;
-            width: calc(100% - 270px) !important;
-            max-width: calc(100% - 270px) !important;
-            padding: 0 24px 32px 24px !important;
-            box-sizing: border-box !important;
+            /* Kolom Konten Utama di Sebelah Kanan Mengisi Sisa Lebar Layar (margin-left: 270px) */
+            div[data-testid="column"]:has(.sidebar-vault-container) ~ div[data-testid="column"],
+            div[data-testid="stColumn"]:has(.sidebar-vault-container) ~ div[data-testid="stColumn"],
+            div[data-testid="column"]:has(.sidebar-vault-container) + div[data-testid="column"],
+            div[data-testid="stColumn"]:has(.sidebar-vault-container) + div[data-testid="stColumn"] {
+                margin-left: 270px !important;
+                flex: 1 1 calc(100% - 270px) !important;
+                min-width: 0 !important;
+                width: calc(100% - 270px) !important;
+                max-width: calc(100% - 270px) !important;
+                padding: 0 24px 32px 24px !important;
+                box-sizing: border-box !important;
+            }
+
+            .mobile-top-bar,
+            .mobile-drawer-backdrop,
+            .mobile-drawer-close-row {
+                display: none !important;
+                visibility: hidden !important;
+                pointer-events: none !important;
+            }
         }
 
         div[data-testid="column"]:has(.sidebar-vault-container)::-webkit-scrollbar,
@@ -1057,64 +1074,527 @@ def inject_css(theme: str | None = None):
             }
         }
 
+        /* ========================================================================== */
+        /* RESPONSIVITAS HANDPHONE, TABLET, DAN TRANSISI PERGANTIAN PERANGKAT        */
+        /* (MOBILE-FIRST ADAPTIVE LAYOUT & TOUCH-OPTIMIZED CONTROLS)                  */
+        /* ========================================================================== */
         @media (max-width: 991px) {
-            /* Cegah horizontal overflow di layar sempit / mobile */
-            body, .stApp, section.stMain, [data-testid="stMainBlockContainer"] {
+            /* 1. Mencegah horizontal viewport overflow */
+            html, body, .stApp, section.stMain, [data-testid="stMainBlockContainer"], .stMainBlockContainer {
                 overflow-x: hidden !important;
+                max-width: 100vw !important;
             }
 
-            /* Konten Utama Mengisi 100% Layar Mobile */
-            div[data-testid="column"]:has(.vault-canvas-header),
-            div[data-testid="stColumn"]:has(.vault-canvas-header) {
+            /* 2. Container blok layout utama Streamlit menjadi full width */
+            div[data-testid="stHorizontalBlock"]:has(.sidebar-vault-container) {
+                display: block !important;
                 width: 100% !important;
                 max-width: 100% !important;
-                flex: 1 1 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
 
-            /* Tablet & Mobile: Off-Canvas Floating Drawer dengan Animasi Slide-In */
+            /* 3. Konten Utama Mengisi 100% Lebar Layar Mobile tanpa Margin Kiri Desktop */
+            div[data-testid="column"]:has(.sidebar-vault-container) ~ div[data-testid="column"],
+            div[data-testid="stColumn"]:has(.sidebar-vault-container) ~ div[data-testid="stColumn"],
+            div[data-testid="column"]:has(.sidebar-vault-container) + div[data-testid="column"],
+            div[data-testid="stColumn"]:has(.sidebar-vault-container) + div[data-testid="stColumn"],
+            div[data-testid="column"]:has(.vault-canvas-header),
+            div[data-testid="stColumn"]:has(.vault-canvas-header) {
+                margin-left: 0 !important;
+                margin-top: 0 !important;
+                flex: 1 1 100% !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 8px 12px 36px 12px !important;
+                box-sizing: border-box !important;
+            }
+
+            /* 4. Sidebar Menjadi Slide-Out Drawer Mengambang (Off-Canvas Drawer) */
             div[data-testid="column"]:has(.sidebar-vault-container),
             div[data-testid="stColumn"]:has(.sidebar-vault-container) {
                 position: fixed !important;
                 top: 0 !important;
                 left: 0 !important;
                 bottom: 0 !important;
-                width: 295px !important;
-                max-width: 85vw !important;
+                width: 290px !important;
+                max-width: 86vw !important;
                 height: 100vh !important;
+                min-height: 100vh !important;
                 max-height: 100vh !important;
-                z-index: 999999 !important;
-                border-radius: 0 24px 24px 0 !important;
-                box-shadow: 20px 0 60px rgba(0, 0, 0, 0.85) !important;
-                animation: offcanvasSlideIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+                z-index: 9999999 !important;
                 overflow-y: auto !important;
+                overflow-x: hidden !important;
+                padding: 14px 14px 24px 14px !important;
+                box-sizing: border-box !important;
+
+                background: #141726 !important;
+                background-color: #141726 !important;
+                border: none !important;
+                border-right: 1.5px solid rgba(148, 163, 184, 0.25) !important;
+                border-radius: 0 20px 20px 0 !important;
+                box-shadow: 20px 0 60px rgba(0, 0, 0, 0.85) !important;
+
+                /* Default: Tertutup di Luar Layar Sebelah Kiri */
+                transform: translateX(-105%) !important;
+                opacity: 0 !important;
+                visibility: hidden !important;
+                pointer-events: none !important;
+                transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, visibility 0.28s !important;
             }
 
-            @keyframes offcanvasSlideIn {
-                from {
-                    transform: translateX(-105%);
-                    opacity: 0.5;
-                }
-                to {
-                    transform: translateX(0);
-                    opacity: 1;
-                }
+            /* Terbuka Saat body memiliki class mobile-nav-open */
+            body.mobile-nav-open div[data-testid="column"]:has(.sidebar-vault-container),
+            body.mobile-nav-open div[data-testid="stColumn"]:has(.sidebar-vault-container) {
+                transform: translateX(0) !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+                pointer-events: auto !important;
             }
 
-            /* Header Canvas Responsif di Mobile */
-            .vault-canvas-header {
-                flex-direction: column !important;
-                align-items: stretch !important;
-                gap: 12px !important;
-                padding: 14px 16px !important;
+            /* 5. Mobile Drawer Backdrop Gelap */
+            .mobile-drawer-backdrop {
+                display: block !important;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                background: rgba(3, 7, 18, 0.72) !important;
+                backdrop-filter: blur(5px) !important;
+                -webkit-backdrop-filter: blur(5px) !important;
+                z-index: 9999990 !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+                visibility: hidden !important;
+                transition: opacity 0.25s ease, visibility 0.25s ease !important;
             }
 
-            .header-search-box {
-                max-width: 100% !important;
+            body.mobile-nav-open .mobile-drawer-backdrop {
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                visibility: visible !important;
+            }
+
+            /* 6. Mobile Top Navigation Bar */
+            .mobile-top-bar {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                gap: 10px !important;
+                padding: 9px 12px !important;
+                background: rgba(20, 23, 38, 0.94) !important;
+                backdrop-filter: blur(18px) !important;
+                -webkit-backdrop-filter: blur(18px) !important;
+                border: 1px solid rgba(148, 163, 184, 0.2) !important;
+                border-radius: 14px !important;
+                margin-bottom: 12px !important;
+                box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35) !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+                position: sticky !important;
+                top: 6px !important;
+                z-index: 900 !important;
+            }
+
+            .mobile-hamburger-btn {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                gap: 6px !important;
+                height: 36px !important;
+                padding: 0 11px !important;
+                border-radius: 9px !important;
+                background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+                border: 1px solid rgba(148, 163, 184, 0.3) !important;
+                color: #ffffff !important;
+                font-size: 12px !important;
+                font-weight: 750 !important;
+                cursor: pointer !important;
+                user-select: none !important;
+                -webkit-user-select: none !important;
+                transition: all 0.2s ease !important;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+                flex-shrink: 0 !important;
+            }
+
+            .mobile-hamburger-btn:hover,
+            .mobile-hamburger-btn:active {
+                background: #2563eb !important;
+                border-color: #3b82f6 !important;
+                color: #ffffff !important;
+                transform: scale(0.96) !important;
+            }
+
+            .hamburger-icon {
+                font-size: 16px !important;
+                line-height: 1 !important;
+            }
+
+            .mobile-brand-pill {
+                display: flex !important;
+                align-items: center !important;
+                gap: 8px !important;
+                overflow: hidden !important;
+            }
+
+            .mobile-brand-logo {
+                width: 26px !important;
+                height: 26px !important;
+                border-radius: 7px !important;
+                background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                font-size: 13px !important;
+                color: #ffffff !important;
+                flex-shrink: 0 !important;
+                box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4) !important;
+            }
+
+            .mobile-brand-title {
+                font-size: 12.5px !important;
+                font-weight: 800 !important;
+                color: #f8fafc !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                letter-spacing: -0.2px !important;
+            }
+
+            .mobile-page-indicator {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: flex-end !important;
+                flex-shrink: 0 !important;
+            }
+
+            .mobile-page-badge {
+                font-size: 10.5px !important;
+                font-weight: 750 !important;
+                color: #38bdf8 !important;
+                background: rgba(56, 189, 248, 0.12) !important;
+                border: 1px solid rgba(56, 189, 248, 0.3) !important;
+                padding: 3px 8px !important;
+                border-radius: 7px !important;
+                white-space: nowrap !important;
+                max-width: 110px !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+            }
+
+            /* Tombol Tutup di Dalam Drawer */
+            .mobile-drawer-close-row {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: space-between !important;
+                padding: 0 0 10px 0 !important;
+                margin-bottom: 8px !important;
+                border-bottom: 1px solid rgba(148, 163, 184, 0.15) !important;
                 width: 100% !important;
             }
 
-            .header-actions-cluster {
-                justify-content: flex-end !important;
+            .mobile-drawer-title {
+                font-size: 10px !important;
+                font-weight: 800 !important;
+                color: #94a3b8 !important;
+                letter-spacing: 1px !important;
+                text-transform: uppercase !important;
+            }
+
+            .mobile-drawer-close-btn {
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 5px !important;
+                background: rgba(239, 68, 68, 0.15) !important;
+                border: 1px solid rgba(239, 68, 68, 0.35) !important;
+                color: #fca5a5 !important;
+                border-radius: 7px !important;
+                padding: 4px 10px !important;
+                font-size: 11px !important;
+                font-weight: 750 !important;
+                cursor: pointer !important;
+                transition: all 0.2s ease !important;
+            }
+
+            .mobile-drawer-close-btn:hover,
+            .mobile-drawer-close-btn:active {
+                background: #ef4444 !important;
+                color: #ffffff !important;
+            }
+
+            /* 7. Header Konten Responsif */
+            .vault-canvas-header {
+                flex-direction: column !important;
+                align-items: stretch !important;
+                gap: 10px !important;
+                padding: 12px 14px !important;
+                border-radius: 16px !important;
+                margin-bottom: 14px !important;
+            }
+
+            .header-main-h1 {
+                font-size: 19px !important;
+                line-height: 1.25 !important;
+                letter-spacing: -0.3px !important;
+            }
+
+            .header-sub-text {
+                font-size: 11px !important;
+                flex-wrap: wrap !important;
+                gap: 4px 6px !important;
+            }
+
+            .header-datetime-box {
+                width: 100% !important;
+                justify-content: center !important;
+                font-size: 11px !important;
+                padding: 6px 10px !important;
+                margin-top: 2px !important;
+            }
+        }
+
+        /* ========================================================================== */
+        /* RESPONSIVITAS MULTI-FRAME, KOLOM, DAN KONTROL TOUCH (max-width: 991px)     */
+        /* (ANTI-BERTUMPUK: KOLOM MENJADI FULL-WIDTH VERTICAL STACK DENGAN JARAK RAPI) */
+        /* ========================================================================== */
+        @media (max-width: 991px) {
+            /* 1. Stacking Vertikal Bersih untuk Seluruh Multi-Kolom Konten dengan Jarak Pemisah Nyaman */
+            div[data-testid="stHorizontalBlock"]:not(:has(.sidebar-vault-container)):not(:has(.sidebar-user-block)):not(:has(.clock-content)):not(:has(.hud-metric-card)) {
+                display: flex !important;
+                flex-direction: column !important;
+                flex-wrap: wrap !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                gap: 16px !important;
+                margin-top: 6px !important;
+                margin-bottom: 22px !important;
+            }
+
+            div[data-testid="stHorizontalBlock"]:not(:has(.sidebar-vault-container)):not(:has(.sidebar-user-block)):not(:has(.clock-content)):not(:has(.hud-metric-card)) > div[data-testid="column"],
+            div[data-testid="stHorizontalBlock"]:not(:has(.sidebar-vault-container)):not(:has(.sidebar-user-block)):not(:has(.clock-content)):not(:has(.hud-metric-card)) > div[data-testid="stColumn"] {
+                width: 100% !important;
+                min-width: 100% !important;
+                max-width: 100% !important;
+                flex: 1 1 100% !important;
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+                margin-bottom: 16px !important;
+                box-sizing: border-box !important;
+            }
+
+            div[data-testid="stHorizontalBlock"]:not(:has(.sidebar-vault-container)):not(:has(.sidebar-user-block)):not(:has(.clock-content)):not(:has(.hud-metric-card)) > div[data-testid="column"]:last-child,
+            div[data-testid="stHorizontalBlock"]:not(:has(.sidebar-vault-container)):not(:has(.sidebar-user-block)):not(:has(.clock-content)):not(:has(.hud-metric-card)) > div[data-testid="stColumn"]:last-child {
+                margin-bottom: 0 !important;
+            }
+
+            /* 2. Grid Responsif untuk Metric Cards (2 Kolom di Tablet & Ponsel Landscape) */
+            div[data-testid="stHorizontalBlock"]:has(.hud-metric-card) {
+                display: grid !important;
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 16px !important;
+                row-gap: 16px !important;
+                column-gap: 16px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                margin-top: 8px !important;
+                margin-bottom: 24px !important;
+            }
+
+            div[data-testid="stHorizontalBlock"]:has(.hud-metric-card) > div[data-testid="column"],
+            div[data-testid="stHorizontalBlock"]:has(.hud-metric-card) > div[data-testid="stColumn"] {
+                width: 100% !important;
+                min-width: 0 !important;
+                max-width: 100% !important;
+                flex: 1 1 100% !important;
+                box-sizing: border-box !important;
+                margin-bottom: 16px !important;
+            }
+
+            .hud-metric-card {
+                height: auto !important;
+                min-height: 130px !important;
+                max-height: none !important;
+                padding: 14px 16px !important;
+                gap: 10px !important;
+                margin-bottom: 16px !important;
+            }
+
+            .metric-card-val {
+                font-size: 20px !important;
+                line-height: 1.2 !important;
+                word-break: break-word !important;
+            }
+
+            .metric-trend-pill {
+                white-space: normal !important;
+                font-size: 10px !important;
+                line-height: 1.3 !important;
+                padding: 3px 8px !important;
+            }
+
+            /* 3. Frame & Container Border Wrapper Responsif (Jarak Pemisah Nyaman & Anti-Tumpang Tindih) */
+            div[data-testid="stVerticalBlockBorderWrapper"] {
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+                margin-top: 10px !important;
+                margin-bottom: 26px !important;
+                border: none !important;
+                background: transparent !important;
+                background-color: transparent !important;
+                box-shadow: none !important;
+            }
+
+            div[data-testid="stVerticalBlockBorderWrapper"] > div {
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+                padding: 18px 18px !important;
+                border-radius: 18px !important;
+                height: auto !important;
+                max-height: none !important;
+                margin-bottom: 0 !important;
+                overflow: visible !important;
+            }
+
+            /* Jarak pemisah pada expander dan box peringatan (Alerts) */
+            div[data-testid="stExpander"] {
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+                margin-top: 10px !important;
+                margin-bottom: 20px !important;
+                border-radius: 16px !important;
+            }
+
+            div[data-testid="stAlert"] {
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+                margin-top: 10px !important;
+                margin-bottom: 20px !important;
+                border-radius: 14px !important;
+            }
+
+            /* Jarak pemisah antar Tab Group */
+            div[data-testid="stTabs"] {
+                margin-top: 12px !important;
+                margin-bottom: 24px !important;
+            }
+
+            /* 4. Tab bar responsif dapat digeser halus (Touch Swipe Scrolling) */
+            div[role="tablist"] {
+                display: flex !important;
+                flex-wrap: nowrap !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+                scrollbar-width: none !important;
+                gap: 6px !important;
+                padding-bottom: 6px !important;
+                margin-bottom: 12px !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+
+            div[role="tablist"]::-webkit-scrollbar {
+                display: none !important;
+            }
+
+            button[data-baseweb="tab"] {
+                flex: 0 0 auto !important;
+                white-space: nowrap !important;
+                padding: 8px 14px !important;
+                font-size: 12px !important;
+                border-radius: 10px !important;
+            }
+
+            /* 5. Grafik Interaktif Plotly & Meteran Gauge Penuh Tanpa Terpotong */
+            div[data-testid="stPlotlyChart"],
+            div[data-testid="stPlotlyChart"] > div,
+            .js-plotly-plot,
+            .plotly .svg-container {
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+                overflow: hidden !important;
+            }
+
+            .plotly .svg-container svg {
+                max-width: 100% !important;
+            }
+
+            /* 6. Formulir & Tombol Ramah Sentuhan (Touch Target Friendly) */
+            .stButton > button,
+            button[kind="primary"],
+            button[kind="secondary"] {
+                min-height: 42px !important;
+                font-size: 13px !important;
+                border-radius: 11px !important;
+                width: 100% !important;
+            }
+
+            div[data-baseweb="input"] input,
+            div[data-baseweb="base-input"] input,
+            div[data-baseweb="select"] input {
+                min-height: 40px !important;
+                font-size: 13px !important;
+            }
+
+            /* 7. Tabel responsif dengan horizontal touch scrolling */
+            div[data-testid="stDataFrame"],
+            div[data-testid="stTable"],
+            div[data-testid="stCustomComponentV1"]:has(table) {
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+
+            /* 8. Judul Section & Subjudul */
+            .section-title-text {
+                font-size: 15px !important;
+            }
+            .section-desc-text {
+                font-size: 11.5px !important;
+            }
+        }
+
+        /* Responsivitas Layar Handphone Portrait Sempit (max-width: 560px) */
+        @media (max-width: 560px) {
+            /* Metric Cards 1 Kolom Penuh di Layar Sempit */
+            div[data-testid="stHorizontalBlock"]:has(.hud-metric-card) {
+                grid-template-columns: 1fr !important;
+                gap: 16px !important;
+                row-gap: 16px !important;
+                margin-bottom: 24px !important;
+            }
+
+            div[data-testid="stHorizontalBlock"]:has(.hud-metric-card) > div[data-testid="column"],
+            div[data-testid="stHorizontalBlock"]:has(.hud-metric-card) > div[data-testid="stColumn"] {
+                margin-bottom: 16px !important;
+            }
+
+            div[data-testid="stVerticalBlockBorderWrapper"] {
+                margin-top: 8px !important;
+                margin-bottom: 22px !important;
+            }
+
+            div[data-testid="stVerticalBlockBorderWrapper"] > div {
+                padding: 15px 14px !important;
+                margin-bottom: 0 !important;
+            }
+
+            div[data-testid="stHorizontalBlock"]:not(:has(.sidebar-vault-container)):not(:has(.sidebar-user-block)):not(:has(.clock-content)):not(:has(.hud-metric-card)) > div[data-testid="column"],
+            div[data-testid="stHorizontalBlock"]:not(:has(.sidebar-vault-container)):not(:has(.sidebar-user-block)):not(:has(.clock-content)):not(:has(.hud-metric-card)) > div[data-testid="stColumn"] {
+                margin-bottom: 16px !important;
+            }
+
+            .section-title-text {
+                font-size: 14px !important;
+            }
+            .section-desc-text {
+                font-size: 11px !important;
             }
         }
 
@@ -1213,7 +1693,20 @@ def inject_css(theme: str | None = None):
         }
 
         /* 4. KONTEN UTAMA: UNIFIED DARK GLASS CARDS */
+        div[data-testid="stVerticalBlockBorderWrapper"] {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+            margin-top: 8px !important;
+            margin-bottom: 24px !important;
+            border: none !important;
+            background: transparent !important;
+            background-color: transparent !important;
+            box-shadow: none !important;
+        }
         div[data-testid="stVerticalBlockBorderWrapper"] > div {
+            width: 100% !important;
+            box-sizing: border-box !important;
             background: rgba(15, 23, 42, 0.78) !important;
             backdrop-filter: blur(16px) !important;
             -webkit-backdrop-filter: blur(16px) !important;
@@ -1222,8 +1715,18 @@ def inject_css(theme: str | None = None):
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45), inset 0 1px 0 0 rgba(255, 255, 255, 0.08) !important;
             color: #f8fafc !important;
             padding: 1.35rem 1.45rem !important;
-            margin-bottom: 0.5rem !important;
+            margin-bottom: 0 !important;
             transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+        div[data-testid="stExpander"] {
+            margin-top: 8px !important;
+            margin-bottom: 20px !important;
+            border-radius: 16px !important;
+        }
+        div[data-testid="stAlert"] {
+            margin-top: 8px !important;
+            margin-bottom: 20px !important;
+            border-radius: 14px !important;
         }
         div[data-testid="stVerticalBlockBorderWrapper"] > div:hover {
             border-color: rgba(99, 102, 241, 0.3) !important;
@@ -1236,6 +1739,7 @@ def inject_css(theme: str | None = None):
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
             border-radius: 14px !important;
             padding: 12px 16px !important;
+            margin-bottom: 16px !important;
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
         }
         [data-testid="stMetricLabel"],
@@ -1677,10 +2181,11 @@ def inject_css(theme: str | None = None):
         .hud-metric-card {
             border-radius: 18px !important;
             padding: 16px 18px !important;
-            height: 165px !important;
-            min-height: 165px !important;
-            max-height: 165px !important;
+            min-height: 140px !important;
+            height: auto !important;
+            max-height: none !important;
             width: 100% !important;
+            margin-bottom: 18px !important;
             box-sizing: border-box !important;
             transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
             display: flex !important;
@@ -2628,21 +3133,56 @@ def inject_css(theme: str | None = None):
                 font-weight: 750 !important;
             }
 
-            /* 2. Sidebar Permanen: Soft Cool Blue-Gray Surface Kontras (#edf2f8) */
-            div[data-testid="column"]:has(.sidebar-vault-container),
-            div[data-testid="stColumn"]:has(.sidebar-vault-container) {
-                background: #edf2f8 !important;
-                background-color: #edf2f8 !important;
-                border: none !important;
-                border-right: 1.5px solid #cbd5e1 !important;
-                flex: 0 0 270px !important;
-                width: 270px !important;
-                min-width: 270px !important;
-                max-width: 270px !important;
-                padding: 14px 14px 14px 14px !important;
-                padding-top: 14px !important;
-                margin-top: 0 !important;
-                box-sizing: border-box !important;
+            /* 2. Sidebar Desktop Permanen: Soft Cool Blue-Gray Surface Kontras (#edf2f8) */
+            @media (min-width: 992px) {
+                div[data-testid="column"]:has(.sidebar-vault-container),
+                div[data-testid="stColumn"]:has(.sidebar-vault-container) {
+                    background: #edf2f8 !important;
+                    background-color: #edf2f8 !important;
+                    border: none !important;
+                    border-right: 1.5px solid #cbd5e1 !important;
+                    flex: 0 0 270px !important;
+                    width: 270px !important;
+                    min-width: 270px !important;
+                    max-width: 270px !important;
+                    padding: 14px 14px 14px 14px !important;
+                    padding-top: 14px !important;
+                    margin-top: 0 !important;
+                    box-sizing: border-box !important;
+                }
+            }
+
+            /* 2b. Light Mode Mobile Drawer & Top Bar Overrides */
+            @media (max-width: 991px) {
+                div[data-testid="column"]:has(.sidebar-vault-container),
+                div[data-testid="stColumn"]:has(.sidebar-vault-container) {
+                    background: #ffffff !important;
+                    background-color: #ffffff !important;
+                    border-right: 1.5px solid #cbd5e1 !important;
+                    box-shadow: 16px 0 50px rgba(15, 23, 42, 0.22) !important;
+                }
+                .mobile-top-bar {
+                    background: rgba(255, 255, 255, 0.96) !important;
+                    border: 1px solid #cbd5e1 !important;
+                    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08) !important;
+                }
+                .mobile-brand-title {
+                    color: #0f172a !important;
+                }
+                .mobile-hamburger-btn {
+                    background: #f1f5f9 !important;
+                    border: 1px solid #cbd5e1 !important;
+                    color: #0f172a !important;
+                }
+                .mobile-drawer-backdrop {
+                    background: rgba(15, 23, 42, 0.55) !important;
+                }
+                .mobile-drawer-close-row {
+                    border-bottom-color: #e2e8f0 !important;
+                }
+                .mobile-drawer-title {
+                    color: #475569 !important;
+                }
             }
 
             /* Sidebar Logo */
@@ -3186,7 +3726,12 @@ def inject_css(theme: str | None = None):
             }
 
             /* 5. Main Content Cards, Containers & Frames (ZERO DARK RESIDUES) */
-            div[data-testid="stVerticalBlockBorderWrapper"],
+            div[data-testid="stVerticalBlockBorderWrapper"] {
+                background: transparent !important;
+                background-color: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
             div[data-testid="stVerticalBlockBorderWrapper"] > div,
             div[data-testid="stVerticalBlock"] > div[style*="border"] {
                 background: #ffffff !important;
@@ -3272,12 +3817,14 @@ def inject_css(theme: str | None = None):
                 background-color: #ffffff !important;
                 border: 1.5px solid #e2e8f0 !important;
                 border-radius: 14px !important;
+                margin-bottom: 16px !important;
                 box-shadow: 0 4px 14px rgba(15, 23, 42, 0.04) !important;
             }
             .hud-metric-card {
                 background: #ffffff !important;
                 background-color: #ffffff !important;
                 border: 1.5px solid #e2e8f0 !important;
+                margin-bottom: 18px !important;
                 box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04) !important;
             }
             .metric-card-val {

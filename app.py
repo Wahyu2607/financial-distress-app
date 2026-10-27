@@ -1844,15 +1844,27 @@ if not st.session_state.logged_in:
     }}
 
     @media (max-width: 820px) {{
-        .slider-card {{
-            width: 95vw !important;
+        .auth-viewport-wrapper {{
             height: auto !important;
-            min-height: 540px !important;
-            border-radius: 20px !important;
+            min-height: 100vh !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+            padding: 20px 12px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }}
+        .slider-card {{
+            width: 100% !important;
+            max-width: 440px !important;
+            height: auto !important;
+            min-height: 520px !important;
+            border-radius: 22px !important;
+            margin: auto !important;
         }}
         .form-panel {{
             width: 100% !important;
-            padding: 20px !important;
+            padding: 24px 20px !important;
         }}
         .brand-overlay {{
             display: none !important;
@@ -2178,10 +2190,17 @@ if st.session_state.sidebar_visible:
         role_label = "System Administrator" if st.session_state.role == "admin" else "Financial Analyst"
         cat_title = "ANALISIS DAN PREDIKSI" if st.session_state.role == "admin" else "NAVIGATION"
 
-        # Header Atas Sidebar: Vault Marker + Logo Brand + Section Label (Satu Elemen Terpadu - Flush Top-0)
+        # Header Atas Sidebar: Vault Marker + Close Row (Mobile) + Logo Brand + Section Label
         st.markdown(
             f"""
             <div class='sidebar-vault-container' style='display:none;'></div>
+            <div class="mobile-drawer-close-row">
+                <div class="mobile-drawer-title">NAVIGASI SISTEM</div>
+                <button type="button" class="mobile-drawer-close-btn" onclick="(window.parent||window).document.body.classList.remove('mobile-nav-open');" title="Tutup Menu Navigasi">
+                    <span>✕</span>
+                    <span>Tutup</span>
+                </button>
+            </div>
             <div class="sidebar-logo-header" title="Distress Prediction - Risk Intelligence">
                 <div class="sidebar-logo-icon">
                     <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
@@ -3006,11 +3025,41 @@ with content_col:
             return false;
         };
 
-        var onSidebarMenuOnly = function(e) {
+        var closeMobileNav = function() {
+            try {
+                if (doc.body) doc.body.classList.remove('mobile-nav-open');
+                if (win.document && win.document.body) win.document.body.classList.remove('mobile-nav-open');
+            } catch(err) {}
+        };
+
+        var toggleMobileNav = function() {
+            try {
+                var b = doc.body || (win.document && win.document.body);
+                if (b) b.classList.toggle('mobile-nav-open');
+            } catch(err) {}
+        };
+
+        var onGlobalClick = function(e) {
             var t = e.target;
             if (!t) return;
 
+            // 1. Cek tombol hamburger mobile
+            if (t.closest && t.closest('.mobile-hamburger-btn')) {
+                try { e.preventDefault(); } catch(err) {}
+                toggleMobileNav();
+                return;
+            }
+
+            // 2. Cek backdrop atau tombol close drawer
+            if (t.closest && (t.closest('.mobile-drawer-backdrop') || t.closest('.mobile-drawer-close-btn'))) {
+                try { e.preventDefault(); } catch(err) {}
+                closeMobileNav();
+                return;
+            }
+
+            // 3. Cek klik pada item menu radio sidebar
             if (isSidebarMenuRadio(t)) {
+                closeMobileNav();
                 try {
                     if (win.sessionStorage) win.sessionStorage.setItem('distress_force_top_scroll', '1');
                 } catch(err) {}
@@ -3020,14 +3069,30 @@ with content_col:
             }
         };
 
-        // Lepas listener lama di window / document agar event tab & tombol tidak memicu auto-scroll
+        // Lepas listener lama di window / document
         if (win.__distressNavScrollHandler) {
             doc.removeEventListener('click', win.__distressNavScrollHandler, true);
             doc.removeEventListener('pointerdown', win.__distressNavScrollHandler, true);
         }
-        win.__distressNavScrollHandler = onSidebarMenuOnly;
-        doc.addEventListener('click', onSidebarMenuOnly, true);
-        doc.addEventListener('pointerdown', onSidebarMenuOnly, true);
+        win.__distressNavScrollHandler = onGlobalClick;
+        doc.addEventListener('click', onGlobalClick, true);
+
+        // Listener adaptif saat ukuran layar atau orientasi device berganti
+        var onDeviceResize = function() {
+            try {
+                var w = win.innerWidth || (doc.documentElement && doc.documentElement.clientWidth) || 0;
+                if (w > 991) {
+                    closeMobileNav();
+                }
+            } catch(err) {}
+        };
+        if (win.__distressResizeHandler) {
+            win.removeEventListener('resize', win.__distressResizeHandler);
+            win.removeEventListener('orientationchange', win.__distressResizeHandler);
+        }
+        win.__distressResizeHandler = onDeviceResize;
+        win.addEventListener('resize', onDeviceResize);
+        win.addEventListener('orientationchange', onDeviceResize);
     } catch(e) {}
 
     try {
@@ -3145,7 +3210,25 @@ with content_col:
         f'onload="{inline_scroll_js}" onerror="{inline_scroll_js}" />'
     )
 
+    mobile_topbar_html = f"""
+    <div class="mobile-top-bar" id="mobileTopBar">
+        <button type="button" class="mobile-hamburger-btn" onclick="(window.parent||window).document.body.classList.toggle('mobile-nav-open');" title="Buka Menu Navigasi">
+            <span class="hamburger-icon">☰</span>
+            <span class="hamburger-text">Menu</span>
+        </button>
+        <div class="mobile-brand-pill">
+            <div class="mobile-brand-logo">⚡</div>
+            <div class="mobile-brand-title">Distress Prediction</div>
+        </div>
+        <div class="mobile-page-indicator">
+            <span class="mobile-page-badge">{page}</span>
+        </div>
+    </div>
+    <div class="mobile-drawer-backdrop" id="mobileDrawerBackdrop" onclick="(window.parent||window).document.body.classList.remove('mobile-nav-open');"></div>
+    """
+
     header_html = f"""
+    {mobile_topbar_html}
     <div class="vault-canvas-header">
         <div class="header-title-column">
             <h1 class="header-main-h1">{page}</h1>
@@ -5761,9 +5844,9 @@ with content_col:
             bar_em_name = "#0f172a" if is_light else "#ffffff"
             st.markdown(
                 f"""
-                <div style="background:{bar_em_bg};border:1.5px solid {bar_em_border};border-radius:9px;min-height:38px;height:38px;padding:0 14px;margin-bottom:0;display:flex;align-items:center;gap:10px;box-shadow:0 2px 6px rgba(15,23,42,0.04);box-sizing:border-box;">
+                <div style="background:{bar_em_bg};border:1.5px solid {bar_em_border};border-radius:10px;min-height:40px;height:auto;padding:8px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 6px rgba(15,23,42,0.04);box-sizing:border-box;">
                     <span style="font-size:16px;line-height:1;flex-shrink:0;">🏢</span>
-                    <div style="font-size:12px;color:{bar_em_txt};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                    <div style="font-size:12px;color:{bar_em_txt};line-height:1.35;word-break:break-word;">
                         Emiten Teranalisis: <b style="color:{bar_em_name};">{st.session_state.company or 'Belum Dipilih'} ({st.session_state.ticker or '-'})</b> • Tahun Laporan: <b style="color:#2563eb;">{st.session_state.year if is_analyzed else '-'}</b>
                     </div>
                 </div>
@@ -5778,6 +5861,8 @@ with content_col:
             if st.button("🏠 Buka Dashboard", key="btn_goto_dash_from_rh", use_container_width=True, help="Buka dashboard utama"):
                 set_page("Dashboard")
                 st.rerun()
+
+        st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
 
         # Hasil Prediksi Multi-Model dan Status 3 Kategori
         xgb_thresh = float(config.get("xgb_threshold", 0.5))
@@ -5855,7 +5940,7 @@ with content_col:
                 metric_card(c[2], "PREDIKSI XGBOOST", xgb_card_val, xgb_card_note, xgb_tone, trend=xgb_trend)
             metric_card(c[3], "KONSENSUS (3 KATEGORI)", overall, overall_note, overall_tone, trend=overall_trend)
 
-            st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='height:18px;'></div>", unsafe_allow_html=True)
             if evaluate_model_concordance:
                 concordance = evaluate_model_concordance(z_cls, mda_cls, xgb_label)
                 render_concordance_badge(concordance)
@@ -5864,7 +5949,7 @@ with content_col:
                 warning_factors = evaluate_warning_factors(st.session_state.financials)
                 render_warning_factors_checklist(warning_factors)
 
-            st.markdown("###")
+            st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
             left, mid, right = st.columns([1.1, 1.5, 1.1])
 
             with left:
@@ -5924,10 +6009,10 @@ with content_col:
             metric_card(c[2], "PREDIKSI XGBOOST", "-", "Menunggu Analisis", "blue", trend="⚪ Standby")
             metric_card(c[3], "KONSENSUS (3 KATEGORI)", "STANDBY", "Belum Dilakukan Prediksi", "blue", trend="⚪ Belum Ada Data")
 
-            st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='height:18px;'></div>", unsafe_allow_html=True)
             st.info("ℹ️ **Status Siaga:** Sistem Peringatan Dini, Keselarasan Model, dan Speedometer Risiko akan otomatis aktif dan terkalkulasi setelah data laporan keuangan emiten dianalisis.")
 
-            st.markdown("###")
+            st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
             left, mid, right = st.columns([1.1, 1.5, 1.1])
 
             with left:
@@ -6034,6 +6119,7 @@ with content_col:
         with t1:
             st.markdown("**Metode Statistik Tradisional (Altman Z''-Score Model)**")
             st.latex(altman_formula(config["altman_coefficients"], latex=True))
+            st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
             if is_analyzed:
                 if z > alt_g:
                     z_badge = "🟢 SAFE ZONE"
@@ -6071,6 +6157,7 @@ with content_col:
                 "berdasarkan seluruh 704 observasi perusahaan manufaktur di BEI:"
             )
             st.latex(mda_formula(config["mda_coefficients"], latex=True))
+            st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
 
             if is_analyzed:
                 if mda > mda_g:
@@ -6120,6 +6207,8 @@ with content_col:
                 c_f3.metric("X3 (EBIT/TA)", f"{st.session_state.ratios.get('X3', 0.0):.4f}")
                 c_f4.metric("X4 (Equity/TL)", f"{min(float(st.session_state.ratios.get('X4', 0.0)), 3.0):.4f}")
 
+                st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
+
                 # Dapatkan kalkulasi detail 3 kategori
                 xgb_details = xgboost_predict_detailed(st.session_state.ratios, str(MODEL_PATH), threshold=xgb_th_cfg)
 
@@ -6145,8 +6234,9 @@ with content_col:
                     with col_badge_xgb:
                         probability_badge(prob_val, status_val, threshold=xgb_th_cfg)
 
-                    st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
+                    st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
                     render_feature_importance_chart(st.session_state.ratios)
+                    st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
 
                     render_styled_dataframe(pd.DataFrame([[
                         f"{prob_val:.4f} ({prob_val*100:.2f}%)",
@@ -6561,7 +6651,7 @@ with content_col:
                     box_kons_txt = "#1e293b" if is_light else "#cbd5e1"
                     st.markdown(
                         f"""
-                        <div style="background:{box_kons_bg};border:1.5px solid {box_kons_border};border-radius:10px;padding:10px 14px;margin-top:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;box-shadow:0 2px 6px rgba(15,23,42,0.04);">
+                        <div style="background:{box_kons_bg};border:1.5px solid {box_kons_border};border-radius:10px;padding:10px 14px;margin-top:12px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;box-shadow:0 2px 6px rgba(15,23,42,0.04);">
                             <span style="font-size:13px;color:{box_kons_txt};font-weight:750;">🎯 Status Konsensus 3 Kategori Terintegrasi:</span>
                             <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:12.5px;font-weight:800;background:{cat3['color']}22;color:{cat3['color']};border:1px solid {cat3['color']}55;">
                                 {cat3['badge_icon']} {cat3['status']} • {cat3['summary_note']}
@@ -6608,7 +6698,7 @@ with content_col:
                     box_kons_txt = "#1e293b" if is_light else "#cbd5e1"
                     st.markdown(
                         f"""
-                        <div style="background:{box_kons_bg};border:1.5px solid {box_kons_border};border-radius:10px;padding:10px 14px;margin-top:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;box-shadow:0 2px 6px rgba(15,23,42,0.04);">
+                        <div style="background:{box_kons_bg};border:1.5px solid {box_kons_border};border-radius:10px;padding:10px 14px;margin-top:12px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;box-shadow:0 2px 6px rgba(15,23,42,0.04);">
                             <span style="font-size:13px;color:{box_kons_txt};font-weight:750;">🎯 Status Konsensus 3 Kategori Terintegrasi:</span>
                             <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:12.5px;font-weight:800;background:rgba(100,116,139,0.15);color:#64748b;border:1px solid rgba(100,116,139,0.3);">
                                 ⏳ STANDBY • Menunggu Analisis Data Emiten
@@ -8216,7 +8306,7 @@ with content_col:
             metric_card(c[2], "PREDIKSI XGBOOST", "-", "Menunggu Analisis", "blue", trend="⚪ Standby")
             metric_card(c[3], "KONSENSUS 3 KATEGORI", "STANDBY MODE", "Belum Dilakukan Prediksi", "blue", trend="⚪ Belum Ada Data")
 
-        st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
 
         # 4. Baris Pemantauan Visual Utama (Visual Gauges dan Early Warning Checklist)
         if is_analyzed:
