@@ -30,6 +30,7 @@
     "distress": 0.65,
     "cutoff": 0.5
   },
-  "system_announcement": "Sistem aktif. Klasifikasi 3 Kategori Operasional (Safe Zone, Grey Area, Distress Zone) telah diaktifkan secara komprehensif.",
-  "allow_user_analysis": true
+  "system_announcement": "",
+  "allow_user_analysis": true,
+  "registration_passcode": "DISTRESS2026"
 }

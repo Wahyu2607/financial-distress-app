@@ -46,6 +46,9 @@ def inject_css(theme: str | None = None):
             font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
             letter-spacing: -0.012em;
             color: #f8fafc;
+            hyphens: none !important;
+            -webkit-hyphens: none !important;
+            word-break: normal !important;
         }
 
         /* Teks Markdown agar selalu terang dan kontras tinggi terhadap wadah/frame gelap */
@@ -116,6 +119,37 @@ def inject_css(theme: str | None = None):
         /* Sembunyikan header default Streamlit */
         header.stAppHeader, [data-testid="stHeader"], [data-testid="stDecoration"], #stDecoration, [data-testid="stToolbar"], #MainMenu, .stDeployButton {
             display: none !important;
+        }
+
+        /* HILANGKAN SEMUA ANCHOR LINK ICON / HOVER LINK PADA SEMUA JUDUL & KONTEN */
+        [data-testid="stHeaderActionElements"],
+        div[data-testid="stHeadingWithActionElements"] > div,
+        .stHeadingWithActionElements [data-testid="stHeaderActionElements"],
+        a.anchorjs-link,
+        .anchorjs-link,
+        .stHeadingWithActionElements a,
+        h1 a, h2 a, h3 a, h4 a, h5 a, h6 a,
+        h1 a.anchor-link, h2 a.anchor-link, h3 a.anchor-link,
+        [data-testid="stMarkdownContainer"] h1 a,
+        [data-testid="stMarkdownContainer"] h2 a,
+        [data-testid="stMarkdownContainer"] h3 a,
+        [data-testid="stMarkdownContainer"] h4 a,
+        [data-testid="stMarkdownContainer"] h5 a,
+        [data-testid="stMarkdownContainer"] h6 a {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* Pastikan container judul Streamlit tidak menggeser posisi teks */
+        div[data-testid="stHeadingWithActionElements"] {
+            display: block !important;
+            width: 100% !important;
         }
 
         section.stMain .block-container, [data-testid="stMainBlockContainer"], .stMainBlockContainer {
@@ -227,6 +261,37 @@ def inject_css(theme: str | None = None):
             max-height: 0 !important;
             margin: 0 !important;
             padding: 0 !important;
+            position: absolute !important;
+            pointer-events: none !important;
+        }
+
+        /* Marker Jangkar Puncak Halaman (Top-of-Page Anchor) untuk Auto-Scroll Menu */
+        #vault-view-top-anchor {
+            scroll-margin-top: 0 !important;
+            position: relative !important;
+            top: 0 !important;
+            height: 0 !important;
+            min-height: 0 !important;
+            max-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+
+        /* Iframe Scroll Manager Komponen Tersembunyi (0-Height Tanpa Gap Layout) */
+        iframe[height="0"],
+        div[data-testid="stCustomComponentV1"]:has(iframe[height="0"]),
+        div[data-testid="element-container"]:has(iframe[height="0"]),
+        div[data-testid="stElementContainer"]:has(iframe[height="0"]) {
+            display: block !important;
+            height: 0 !important;
+            min-height: 0 !important;
+            max-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            overflow: hidden !important;
             position: absolute !important;
             pointer-events: none !important;
         }
@@ -1201,14 +1266,14 @@ def inject_css(theme: str | None = None):
             align-items: center;
             justify-content: space-between;
             gap: 16px;
-            margin-bottom: 20px;
-            padding: 14px 20px;
-            background: rgba(15, 23, 42, 0.65);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            margin-bottom: 22px;
+            padding: 16px 24px;
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(10, 15, 30, 0.94) 100%);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 20px;
-            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+            box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
             flex-wrap: nowrap;
         }
         .header-title-column {
@@ -1220,16 +1285,91 @@ def inject_css(theme: str | None = None):
         }
         .header-main-h1 {
             font-size: 24px;
-            font-weight: 850;
-            letter-spacing: -0.4px;
+            font-weight: 900;
+            letter-spacing: -0.5px;
             color: #ffffff !important;
             margin: 0;
-            line-height: 1.2;
+            line-height: 1.25;
         }
         .header-sub-text {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 5px;
+            font-size: 12.5px;
+            line-height: 1.4;
+        }
+        .header-platform-tag {
+            background: rgba(37, 99, 235, 0.18);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            padding: 2.5px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .header-sub-desc {
+            color: #94a3b8;
+            font-weight: 550;
             font-size: 12px;
-            color: #94a3b8 !important;
-            font-weight: 500;
+            white-space: nowrap;
+        }
+        .header-sub-sep {
+            color: #475569;
+            font-weight: 700;
+            font-size: 11px;
+        }
+        .header-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 2px 9px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 750;
+            white-space: nowrap;
+        }
+        .header-status-pill.standby-pill {
+            background: rgba(148, 163, 184, 0.12);
+            color: #cbd5e1;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+        }
+        .header-status-pill.active-pill {
+            background: rgba(16, 185, 129, 0.16);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.35);
+        }
+        .header-emiten-pill {
+            background: rgba(37, 99, 235, 0.2);
+            border: 1px solid rgba(96, 165, 250, 0.4);
+            padding: 2px 9px;
+            border-radius: 7px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 12px;
+        }
+        .emiten-pill-ticker {
+            color: #60a5fa;
+            font-weight: 900;
+            letter-spacing: 0.3px;
+        }
+        .emiten-pill-year {
+            color: #cbd5e1;
+            font-weight: 700;
+        }
+        .header-company-name {
+            color: #94a3b8;
+            font-weight: 600;
+            font-size: 12px;
+            max-width: 280px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .header-search-box {
             flex: 1;
@@ -1278,6 +1418,34 @@ def inject_css(theme: str | None = None):
             margin-right: 0;
             flex-shrink: 0;
             box-sizing: border-box;
+        }
+        .clock-live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 10.5px;
+            font-weight: 800;
+            color: #34d399;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+        }
+        .clock-pulse-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 8px #10b981;
+            animation: clockPulseAnim 2s infinite ease-in-out;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+        @keyframes clockPulseAnim {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.35; transform: scale(0.85); }
         }
         .clock-icon {
             font-size: 14px;
@@ -1586,6 +1754,9 @@ def inject_css(theme: str | None = None):
             white-space: nowrap !important;
             overflow: hidden !important;
             text-overflow: ellipsis !important;
+            text-align: right !important;
+            justify-content: flex-end !important;
+            display: flex !important;
         }
         .metric-card-bottom {
             margin-top: auto !important;
@@ -1707,6 +1878,123 @@ def inject_css(theme: str | None = None):
             color: #ffffff !important;
         }
 
+        /* Dashboard & Top Navigation Quick Nav Buttons (Lega, Rapi, Tengah & Anti-Berdempetan) */
+        .st-key-btn_goto_dl_from_dash,
+        .st-key-btn_goto_pred_from_adm_dash,
+        .st-key-btn_goto_eval_from_adm_dash,
+        .st-key-btn_goto_api_from_dash,
+        .st-key-btn_goto_rh_from_pe,
+        .st-key-btn_goto_dash_from_pe,
+        .st-key-btn_goto_dl_from_rh,
+        .st-key-btn_goto_dash_from_rh,
+        .st-key-btn_prof_goto_dash,
+        .st-key-btn_prof_goto_results,
+        .st-key-btn_prof_top_single_logout {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            background: transparent !important;
+            background-color: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+        .st-key-btn_goto_dl_from_dash button,
+        .st-key-btn_goto_pred_from_adm_dash button,
+        .st-key-btn_goto_eval_from_adm_dash button,
+        .st-key-btn_goto_api_from_dash button,
+        .st-key-btn_goto_rh_from_pe button,
+        .st-key-btn_goto_dash_from_pe button,
+        .st-key-btn_goto_dl_from_rh button,
+        .st-key-btn_goto_dash_from_rh button,
+        .st-key-btn_prof_goto_dash button,
+        .st-key-btn_prof_goto_results button {
+            height: 38px !important;
+            min-height: 38px !important;
+            max-height: 38px !important;
+            padding: 0 8px !important;
+            font-size: 11.5px !important;
+            font-weight: 750 !important;
+            letter-spacing: -0.15px !important;
+            border-radius: 9px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-align: center !important;
+            white-space: nowrap !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+            background: rgba(30, 41, 59, 0.75) !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            color: #f8fafc !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+            transition: all 0.18s ease !important;
+        }
+        .st-key-btn_goto_dl_from_dash button div[data-testid="stMarkdownContainer"],
+        .st-key-btn_goto_pred_from_adm_dash button div[data-testid="stMarkdownContainer"],
+        .st-key-btn_goto_eval_from_adm_dash button div[data-testid="stMarkdownContainer"],
+        .st-key-btn_goto_api_from_dash button div[data-testid="stMarkdownContainer"],
+        .st-key-btn_goto_rh_from_pe button div[data-testid="stMarkdownContainer"],
+        .st-key-btn_goto_dash_from_pe button div[data-testid="stMarkdownContainer"],
+        .st-key-btn_goto_dl_from_rh button div[data-testid="stMarkdownContainer"],
+        .st-key-btn_goto_dash_from_rh button div[data-testid="stMarkdownContainer"],
+        .st-key-btn_prof_goto_dash button div[data-testid="stMarkdownContainer"],
+        .st-key-btn_prof_goto_results button div[data-testid="stMarkdownContainer"],
+        .st-key-btn_goto_dl_from_dash button div,
+        .st-key-btn_goto_pred_from_adm_dash button div,
+        .st-key-btn_goto_eval_from_adm_dash button div,
+        .st-key-btn_goto_api_from_dash button div,
+        .st-key-btn_goto_rh_from_pe button div,
+        .st-key-btn_goto_dash_from_pe button div,
+        .st-key-btn_goto_dl_from_rh button div,
+        .st-key-btn_goto_dash_from_rh button div,
+        .st-key-btn_prof_goto_dash button div,
+        .st-key-btn_prof_goto_results button div {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-align: center !important;
+            width: 100% !important;
+            margin: 0 auto !important;
+        }
+        .st-key-btn_goto_dl_from_dash button p,
+        .st-key-btn_goto_pred_from_adm_dash button p,
+        .st-key-btn_goto_eval_from_adm_dash button p,
+        .st-key-btn_goto_api_from_dash button p,
+        .st-key-btn_goto_rh_from_pe button p,
+        .st-key-btn_goto_dash_from_pe button p,
+        .st-key-btn_goto_dl_from_rh button p,
+        .st-key-btn_goto_dash_from_rh button p,
+        .st-key-btn_prof_goto_dash button p,
+        .st-key-btn_prof_goto_results button p {
+            font-size: 11.5px !important;
+            font-weight: 750 !important;
+            white-space: nowrap !important;
+            margin: 0 auto !important;
+            padding: 0 !important;
+            line-height: 1 !important;
+            text-align: center !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100% !important;
+        }
+        .st-key-btn_goto_dl_from_dash button:hover,
+        .st-key-btn_goto_pred_from_adm_dash button:hover,
+        .st-key-btn_goto_eval_from_adm_dash button:hover,
+        .st-key-btn_goto_api_from_dash button:hover,
+        .st-key-btn_goto_rh_from_pe button:hover,
+        .st-key-btn_goto_dash_from_pe button:hover,
+        .st-key-btn_goto_dl_from_rh button:hover,
+        .st-key-btn_goto_dash_from_rh button:hover,
+        .st-key-btn_prof_goto_dash button:hover,
+        .st-key-btn_prof_goto_results button:hover {
+            background: rgba(51, 65, 85, 0.9) !important;
+            border-color: rgba(99, 102, 241, 0.5) !important;
+            color: #ffffff !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25) !important;
+        }
+
         /* Radio & Checkbox Labels */
         div[data-testid="stRadio"] label,
         div[data-testid="stCheckbox"] label {
@@ -1757,6 +2045,77 @@ def inject_css(theme: str | None = None):
             overflow: hidden !important;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
             background: rgba(13, 19, 33, 0.85) !important;
+        }
+        div[data-testid="stTable"] {
+            background: rgba(13, 19, 33, 0.85) !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            border-radius: 14px !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35) !important;
+            overflow: hidden !important;
+        }
+        div[data-testid="stTable"] table {
+            background: rgba(13, 19, 33, 0.85) !important;
+            color: #f8fafc !important;
+            border-collapse: collapse !important;
+            width: 100% !important;
+        }
+        div[data-testid="stTable"] thead tr th,
+        div[data-testid="stTable"] th {
+            background: rgba(30, 41, 59, 0.95) !important;
+            color: #f8fafc !important;
+            font-weight: 800 !important;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.15) !important;
+            padding: 10px 14px !important;
+        }
+        div[data-testid="stTable"] tbody tr td,
+        div[data-testid="stTable"] td {
+            background: rgba(15, 23, 42, 0.85) !important;
+            color: #f1f5f9 !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+            padding: 8px 14px !important;
+        }
+        div[data-testid="stTable"] tbody tr:nth-child(even) td {
+            background: rgba(15, 23, 42, 0.55) !important;
+        }
+        div[data-testid="stTable"] tbody tr:hover td {
+            background: rgba(255, 255, 255, 0.04) !important;
+        }
+
+        /* Generic HTML Tables & Numeric Alignment */
+        table td.text-right, table th.text-right,
+        table td.num, table th.num,
+        table td.numeric, table th.numeric,
+        .table-numeric, .table-num,
+        div[data-testid="stTable"] td.text-right,
+        div[data-testid="stTable"] th.text-right,
+        div[data-testid="stTable"] td:has(.font-mono-num),
+        div[data-testid="stTable"] td:has(.mono-num) {
+            text-align: right !important;
+            font-family: 'JetBrains Mono', monospace !important;
+            font-variant-numeric: tabular-nums !important;
+        }
+
+        /* Metric & Number Inputs Right Alignment */
+        div[data-testid="stMetricValue"],
+        div[data-testid="stMetricValue"] > div {
+            text-align: right !important;
+            justify-content: flex-end !important;
+            display: flex !important;
+            font-family: 'JetBrains Mono', monospace !important;
+            font-variant-numeric: tabular-nums !important;
+        }
+        div[data-testid="stMetricDelta"],
+        div[data-testid="stMetricDelta"] > div {
+            text-align: right !important;
+            justify-content: flex-end !important;
+            display: flex !important;
+        }
+        input[type="number"],
+        div[data-baseweb="input"] input[type="number"],
+        div[data-testid="stNumberInput"] input {
+            text-align: right !important;
+            font-family: 'JetBrains Mono', monospace !important;
+            font-variant-numeric: tabular-nums !important;
         }
         .kv-table {
             border-radius: 14px !important;
@@ -1864,21 +2223,184 @@ def inject_css(theme: str | None = None):
             font-weight: 500 !important;
         }
 
+        /* ===================================================================== */
+        /* COOL FINTECH SPINNER & LOADING ANIMATION (GLOBAL KEYFRAMES & DARK)   */
+        /* ===================================================================== */
+        @keyframes spin-clockwise {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        @keyframes spin-counter {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(-360deg); }
+        }
+        @keyframes pulse-scale {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+        @keyframes blink-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.25; }
+        }
+        @keyframes shimmer-bar {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        @keyframes spinner-scanline {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        @keyframes glow-pulse {
+            0%, 100% { opacity: 0.85; filter: drop-shadow(0 0 6px rgba(56,189,248,0.5)); }
+            50% { opacity: 1; filter: drop-shadow(0 0 14px rgba(56,189,248,0.85)); }
+        }
+        @keyframes cyber-radar-sweep {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Streamlit Spinner Container (Glassmorphic FinTech HUD) */
+        div[data-testid="stSpinner"],
+        .stSpinner {
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.92) 100%) !important;
+            border: 1px solid rgba(56, 189, 248, 0.35) !important;
+            border-radius: 16px !important;
+            padding: 16px 24px !important;
+            box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5), 0 0 25px rgba(56, 189, 248, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+            backdrop-filter: blur(16px) !important;
+            margin: 14px 0 !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+        div[data-testid="stSpinner"]::before,
+        .stSpinner::before {
+            content: "" !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 2.5px !important;
+            background: linear-gradient(90deg, transparent, #38bdf8, #818cf8, #10b981, transparent) !important;
+            animation: spinner-scanline 1.8s linear infinite !important;
+        }
+        div[data-testid="stSpinner"] > div {
+            display: flex !important;
+            align-items: center !important;
+            gap: 16px !important;
+        }
+        div[data-testid="stSpinner"] svg,
+        .stSpinner svg {
+            width: 30px !important;
+            height: 30px !important;
+            color: #38bdf8 !important;
+            stroke: #38bdf8 !important;
+            filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.75)) drop-shadow(0 0 18px rgba(99, 102, 241, 0.4)) !important;
+            animation: spin-clockwise 1.1s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
+        }
+        div[data-testid="stSpinner"] [data-testid="stMarkdownContainer"] p,
+        div[data-testid="stSpinner"] span,
+        div[data-testid="stSpinner"] div {
+            font-weight: 750 !important;
+            font-size: 14px !important;
+            color: #f8fafc !important;
+            letter-spacing: -0.2px !important;
+        }
+
+        /* DATE INPUT & GELEMBUNG KALENDER INTERAKTIF (DARK MODE) */
+        div[data-testid="stDateInput"] {
+            width: 100% !important;
+        }
+        div[data-testid="stDateInput"] [data-baseweb="input"] {
+            background: rgba(15, 23, 42, 0.75) !important;
+            border: 1.5px solid rgba(255, 255, 255, 0.14) !important;
+            border-radius: 12px !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) !important;
+            transition: all 0.2s ease !important;
+        }
+        div[data-testid="stDateInput"] [data-baseweb="input"]:focus-within {
+            border-color: #6366f1 !important;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3) !important;
+        }
+        div[data-testid="stDateInput"] input {
+            color: #f8fafc !important;
+            font-weight: 700 !important;
+            font-family: 'JetBrains Mono', monospace !important;
+        }
+        div[data-testid="stDateInput"] svg,
+        div[data-testid="stDateInput"] button {
+            color: #38bdf8 !important;
+            fill: #38bdf8 !important;
+        }
+        div[data-baseweb="popover"]:has(div[data-baseweb="calendar"]) {
+            border-radius: 16px !important;
+            overflow: hidden !important;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.7), 0 0 0 1.5px rgba(255, 255, 255, 0.14) !important;
+        }
+        div[data-baseweb="calendar"] {
+            background: #0f172a !important;
+            background-color: #0f172a !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            border-radius: 16px !important;
+            padding: 10px !important;
+            color: #f8fafc !important;
+        }
+        div[data-baseweb="calendar"] header {
+            background: transparent !important;
+            color: #f8fafc !important;
+            padding: 4px 6px !important;
+        }
+        div[data-baseweb="calendar"] header button {
+            color: #38bdf8 !important;
+            border-radius: 8px !important;
+        }
+        div[data-baseweb="calendar"] header select {
+            color: #f8fafc !important;
+            background: rgba(30, 41, 59, 0.85) !important;
+            border-radius: 8px !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            font-weight: 700 !important;
+        }
+        div[data-baseweb="calendar"] div[role="columnheader"] {
+            color: #94a3b8 !important;
+            font-weight: 800 !important;
+            font-size: 11px !important;
+        }
+        div[data-baseweb="calendar"] div[role="gridcell"] {
+            color: #cbd5e1 !important;
+            border-radius: 8px !important;
+            font-weight: 650 !important;
+            transition: all 0.15s ease !important;
+        }
+        div[data-baseweb="calendar"] div[role="gridcell"]:hover {
+            background: rgba(56, 189, 248, 0.22) !important;
+            color: #38bdf8 !important;
+        }
+        div[data-baseweb="calendar"] div[aria-selected="true"],
+        div[data-baseweb="calendar"] div[aria-selected="true"] * {
+            background: #2563eb !important;
+            background-color: #2563eb !important;
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+            font-weight: 850 !important;
+            box-shadow: 0 2px 10px rgba(37, 99, 235, 0.5) !important;
+        }
+
         /* SECTION HEADER DI DALAM KONTEN */
         .canvas-section-title {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 12px;
+            margin-top: 4px;
+            margin-bottom: 14px;
             padding-bottom: 8px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
         .section-title-text {
-            font-size: 13.5px;
+            font-size: 17px;
             font-weight: 850;
             color: #f8fafc;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
+            letter-spacing: -0.2px;
+            line-height: 1.25;
         }
         .section-desc-text {
             font-size: 11.5px;
@@ -1954,6 +2476,16 @@ def inject_css(theme: str | None = None):
         }
 
         /* Profile Page Logout Menu & Action Buttons (Dark Mode) */
+        .st-key-btn_prof_top_single_logout {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            background: transparent !important;
+            background-color: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+        .st-key-btn_prof_top_single_logout button,
         .st-key-btn_logout_prof_card button,
         .st-key-btn_prof_nav_logout button,
         .st-key-btn_logout_prof_form button,
@@ -1964,9 +2496,23 @@ def inject_css(theme: str | None = None):
             border: 1px solid rgba(248, 113, 113, 0.45) !important;
             box-shadow: 0 4px 14px rgba(220, 38, 38, 0.35) !important;
             font-weight: 800 !important;
-            border-radius: 10px !important;
+            border-radius: 9px !important;
+            height: 38px !important;
+            min-height: 38px !important;
+            max-height: 38px !important;
+            padding: 0 10px !important;
+            font-size: 11.5px !important;
+            letter-spacing: -0.15px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-align: center !important;
+            white-space: nowrap !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
         }
+        .st-key-btn_prof_top_single_logout button:hover,
         .st-key-btn_logout_prof_card button:hover,
         .st-key-btn_prof_nav_logout button:hover,
         .st-key-btn_logout_prof_form button:hover,
@@ -1975,6 +2521,14 @@ def inject_css(theme: str | None = None):
             border-color: rgba(248, 113, 113, 0.8) !important;
             box-shadow: 0 6px 20px rgba(239, 68, 68, 0.55) !important;
             transform: translateY(-1px) !important;
+            color: #ffffff !important;
+        }
+        .st-key-btn_prof_top_single_logout button *,
+        .st-key-btn_prof_top_single_logout button p,
+        .st-key-btn_prof_top_single_logout button span {
+            color: #ffffff !important;
+            -webkit-text-fill-color: #ffffff !important;
+            font-weight: 750 !important;
         }
         </style>
         """,
@@ -2029,6 +2583,36 @@ def inject_css(theme: str | None = None):
                 color: #0f172a !important;
                 -webkit-text-fill-color: #0f172a !important;
                 font-weight: 850 !important;
+            }
+
+            /* Sembunyikan semua anchor link pada judul dalam Light Mode */
+            [data-testid="stHeaderActionElements"],
+            div[data-testid="stHeadingWithActionElements"] > div,
+            .stHeadingWithActionElements [data-testid="stHeaderActionElements"],
+            a.anchorjs-link,
+            .anchorjs-link,
+            .stHeadingWithActionElements a,
+            h1 a, h2 a, h3 a, h4 a, h5 a, h6 a,
+            h1 a.anchor-link, h2 a.anchor-link, h3 a.anchor-link,
+            [data-testid="stMarkdownContainer"] h1 a,
+            [data-testid="stMarkdownContainer"] h2 a,
+            [data-testid="stMarkdownContainer"] h3 a,
+            [data-testid="stMarkdownContainer"] h4 a,
+            [data-testid="stMarkdownContainer"] h5 a,
+            [data-testid="stMarkdownContainer"] h6 a {
+                display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+                width: 0 !important;
+                height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            div[data-testid="stHeadingWithActionElements"] {
+                display: block !important;
+                width: 100% !important;
             }
             .stApp [data-testid="stCaptionContainer"] p,
             .stCaption, caption, .header-sub-caption {
@@ -2230,27 +2814,186 @@ def inject_css(theme: str | None = None):
                 transform: scale(1.08) !important;
             }
 
+            /* Single Logout Button in Profile Page Top Bar (Light Mode) */
+            .st-key-btn_prof_top_single_logout {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                background: transparent !important;
+                background-color: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+            .st-key-btn_prof_top_single_logout button,
+            .st-key-btn_prof_top_single_logout > button,
+            .st-key-btn_prof_top_single_logout div > button,
+            div.st-key-btn_prof_top_single_logout button {
+                height: 38px !important;
+                min-height: 38px !important;
+                max-height: 38px !important;
+                padding: 0 10px !important;
+                font-size: 11.5px !important;
+                font-weight: 750 !important;
+                letter-spacing: -0.15px !important;
+                border-radius: 9px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                text-align: center !important;
+                white-space: nowrap !important;
+                box-sizing: border-box !important;
+                width: 100% !important;
+                background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+                background-color: #dc2626 !important;
+                border: 1px solid #b91c1c !important;
+                color: #ffffff !important;
+                box-shadow: 0 2px 8px rgba(220, 38, 38, 0.28) !important;
+                transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            }
+            .st-key-btn_prof_top_single_logout button:hover,
+            .st-key-btn_prof_top_single_logout > button:hover,
+            .st-key-btn_prof_top_single_logout div > button:hover,
+            div.st-key-btn_prof_top_single_logout button:hover {
+                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+                background-color: #ef4444 !important;
+                border-color: #dc2626 !important;
+                box-shadow: 0 4px 14px rgba(239, 68, 68, 0.45) !important;
+                color: #ffffff !important;
+                transform: translateY(-1px) !important;
+            }
+            .st-key-btn_prof_top_single_logout button:active,
+            .st-key-btn_prof_top_single_logout > button:active,
+            div.st-key-btn_prof_top_single_logout button:active {
+                transform: translateY(0) !important;
+                box-shadow: 0 1px 4px rgba(220, 38, 38, 0.25) !important;
+            }
+            .st-key-btn_prof_top_single_logout button div[data-testid="stMarkdownContainer"],
+            .st-key-btn_prof_top_single_logout button div,
+            .st-key-btn_prof_top_single_logout button p,
+            .st-key-btn_prof_top_single_logout button span,
+            .st-key-btn_prof_top_single_logout button * {
+                background: transparent !important;
+                background-color: transparent !important;
+                color: #ffffff !important;
+                -webkit-text-fill-color: #ffffff !important;
+                font-weight: 750 !important;
+                font-size: 11.5px !important;
+                line-height: 1 !important;
+                white-space: nowrap !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
 
 
 
             /* 4. Top Command Deck (Header) */
             .vault-canvas-header {
-                background: #ffffff !important;
+                background: linear-gradient(180deg, #ffffff 0%, #fcfdfe 100%) !important;
                 background-color: #ffffff !important;
                 border: 1.5px solid #e2e8f0 !important;
-                box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05) !important;
+                box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.06), 0 1px 3px rgba(15, 23, 42, 0.03) !important;
                 align-items: center !important;
                 justify-content: space-between !important;
-                padding: 14px 20px !important;
+                padding: 16px 24px !important;
                 gap: 16px !important;
                 flex-wrap: nowrap !important;
+                border-radius: 20px !important;
             }
             .header-title-column {
                 min-width: 0 !important;
                 flex: 1 !important;
             }
             .header-main-h1 {
+                font-size: 24px !important;
+                font-weight: 900 !important;
+                letter-spacing: -0.5px !important;
                 color: #0f172a !important;
+                margin: 0 !important;
+                line-height: 1.25 !important;
+            }
+            .header-sub-text {
+                display: flex !important;
+                align-items: center !important;
+                gap: 8px !important;
+                flex-wrap: wrap !important;
+                margin-top: 5px !important;
+                font-size: 12.5px !important;
+                line-height: 1.4 !important;
+            }
+            .header-platform-tag {
+                background: #eff6ff !important;
+                color: #1d4ed8 !important;
+                border: 1px solid #bfdbfe !important;
+                padding: 2.5px 8px !important;
+                border-radius: 6px !important;
+                font-size: 10px !important;
+                font-weight: 800 !important;
+                letter-spacing: 0.6px !important;
+                text-transform: uppercase !important;
+                white-space: nowrap !important;
+            }
+            .header-sub-desc {
+                color: #475569 !important;
+                font-weight: 600 !important;
+                font-size: 12px !important;
+                white-space: nowrap !important;
+            }
+            .header-sub-sep {
+                color: #94a3b8 !important;
+                font-weight: 700 !important;
+                font-size: 11px !important;
+            }
+            .header-status-pill {
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 5px !important;
+                padding: 2px 9px !important;
+                border-radius: 999px !important;
+                font-size: 11px !important;
+                font-weight: 750 !important;
+                white-space: nowrap !important;
+            }
+            .header-status-pill.standby-pill {
+                background: #f1f5f9 !important;
+                color: #475569 !important;
+                border: 1px solid #cbd5e1 !important;
+            }
+            .header-status-pill.active-pill {
+                background: #ecfdf5 !important;
+                color: #065f46 !important;
+                border: 1px solid #a7f3d0 !important;
+            }
+            .header-emiten-pill {
+                background: #eff6ff !important;
+                border: 1px solid #93c5fd !important;
+                padding: 2px 9px !important;
+                border-radius: 7px !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 5px !important;
+                font-size: 12px !important;
+            }
+            .emiten-pill-ticker {
+                color: #1d4ed8 !important;
+                font-weight: 900 !important;
+                letter-spacing: 0.3px !important;
+            }
+            .emiten-pill-year {
+                color: #334155 !important;
+                font-weight: 700 !important;
+            }
+            .header-company-name {
+                color: #334155 !important;
+                font-weight: 650 !important;
+                font-size: 12px !important;
+                max-width: 280px !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
+                white-space: nowrap !important;
             }
             .header-search-box {
                 background: #f8fafc !important;
@@ -2288,13 +3031,28 @@ def inject_css(theme: str | None = None):
                 flex-shrink: 0 !important;
             }
             .clock-live-indicator {
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 6px !important;
+                padding: 2px 8px !important;
+                border-radius: 999px !important;
+                font-size: 10.5px !important;
+                font-weight: 800 !important;
                 color: #065f46 !important;
                 background: #ecfdf5 !important;
                 border: 1px solid #a7f3d0 !important;
+                letter-spacing: 0.5px !important;
+                flex-shrink: 0 !important;
             }
             .clock-pulse-dot {
+                width: 7px !important;
+                height: 7px !important;
+                border-radius: 50% !important;
                 background: #059669 !important;
                 box-shadow: 0 0 8px #059669 !important;
+                animation: clockPulseAnim 2s infinite ease-in-out !important;
+                display: inline-block !important;
+                flex-shrink: 0 !important;
             }
             .clock-content {
                 display: flex !important;
@@ -2525,6 +3283,32 @@ def inject_css(theme: str | None = None):
             .metric-card-val {
                 color: #0f172a !important;
                 font-weight: 900 !important;
+                text-align: right !important;
+                justify-content: flex-end !important;
+                display: flex !important;
+                font-family: 'JetBrains Mono', monospace !important;
+                font-variant-numeric: tabular-nums !important;
+            }
+            div[data-testid="stMetricValue"],
+            div[data-testid="stMetricValue"] > div {
+                text-align: right !important;
+                justify-content: flex-end !important;
+                display: flex !important;
+                font-family: 'JetBrains Mono', monospace !important;
+                font-variant-numeric: tabular-nums !important;
+            }
+            div[data-testid="stMetricDelta"],
+            div[data-testid="stMetricDelta"] > div {
+                text-align: right !important;
+                justify-content: flex-end !important;
+                display: flex !important;
+            }
+            input[type="number"],
+            div[data-baseweb="input"] input[type="number"],
+            div[data-testid="stNumberInput"] input {
+                text-align: right !important;
+                font-family: 'JetBrains Mono', monospace !important;
+                font-variant-numeric: tabular-nums !important;
             }
             .metric-card-title {
                 color: #1e293b !important;
@@ -2655,6 +3439,20 @@ def inject_css(theme: str | None = None):
                 background-color: #eff6ff !important;
             }
 
+            /* Numeric Right Alignment for Tables */
+            table td.text-right, table th.text-right,
+            table td.num, table th.num,
+            table td.numeric, table th.numeric,
+            .table-numeric, .table-num,
+            div[data-testid="stTable"] td.text-right,
+            div[data-testid="stTable"] th.text-right,
+            div[data-testid="stTable"] td:has(.font-mono-num),
+            div[data-testid="stTable"] td:has(.mono-num) {
+                text-align: right !important;
+                font-family: 'JetBrains Mono', monospace !important;
+                font-variant-numeric: tabular-nums !important;
+            }
+
             /* Minimalist Key-Value Tables (.kv-table) */
             .kv-table {
                 background: #ffffff !important;
@@ -2712,6 +3510,9 @@ def inject_css(theme: str | None = None):
             div[data-testid="stMarkdownContainer"] h6 {
                 color: #0f172a !important;
                 font-weight: 850 !important;
+                hyphens: none !important;
+                -webkit-hyphens: none !important;
+                word-break: normal !important;
             }
 
             /* Formula KaTeX / LaTeX Matematika agar hitam pekat di mode terang */
@@ -2918,12 +3719,83 @@ def inject_css(theme: str | None = None):
                 fill: #64748b !important;
             }
 
-            /* Date & Calendar Picker in Light Mode */
-            div[data-baseweb="calendar"],
-            div[data-baseweb="calendar"] * {
-                background-color: #ffffff;
+            /* Date & Calendar Picker Bubble in Light Mode */
+            div[data-testid="stDateInput"] {
+                width: 100% !important;
+            }
+            div[data-testid="stDateInput"] [data-baseweb="input"] {
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                border: 1.5px solid #cbd5e1 !important;
+                border-radius: 12px !important;
+                box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04) !important;
+            }
+            div[data-testid="stDateInput"] [data-baseweb="input"]:focus-within {
+                border-color: #2563eb !important;
+                box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18) !important;
+            }
+            div[data-testid="stDateInput"] input {
                 color: #0f172a !important;
                 -webkit-text-fill-color: #0f172a !important;
+                font-weight: 700 !important;
+                font-family: 'JetBrains Mono', monospace !important;
+            }
+            div[data-testid="stDateInput"] svg,
+            div[data-testid="stDateInput"] button {
+                color: #2563eb !important;
+                fill: #2563eb !important;
+            }
+            div[data-baseweb="popover"]:has(div[data-baseweb="calendar"]) {
+                border-radius: 16px !important;
+                overflow: hidden !important;
+                box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12), 0 0 0 1.5px #cbd5e1 !important;
+            }
+            div[data-baseweb="calendar"] {
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                border: 1.5px solid #cbd5e1 !important;
+                border-radius: 16px !important;
+                padding: 10px !important;
+                color: #0f172a !important;
+            }
+            div[data-baseweb="calendar"] * {
+                color: #0f172a !important;
+                -webkit-text-fill-color: #0f172a !important;
+            }
+            div[data-baseweb="calendar"] header button {
+                color: #2563eb !important;
+                border-radius: 8px !important;
+            }
+            div[data-baseweb="calendar"] header select {
+                color: #0f172a !important;
+                background: #f1f5f9 !important;
+                border-radius: 8px !important;
+                border: 1px solid #cbd5e1 !important;
+                font-weight: 700 !important;
+            }
+            div[data-baseweb="calendar"] div[role="columnheader"] {
+                color: #475569 !important;
+                font-weight: 800 !important;
+                font-size: 11px !important;
+            }
+            div[data-baseweb="calendar"] div[role="gridcell"] {
+                color: #1e293b !important;
+                border-radius: 8px !important;
+                font-weight: 650 !important;
+                transition: all 0.15s ease !important;
+            }
+            div[data-baseweb="calendar"] div[role="gridcell"]:hover {
+                background: #eff6ff !important;
+                color: #2563eb !important;
+            }
+            div[data-baseweb="calendar"] div[aria-selected="true"],
+            div[data-baseweb="calendar"] div[aria-selected="true"] * {
+                background: #2563eb !important;
+                background-color: #2563eb !important;
+                color: #ffffff !important;
+                -webkit-text-fill-color: #ffffff !important;
+                font-weight: 850 !important;
+                box-shadow: 0 2px 10px rgba(37, 99, 235, 0.4) !important;
             }
 
             /* File Uploader in Light Mode */
@@ -2953,7 +3825,7 @@ def inject_css(theme: str | None = None):
                 box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45) !important;
                 color: #ffffff !important;
             }
-            .stButton button:not([kind="primary"]):not(.st-key-btn_quick_edit_profile button):not(.st-key-btn_sidebar_logout_bottom button) {
+            .stButton button:not([kind="primary"]):not(.st-key-btn_quick_edit_profile button):not(.st-key-btn_sidebar_logout_bottom button):not(.st-key-btn_prof_top_single_logout button):not(.st-key-btn_logout_prof_card button):not(.st-key-btn_prof_nav_logout button):not(.st-key-btn_logout_prof_form button):not(.st-key-btn_confirm_logout_yes button) {
                 background: #ffffff !important;
                 background-color: #ffffff !important;
                 border: 1.5px solid #cbd5e1 !important;
@@ -2961,22 +3833,154 @@ def inject_css(theme: str | None = None):
                 font-weight: 750 !important;
                 box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
             }
-            .stButton button:not([kind="primary"]):not(.st-key-btn_quick_edit_profile button):not(.st-key-btn_sidebar_logout_bottom button) *,
-            .stButton button:not([kind="primary"]):not(.st-key-btn_quick_edit_profile button):not(.st-key-btn_sidebar_logout_bottom button) p,
-            .stButton button:not([kind="primary"]):not(.st-key-btn_quick_edit_profile button):not(.st-key-btn_sidebar_logout_bottom button) span {
+            .stButton button:not([kind="primary"]):not(.st-key-btn_quick_edit_profile button):not(.st-key-btn_sidebar_logout_bottom button):not(.st-key-btn_prof_top_single_logout button):not(.st-key-btn_logout_prof_card button):not(.st-key-btn_prof_nav_logout button):not(.st-key-btn_logout_prof_form button):not(.st-key-btn_confirm_logout_yes button) *,
+            .stButton button:not([kind="primary"]):not(.st-key-btn_quick_edit_profile button):not(.st-key-btn_sidebar_logout_bottom button):not(.st-key-btn_prof_top_single_logout button):not(.st-key-btn_logout_prof_card button):not(.st-key-btn_prof_nav_logout button):not(.st-key-btn_logout_prof_form button):not(.st-key-btn_confirm_logout_yes button) p,
+            .stButton button:not([kind="primary"]):not(.st-key-btn_quick_edit_profile button):not(.st-key-btn_sidebar_logout_bottom button):not(.st-key-btn_prof_top_single_logout button):not(.st-key-btn_logout_prof_card button):not(.st-key-btn_prof_nav_logout button):not(.st-key-btn_logout_prof_form button):not(.st-key-btn_confirm_logout_yes button) span {
                 color: #0f172a !important;
                 font-weight: 750 !important;
             }
-            .stButton button:not([kind="primary"]):not(.st-key-btn_quick_edit_profile button):not(.st-key-btn_sidebar_logout_bottom button):hover {
+            .stButton button:not([kind="primary"]):not(.st-key-btn_quick_edit_profile button):not(.st-key-btn_sidebar_logout_bottom button):not(.st-key-btn_prof_top_single_logout button):not(.st-key-btn_logout_prof_card button):not(.st-key-btn_prof_nav_logout button):not(.st-key-btn_logout_prof_form button):not(.st-key-btn_confirm_logout_yes button):hover {
                 background: #f8fafc !important;
                 background-color: #f8fafc !important;
                 border-color: #2563eb !important;
                 color: #1d4ed8 !important;
                 box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12) !important;
             }
-            .stButton button:not([kind="primary"]):not(.st-key-btn_quick_edit_profile button):not(.st-key-btn_sidebar_logout_bottom button):hover *,
-            .stButton button:not([kind="primary"]):not(.st-key-btn_quick_edit_profile button):not(.st-key-btn_sidebar_logout_bottom button):hover p,
-            .stButton button:not([kind="primary"]):not(.st-key-btn_quick_edit_profile button):not(.st-key-btn_sidebar_logout_bottom button):hover span {
+            .stButton button:not([kind="primary"]):not(.st-key-btn_quick_edit_profile button):not(.st-key-btn_sidebar_logout_bottom button):not(.st-key-btn_prof_top_single_logout button):not(.st-key-btn_logout_prof_card button):not(.st-key-btn_prof_nav_logout button):not(.st-key-btn_logout_prof_form button):not(.st-key-btn_confirm_logout_yes button):hover *,
+            .stButton button:not([kind="primary"]):not(.st-key-btn_quick_edit_profile button):not(.st-key-btn_sidebar_logout_bottom button):not(.st-key-btn_prof_top_single_logout button):not(.st-key-btn_logout_prof_card button):not(.st-key-btn_prof_nav_logout button):not(.st-key-btn_logout_prof_form button):not(.st-key-btn_confirm_logout_yes button):hover p,
+            .stButton button:not([kind="primary"]):not(.st-key-btn_quick_edit_profile button):not(.st-key-btn_sidebar_logout_bottom button):not(.st-key-btn_prof_top_single_logout button):not(.st-key-btn_logout_prof_card button):not(.st-key-btn_prof_nav_logout button):not(.st-key-btn_logout_prof_form button):not(.st-key-btn_confirm_logout_yes button):hover span {
+                color: #1d4ed8 !important;
+            }
+
+            /* Light Mode Top Navigation Quick Nav Buttons (Pintasan Navigasi: Rapi, Lega, Tengah & Anti-Berdempetan) */
+            .st-key-btn_goto_dl_from_dash,
+            .st-key-btn_goto_pred_from_adm_dash,
+            .st-key-btn_goto_eval_from_adm_dash,
+            .st-key-btn_goto_api_from_dash,
+            .st-key-btn_goto_rh_from_pe,
+            .st-key-btn_goto_dash_from_pe,
+            .st-key-btn_goto_dl_from_rh,
+            .st-key-btn_goto_dash_from_rh,
+            .st-key-btn_prof_goto_dash,
+            .st-key-btn_prof_goto_results,
+            .st-key-btn_prof_top_single_logout {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                background: transparent !important;
+                background-color: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+            .st-key-btn_goto_dl_from_dash button,
+            .st-key-btn_goto_pred_from_adm_dash button,
+            .st-key-btn_goto_eval_from_adm_dash button,
+            .st-key-btn_goto_api_from_dash button,
+            .st-key-btn_goto_rh_from_pe button,
+            .st-key-btn_goto_dash_from_pe button,
+            .st-key-btn_goto_dl_from_rh button,
+            .st-key-btn_goto_dash_from_rh button,
+            .st-key-btn_prof_goto_dash button,
+            .st-key-btn_prof_goto_results button {
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+                border: 1.5px solid #cbd5e1 !important;
+                color: #0f172a !important;
+                box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05) !important;
+                height: 38px !important;
+                min-height: 38px !important;
+                max-height: 38px !important;
+                padding: 0 8px !important;
+                font-size: 11.5px !important;
+                font-weight: 750 !important;
+                letter-spacing: -0.15px !important;
+                border-radius: 9px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                text-align: center !important;
+                white-space: nowrap !important;
+                box-sizing: border-box !important;
+                width: 100% !important;
+                transition: all 0.18s ease !important;
+            }
+            .st-key-btn_goto_dl_from_dash button div[data-testid="stMarkdownContainer"],
+            .st-key-btn_goto_pred_from_adm_dash button div[data-testid="stMarkdownContainer"],
+            .st-key-btn_goto_eval_from_adm_dash button div[data-testid="stMarkdownContainer"],
+            .st-key-btn_goto_api_from_dash button div[data-testid="stMarkdownContainer"],
+            .st-key-btn_goto_rh_from_pe button div[data-testid="stMarkdownContainer"],
+            .st-key-btn_goto_dash_from_pe button div[data-testid="stMarkdownContainer"],
+            .st-key-btn_goto_dl_from_rh button div[data-testid="stMarkdownContainer"],
+            .st-key-btn_goto_dash_from_rh button div[data-testid="stMarkdownContainer"],
+            .st-key-btn_prof_goto_dash button div[data-testid="stMarkdownContainer"],
+            .st-key-btn_prof_goto_results button div[data-testid="stMarkdownContainer"],
+            .st-key-btn_goto_dl_from_dash button div,
+            .st-key-btn_goto_pred_from_adm_dash button div,
+            .st-key-btn_goto_eval_from_adm_dash button div,
+            .st-key-btn_goto_api_from_dash button div,
+            .st-key-btn_goto_rh_from_pe button div,
+            .st-key-btn_goto_dash_from_pe button div,
+            .st-key-btn_goto_dl_from_rh button div,
+            .st-key-btn_goto_dash_from_rh button div,
+            .st-key-btn_prof_goto_dash button div,
+            .st-key-btn_prof_goto_results button div {
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                text-align: center !important;
+                width: 100% !important;
+                margin: 0 auto !important;
+            }
+            .st-key-btn_goto_dl_from_dash button p,
+            .st-key-btn_goto_pred_from_adm_dash button p,
+            .st-key-btn_goto_eval_from_adm_dash button p,
+            .st-key-btn_goto_api_from_dash button p,
+            .st-key-btn_goto_rh_from_pe button p,
+            .st-key-btn_goto_dash_from_pe button p,
+            .st-key-btn_goto_dl_from_rh button p,
+            .st-key-btn_goto_dash_from_rh button p,
+            .st-key-btn_prof_goto_dash button p,
+            .st-key-btn_prof_goto_results button p {
+                font-size: 11.5px !important;
+                font-weight: 750 !important;
+                white-space: nowrap !important;
+                color: #0f172a !important;
+                margin: 0 auto !important;
+                padding: 0 !important;
+                line-height: 1 !important;
+                text-align: center !important;
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                width: 100% !important;
+            }
+            .st-key-btn_goto_dl_from_dash button:hover,
+            .st-key-btn_goto_pred_from_adm_dash button:hover,
+            .st-key-btn_goto_eval_from_adm_dash button:hover,
+            .st-key-btn_goto_api_from_dash button:hover,
+            .st-key-btn_goto_rh_from_pe button:hover,
+            .st-key-btn_goto_dash_from_pe button:hover,
+            .st-key-btn_goto_dl_from_rh button:hover,
+            .st-key-btn_goto_dash_from_rh button:hover,
+            .st-key-btn_prof_goto_dash button:hover,
+            .st-key-btn_prof_goto_results button:hover {
+                background: #eff6ff !important;
+                background-color: #eff6ff !important;
+                border-color: #2563eb !important;
+                color: #1d4ed8 !important;
+                transform: translateY(-1px) !important;
+                box-shadow: 0 4px 12px rgba(37, 99, 235, 0.12) !important;
+            }
+            .st-key-btn_goto_dl_from_dash button:hover *,
+            .st-key-btn_goto_pred_from_adm_dash button:hover *,
+            .st-key-btn_goto_eval_from_adm_dash button:hover *,
+            .st-key-btn_goto_api_from_dash button:hover *,
+            .st-key-btn_goto_rh_from_pe button:hover *,
+            .st-key-btn_goto_dash_from_pe button:hover *,
+            .st-key-btn_goto_dl_from_rh button:hover *,
+            .st-key-btn_goto_dash_from_rh button:hover *,
+            .st-key-btn_prof_goto_dash button:hover *,
+            .st-key-btn_prof_goto_results button:hover * {
                 color: #1d4ed8 !important;
             }
 
@@ -3002,6 +4006,31 @@ def inject_css(theme: str | None = None):
                 font-weight: 850 !important;
                 box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08) !important;
             }
+
+            /* Light Mode Spinner Styling (Glassmorphic White FinTech) */
+            div[data-testid="stSpinner"],
+            .stSpinner {
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(241, 245, 249, 0.96) 100%) !important;
+                border: 1px solid rgba(37, 99, 235, 0.3) !important;
+                box-shadow: 0 12px 32px rgba(37, 99, 235, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+            }
+            div[data-testid="stSpinner"]::before,
+            .stSpinner::before {
+                background: linear-gradient(90deg, transparent, #2563eb, #38bdf8, #059669, transparent) !important;
+            }
+            div[data-testid="stSpinner"] svg,
+            .stSpinner svg {
+                color: #2563eb !important;
+                stroke: #2563eb !important;
+                filter: drop-shadow(0 0 6px rgba(37, 99, 235, 0.45)) !important;
+            }
+            div[data-testid="stSpinner"] [data-testid="stMarkdownContainer"] p,
+            div[data-testid="stSpinner"] span,
+            div[data-testid="stSpinner"] div {
+                color: #0f172a !important;
+                font-weight: 750 !important;
+            }
+
             div[data-testid="stExpander"] {
                 background: #ffffff !important;
                 background-color: #ffffff !important;
@@ -3053,6 +4082,16 @@ def inject_css(theme: str | None = None):
             }
 
             /* Profile Page Logout Menu & Action Buttons (Light Mode) */
+            .st-key-btn_prof_top_single_logout {
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+                background: transparent !important;
+                background-color: transparent !important;
+                border: none !important;
+                box-shadow: none !important;
+            }
+            .st-key-btn_prof_top_single_logout button,
             .st-key-btn_logout_prof_card button,
             .st-key-btn_prof_nav_logout button,
             .st-key-btn_logout_prof_form button,
@@ -3063,17 +4102,43 @@ def inject_css(theme: str | None = None):
                 border: 1px solid #b91c1c !important;
                 box-shadow: 0 4px 14px rgba(220, 38, 38, 0.28) !important;
                 font-weight: 800 !important;
-                border-radius: 10px !important;
+                border-radius: 9px !important;
+                height: 38px !important;
+                min-height: 38px !important;
+                max-height: 38px !important;
+                padding: 0 10px !important;
+                font-size: 11.5px !important;
+                letter-spacing: -0.15px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                text-align: center !important;
+                white-space: nowrap !important;
+                box-sizing: border-box !important;
+                width: 100% !important;
                 transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
             }
+            .st-key-btn_prof_top_single_logout button:hover,
             .st-key-btn_logout_prof_card button:hover,
             .st-key-btn_prof_nav_logout button:hover,
             .st-key-btn_logout_prof_form button:hover,
             .st-key-btn_confirm_logout_yes button:hover {
-                background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%) !important;
-                border-color: #991b1b !important;
+                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+                border-color: #dc2626 !important;
                 box-shadow: 0 6px 20px rgba(220, 38, 38, 0.42) !important;
                 transform: translateY(-1px) !important;
+                color: #ffffff !important;
+            }
+            .st-key-btn_prof_top_single_logout button *,
+            .st-key-btn_prof_top_single_logout button p,
+            .st-key-btn_prof_top_single_logout button span,
+            .st-key-btn_logout_prof_card button *,
+            .st-key-btn_prof_nav_logout button *,
+            .st-key-btn_logout_prof_form button *,
+            .st-key-btn_confirm_logout_yes button * {
+                color: #ffffff !important;
+                -webkit-text-fill-color: #ffffff !important;
+                font-weight: 750 !important;
             }
             </style>
             """,

@@ -76,6 +76,12 @@ Untuk menguji keakuratan seluruh formula kalkulasi:
 python -m unittest tests/test_calculations.py
 ```
 
+### 7. Menjalankan Pipeline di Google Colab / Jupyter Notebook
+Untuk keperluan eksperimen, analisis statistik mandiri, pelatihan ulang (*retraining*), dan visualisasi terpisah dari UI Streamlit:
+- Buka [Google Colab](https://colab.research.google.com/)
+- Pilih menu **Upload** dan unggah berkas [`financial_distress_model.ipynb`](file:///c:/Users/ACER/Downloads/financial_distress_streamlit/financial_distress_model.ipynb)
+- Jalankan sel secara berurutan (*Run All*) untuk mengeksekusi pipeline preprocessing, ketiga model (Altman, MDA, XGBoost), komparasi benchmark, dan modul backend intelijen finansial.
+
 ---
 
 ## 🔑 Kredensial Pengguna Sistem (Login Defaults)
@@ -143,6 +149,7 @@ Sesuai rancangan sistem Bab III Gambar 3.2 (Hal. 88 & 95) dan Lampiran 5 (Hal. 1
 ```text
 financial_distress_streamlit/
 ├── app.py                      # Berkas aplikasi utama Streamlit (Routing, Page Controller)
+├── financial_distress_model.ipynb # Notebook Google Colab: Preprocessing, Multi-Model, Evaluasi & Backend
 ├── config.json                 # Konfigurasi parameter model global (koefisien, cut-off)
 ├── requirements.txt            # Daftar pustaka dan dependensi Python
 ├── README.md                   # Dokumentasi teknis & akademik sistem

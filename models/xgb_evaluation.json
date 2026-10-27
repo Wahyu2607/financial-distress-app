@@ -535,28 +535,38 @@
   "active_sample_evaluation": {
     "has_data": true,
     "ratios": {
-      "X1": 0.0,
-      "X2": 0.0,
-      "X3": 0.0,
-      "X4": 0.0
+      "X1": 0.03488464208200059,
+      "X2": 0.03485477051657823,
+      "X3": 0.03496038177557858,
+      "X4": 0.20391567503615468
     },
     "altman": {
-      "z_score": 0.0,
+      "z_score": 0.7915150282618193,
       "classification": "distress",
       "is_distress": true,
       "cut_off": 1.1
     },
     "mda": {
-      "mda_score": 0.0,
-      "classification": "distress",
-      "is_distress": true,
+      "mda_score": 0.5053371570398852,
+      "classification": "aman",
+      "is_distress": false,
       "cut_off": 0.3844
     },
     "xgboost": {
-      "probability": 0.6657460331916809,
-      "label": 1,
-      "status": "DISTRESS",
+      "probability": 0.17661216595236995,
+      "label": 0,
+      "status": "NON-DISTRESS",
       "cut_off": 0.5
     }
+  },
+  "split_info": {
+    "test_size": 0.2,
+    "train_size": 0.8,
+    "test_pct": 20,
+    "train_pct": 80,
+    "split_label": "80/20",
+    "train_samples": 563,
+    "test_samples": 141,
+    "total_samples": 704
   }
 }

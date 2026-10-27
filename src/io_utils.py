@@ -9,25 +9,25 @@ import pandas as pd
 
 # Skema input baku sesuai kebutuhan model Financial Distress (Altman, MDA, XGBoost)
 VARIABLE_SCHEMA = [
-    {"key": "ticker", "code": "V01", "label": "Kode Saham", "csv": "ticker", "kind": "text", "used_by": "Identitas Perusahaan"},
-    {"key": "report_year", "code": "V02", "label": "Tahun Laporan", "csv": "report_year", "kind": "year", "used_by": "Identitas Periode"},
-    {"key": "ebit", "code": "V03", "label": "EBIT (Laba Sebelum Pajak + Beban Bunga)", "csv": "ebit", "kind": "number", "used_by": "Rasio X3 (Altman, MDA, XGBoost)"},
-    {"key": "interest_expense", "code": "V04", "label": "Interest Expense (Beban Bunga & Keuangan)", "csv": "interest_expense", "kind": "number", "used_by": "Perhitungan EBIT otomatis"},
-    {"key": "total_assets", "code": "V05", "label": "Total Assets (Jumlah Aset)", "csv": "total_assets", "kind": "number", "used_by": "Pembagi rasio X1, X2, X3, X5"},
-    {"key": "current_assets", "code": "V06", "label": "Current Assets (Jumlah Aset Lancar)", "csv": "current_assets", "kind": "number", "used_by": "Komponen Modal Kerja (X1)"},
-    {"key": "total_liabilities", "code": "V07", "label": "Total Liabilities Net Minority Interest (Jumlah Liabilitas)", "csv": "total_liabilities", "kind": "number", "used_by": "Pembagi rasio X4"},
-    {"key": "current_liabilities", "code": "V08", "label": "Current Liabilities (Jumlah Liabilitas Jangka Pendek)", "csv": "current_liabilities", "kind": "number", "used_by": "Komponen Modal Kerja (X1)"},
-    {"key": "common_stock_equity", "code": "V09", "label": "Common Stock Equity (Ekuitas Pemilik Induk)", "csv": "common_stock_equity", "kind": "number", "used_by": "Pembilang rasio X4 (Book Equity)"},
-    {"key": "retained_earnings", "code": "V10", "label": "Retained Earnings (Saldo Laba Belum Ditentukan)", "csv": "retained_earnings", "kind": "number", "used_by": "Rasio X2 (Altman, MDA, XGBoost) & Label Latih"},
-    {"key": "working_capital", "code": "V11", "label": "Working Capital (Modal Kerja = CA − CL)", "csv": "working_capital", "kind": "number", "used_by": "Rasio X1 (Altman, MDA, XGBoost)"},
-    {"key": "operating_cash_flow", "code": "V12", "label": "Operating Cash Flow (Arus Kas Bersih Operasi)", "csv": "operating_cash_flow", "kind": "number", "used_by": "Analisis arus kas operasional"},
-    {"key": "total_revenue", "code": "V13", "label": "Total Revenue (Penjualan & Pendapatan Usaha)", "csv": "total_revenue", "kind": "number", "used_by": "Rasio X5 (MDA)"},
-    {"key": "net_income", "code": "V14", "label": "Net Income (Laba Entitas Induk)", "csv": "net_income", "kind": "number", "used_by": "Penentuan label biner data latih (Distress)"},
-    {"key": "total_debt", "code": "V15", "label": "Total Debt (Utang Berbunga / Bank)", "csv": "total_debt", "kind": "number", "used_by": "Analisis struktur utang emiten"},
+    {"key": "ticker", "code": "01", "label": "Kode Saham", "csv": "ticker", "kind": "text", "used_by": "Identitas Perusahaan"},
+    {"key": "report_year", "code": "02", "label": "Tahun Laporan", "csv": "report_year", "kind": "year", "used_by": "Identitas Periode"},
+    {"key": "ebit", "code": "03", "label": "EBIT (Laba Sebelum Pajak + Beban Bunga)", "csv": "ebit", "kind": "number", "used_by": "Rasio X3 (Altman, MDA, XGBoost)"},
+    {"key": "interest_expense", "code": "04", "label": "Interest Expense (Beban Bunga dan Keuangan)", "csv": "interest_expense", "kind": "number", "used_by": "Perhitungan EBIT otomatis"},
+    {"key": "total_assets", "code": "05", "label": "Total Assets (Jumlah Aset)", "csv": "total_assets", "kind": "number", "used_by": "Pembagi rasio X1, X2, X3, X5"},
+    {"key": "current_assets", "code": "06", "label": "Current Assets (Jumlah Aset Lancar)", "csv": "current_assets", "kind": "number", "used_by": "Komponen Modal Kerja (X1)"},
+    {"key": "total_liabilities", "code": "07", "label": "Total Liabilities Net Minority Interest (Jumlah Liabilitas)", "csv": "total_liabilities", "kind": "number", "used_by": "Pembagi rasio X4"},
+    {"key": "current_liabilities", "code": "08", "label": "Current Liabilities (Jumlah Liabilitas Jangka Pendek)", "csv": "current_liabilities", "kind": "number", "used_by": "Komponen Modal Kerja (X1)"},
+    {"key": "common_stock_equity", "code": "09", "label": "Common Stock Equity (Ekuitas Pemilik Induk)", "csv": "common_stock_equity", "kind": "number", "used_by": "Pembilang rasio X4 (Book Equity)"},
+    {"key": "retained_earnings", "code": "10", "label": "Retained Earnings (Saldo Laba Belum Ditentukan)", "csv": "retained_earnings", "kind": "number", "used_by": "Rasio X2 (Altman, MDA, XGBoost) dan Label Latih"},
+    {"key": "working_capital", "code": "11", "label": "Working Capital (Modal Kerja = CA − CL)", "csv": "working_capital", "kind": "number", "used_by": "Rasio X1 (Altman, MDA, XGBoost)"},
+    {"key": "operating_cash_flow", "code": "12", "label": "Operating Cash Flow (Arus Kas Bersih Operasi)", "csv": "operating_cash_flow", "kind": "number", "used_by": "Analisis arus kas operasional"},
+    {"key": "total_revenue", "code": "13", "label": "Total Revenue (Penjualan dan Pendapatan Usaha)", "csv": "total_revenue", "kind": "number", "used_by": "Rasio X5 (MDA)"},
+    {"key": "net_income", "code": "14", "label": "Net Income (Laba Entitas Induk)", "csv": "net_income", "kind": "number", "used_by": "Penentuan label biner data latih (Distress)"},
+    {"key": "total_debt", "code": "15", "label": "Total Debt (Utang Berbunga / Bank)", "csv": "total_debt", "kind": "number", "used_by": "Analisis struktur utang emiten"},
 ]
 
 FINANCIAL_FIELDS = [
-    (item["key"], f'{item["code"]} — {item["label"]}  |  kolom: {item["csv"]}')
+    (item["key"], f'{item["code"]}. {item["label"]} (kolom: {item["csv"]})')
     for item in VARIABLE_SCHEMA
 ]
 
@@ -35,7 +35,7 @@ FINANCIAL_FIELDS = [
 def variable_label(key: str) -> str:
     for item in VARIABLE_SCHEMA:
         if item["key"] == key:
-            return f'{item["code"]} — {item["label"]}'
+            return f'{item["code"]}. {item["label"]}'
     return key
 
 
@@ -1969,7 +1969,7 @@ def get_sample_template_dataframe() -> pd.DataFrame:
             "ticker": "ICBP",
             "report_year": 2024,
             "company": "PT Indofood CBP Sukses Makmur Tbk",
-            "sector": "Consumer Goods / F&B",
+            "sector": "Consumer Non-Cyclicals / Food dan Beverage",
             "total_assets": 115_300_000_000_000.0,
             "total_liabilities": 58_400_000_000_000.0,
             "current_assets": 42_100_000_000_000.0,
@@ -1988,7 +1988,7 @@ def get_sample_template_dataframe() -> pd.DataFrame:
             "ticker": "KBLI",
             "report_year": 2024,
             "company": "PT KMI Wire and Cable Tbk",
-            "sector": "Kabel & Komponen Elektronik",
+            "sector": "Kabel dan Komponen Elektronik",
             "total_assets": 3_500_000_000_000.0,
             "total_liabilities": 1_200_000_000_000.0,
             "current_assets": 2_100_000_000_000.0,
@@ -2391,7 +2391,7 @@ def generate_printable_html_report(
                     <td><b>{mda:.2f}</b></td>
                     <td>Cut-off 0.3844 (Grey [0.0, 1.0])</td>
                     <td><span class="badge {'badge-safe' if mda > 1.0 else ('badge-grey' if mda >= 0.0 else 'badge-distress')}">{mda_cls.upper()}</span></td>
-                    <td>Model Empiris BEI 704 Observasi (Lampiran 2)</td>
+                    <td>Model Empiris BEI 704 Observasi</td>
                 </tr>
                 <tr>
                     <td><b>XGBoost Classifier (AI)</b></td>
@@ -2441,7 +2441,7 @@ def generate_printable_html_report(
                     <td>Equity to Total Liabilities (Eq/TL)</td>
                     <td>Total Ekuitas Saham / Total Liabilitas</td>
                     <td><b>{r.get('X4', 0.0):.4f}</b></td>
-                    <td>{'🛡️ Capping X4 Maks 3.0 Aktif (Skripsi Hal. 41)' if 'X4' in cap else 'Normal'}</td>
+                    <td>{'🛡️ Capping X4 Maks 3.0 Aktif' if 'X4' in cap else 'Normal'}</td>
                 </tr>
                 <tr>
                     <td><b>X5</b></td>
@@ -2692,7 +2692,7 @@ def generate_full_json_report(
             "sector": sector,
             "analyst": username,
             "timestamp": analysis_date or datetime.now().isoformat(),
-            "engine_version": "DistressAI 2.0 (Skripsi FEB BEI)",
+            "engine_version": "DistressAI 2.0 (BEI / IDX Benchmark)",
         },
         "results": {
             "altman_z_score": round(float(z), 4),
