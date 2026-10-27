@@ -1506,6 +1506,50 @@ if not st.session_state.logged_in:
         font-size: 12px !important;
     }}
 
+    .password-input-wrapper {{
+        position: relative !important;
+        width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+    }}
+    .password-input-wrapper .auth-input {{
+        padding-right: 38px !important;
+    }}
+    .btn-toggle-password {{
+        position: absolute !important;
+        right: 8px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        outline: none !important;
+        cursor: pointer !important;
+        color: #64748b !important;
+        font-size: 16px !important;
+        line-height: 1 !important;
+        padding: 4px !important;
+        border-radius: 6px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 60 !important;
+        user-select: none !important;
+        -webkit-user-select: none !important;
+        transition: transform 0.15s ease, opacity 0.15s ease !important;
+    }}
+    .btn-toggle-password:hover {{
+        transform: translateY(-50%) scale(1.15) !important;
+        opacity: 0.8 !important;
+    }}
+    .btn-toggle-password .eye-icon {{
+        display: inline-block !important;
+        font-size: 16px !important;
+        line-height: 1 !important;
+        pointer-events: none !important;
+    }}
+
     .btn-auth-submit {{
         width: 100%;
         height: 40px;
@@ -1949,7 +1993,12 @@ if not st.session_state.logged_in:
 <label class="input-label" for="in_pass">Password</label>
 <span class="forgot-pass-link" onclick="alert('Silakan hubungi administrator sistem untuk mereset kata sandi akun Anda.')">Lupa?</span>
 </div>
+<div class="password-input-wrapper">
 <input type="password" id="in_pass" name="in_pass" placeholder="Enter your password" required class="auth-input" autocomplete="current-password">
+<button type="button" class="btn-toggle-password" onclick="var el=document.getElementById('in_pass'),s=this.querySelector('.eye-icon'); if(el){{ el.type=(el.type==='password'?'text':'password'); if(s) s.innerText=(el.type==='password'?'👁️':'🙈'); }}" title="Tampilkan / Sembunyikan Kata Sandi" aria-label="Toggle password visibility">
+<span class="eye-icon">👁️</span>
+</button>
+</div>
 </div>
 
 <button type="submit" class="btn-auth-submit">
@@ -1993,7 +2042,12 @@ SIGN IN
 <div class="input-label-row">
 <label class="input-label" for="up_pass">Password (Min. 6 Karakter)</label>
 </div>
+<div class="password-input-wrapper">
 <input type="password" id="up_pass" name="up_pass" placeholder="Enter password (min. 6 chars)" required minlength="6" class="auth-input" autocomplete="new-password">
+<button type="button" class="btn-toggle-password" onclick="var el=document.getElementById('up_pass'),s=this.querySelector('.eye-icon'); if(el){{ el.type=(el.type==='password'?'text':'password'); if(s) s.innerText=(el.type==='password'?'👁️':'🙈'); }}" title="Tampilkan / Sembunyikan Kata Sandi" aria-label="Toggle password visibility">
+<span class="eye-icon">👁️</span>
+</button>
+</div>
 </div>
 
 <div class="checkbox-row">
@@ -2196,7 +2250,7 @@ if st.session_state.sidebar_visible:
             <div class='sidebar-vault-container' style='display:none;'></div>
             <div class="mobile-drawer-close-row">
                 <div class="mobile-drawer-title">NAVIGASI SISTEM</div>
-                <button type="button" class="mobile-drawer-close-btn" onclick="(window.parent||window).document.body.classList.remove('mobile-nav-open');" title="Tutup Menu Navigasi">
+                <button type="button" class="mobile-drawer-close-btn" onclick="(window.parent||window).__closeMobileNav ? (window.parent||window).__closeMobileNav() : (window.parent||window).document.body.classList.remove('mobile-nav-open');" title="Tutup Menu Navigasi">
                     <span>✕</span>
                     <span>Tutup</span>
                 </button>
@@ -3031,13 +3085,19 @@ with content_col:
                 if (win.document && win.document.body) win.document.body.classList.remove('mobile-nav-open');
             } catch(err) {}
         };
+        win.__closeMobileNav = closeMobileNav;
 
+        var lastToggleTime = 0;
         var toggleMobileNav = function() {
+            var now = Date.now();
+            if (now - lastToggleTime < 350) return;
+            lastToggleTime = now;
             try {
                 var b = doc.body || (win.document && win.document.body);
                 if (b) b.classList.toggle('mobile-nav-open');
             } catch(err) {}
         };
+        win.__toggleMobileNav = toggleMobileNav;
 
         var onGlobalClick = function(e) {
             var t = e.target;
@@ -3198,6 +3258,7 @@ with content_col:
         "var s=['section[data-testid=\"stMain\"]','section.main','[data-testid=\"stAppViewContainer\"]','.stAppViewContainer','.main','[data-testid=\"stMainBlockContainer\"]','.stMainBlockContainer','.block-container','#root'];"
         "for(var i=0;i<s.length;i++){try{var els=document.querySelectorAll(s[i]);for(var j=0;j<els.length;j++){if(els[j]){els[j].scrollTop=0;}}}catch(e){}}"
         "try{var a=document.getElementById('vault-view-top-anchor')||document.querySelector('.vault-canvas-header')||document.querySelector('h1.header-main-h1');if(a&&a.scrollIntoView){a.scrollIntoView({behavior:'instant',block:'start',inline:'nearest'});}}catch(e){}"
+        "try{(window.parent||window).document.body.classList.remove('mobile-nav-open');}catch(e){}"
         "};"
         "var shouldRun=(__SCROLL_FLAG__===1)||(sessionStorage.getItem('distress_force_top_scroll')==='1');"
         "try{sessionStorage.removeItem('distress_force_top_scroll');}catch(e){}"
@@ -3212,7 +3273,7 @@ with content_col:
 
     mobile_topbar_html = f"""
     <div class="mobile-top-bar" id="mobileTopBar">
-        <button type="button" class="mobile-hamburger-btn" onclick="(window.parent||window).document.body.classList.toggle('mobile-nav-open');" title="Buka Menu Navigasi">
+        <button type="button" class="mobile-hamburger-btn" onclick="(window.parent||window).__toggleMobileNav ? (window.parent||window).__toggleMobileNav() : (window.parent||window).document.body.classList.toggle('mobile-nav-open');" title="Buka Menu Navigasi">
             <span class="hamburger-icon">☰</span>
             <span class="hamburger-text">Menu</span>
         </button>
@@ -3224,7 +3285,8 @@ with content_col:
             <span class="mobile-page-badge">{page}</span>
         </div>
     </div>
-    <div class="mobile-drawer-backdrop" id="mobileDrawerBackdrop" onclick="(window.parent||window).document.body.classList.remove('mobile-nav-open');"></div>
+    <div class="mobile-top-bar-spacer"></div>
+    <div class="mobile-drawer-backdrop" id="mobileDrawerBackdrop" onclick="(window.parent||window).__closeMobileNav ? (window.parent||window).__closeMobileNav() : (window.parent||window).document.body.classList.remove('mobile-nav-open');"></div>
     """
 
     header_html = f"""

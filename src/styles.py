@@ -90,9 +90,6 @@ def inject_css(theme: str | None = None):
         .material-icons,
         [class*="material-symbols"],
         [class*="material-icons"],
-        button[aria-label*="password" i],
-        button[aria-label*="visibility" i],
-        div[data-baseweb="input"] button,
         div[data-testid="stExpander"] [data-testid="stIconMaterial"] {
             font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', 'Material Icons' !important;
             font-weight: normal !important;
@@ -101,6 +98,87 @@ def inject_css(theme: str | None = None):
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
+        }
+
+        /* PERLINDUNGAN UTAMA TOMBOL SHOW/HIDE PASSWORD STREAMLIT (NATIVE & BASEWEB) */
+        div[data-baseweb="base-input"] {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            position: relative !important;
+            width: 100% !important;
+        }
+
+        div[data-baseweb="base-input"] > input {
+            flex: 1 1 auto !important;
+            width: auto !important;
+            min-width: 0 !important;
+        }
+
+        div[data-baseweb="input"] button,
+        div[data-baseweb="base-input"] button,
+        button[data-testid*="stTextInputPasswordToggle"],
+        [data-testid="stTextInputPasswordToggle"],
+        button[aria-label*="password" i],
+        button[aria-label*="visibility" i] {
+            display: inline-flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: transparent !important;
+            background-color: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            outline: none !important;
+            cursor: pointer !important;
+            pointer-events: auto !important;
+            width: 34px !important;
+            min-width: 34px !important;
+            max-width: 34px !important;
+            height: 34px !important;
+            min-height: 34px !important;
+            padding: 0 !important;
+            margin: 0 4px 0 0 !important;
+            color: #94a3b8 !important;
+            flex-shrink: 0 !important;
+            z-index: 10 !important;
+            transition: color 0.2s ease, transform 0.15s ease !important;
+        }
+
+        div[data-baseweb="input"] button:hover,
+        div[data-baseweb="base-input"] button:hover,
+        button[data-testid*="stTextInputPasswordToggle"]:hover,
+        button[aria-label*="password" i]:hover,
+        button[aria-label*="visibility" i]:hover {
+            color: #38bdf8 !important;
+            transform: scale(1.08) !important;
+        }
+
+        div[data-baseweb="input"] button svg,
+        div[data-baseweb="base-input"] button svg,
+        button[data-testid*="stTextInputPasswordToggle"] svg,
+        [data-testid="stTextInputPasswordToggle"] svg,
+        button[aria-label*="password" i] svg,
+        button[aria-label*="visibility" i] svg {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            width: 20px !important;
+            height: 20px !important;
+            min-width: 20px !important;
+            min-height: 20px !important;
+            fill: currentColor !important;
+            color: inherit !important;
+            stroke: none !important;
+        }
+
+        div[data-baseweb="input"] button *,
+        div[data-baseweb="base-input"] button *,
+        button[aria-label*="password" i] *,
+        button[aria-label*="visibility" i] * {
+            visibility: visible !important;
+            opacity: 1 !important;
         }
 
         /* 2. LATAR BELAKANG KANVAS UTAMA (UNIFIED DARK MODE WITH AMBIENT EMERALD GLOW) */
@@ -255,11 +333,17 @@ def inject_css(theme: str | None = None):
             }
 
             .mobile-top-bar,
+            .mobile-top-bar-spacer,
             .mobile-drawer-backdrop,
             .mobile-drawer-close-row {
                 display: none !important;
                 visibility: hidden !important;
                 pointer-events: none !important;
+                height: 0 !important;
+                min-height: 0 !important;
+                max-height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
             }
         }
 
@@ -1176,25 +1260,44 @@ def inject_css(theme: str | None = None):
                 visibility: visible !important;
             }
 
-            /* 6. Mobile Top Navigation Bar */
+            /* 6. Mobile Top Navigation Bar (Fixed Always-On-Top Header) */
             .mobile-top-bar {
                 display: flex !important;
                 align-items: center !important;
                 justify-content: space-between !important;
                 gap: 10px !important;
-                padding: 9px 12px !important;
-                background: rgba(20, 23, 38, 0.94) !important;
-                backdrop-filter: blur(18px) !important;
-                -webkit-backdrop-filter: blur(18px) !important;
-                border: 1px solid rgba(148, 163, 184, 0.2) !important;
-                border-radius: 14px !important;
-                margin-bottom: 12px !important;
-                box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35) !important;
+                height: 52px !important;
+                min-height: 52px !important;
+                max-height: 52px !important;
+                padding: 0 16px !important;
+                background: rgba(15, 23, 42, 0.95) !important;
+                backdrop-filter: blur(20px) !important;
+                -webkit-backdrop-filter: blur(20px) !important;
+                border: none !important;
+                border-bottom: 1.5px solid rgba(148, 163, 184, 0.22) !important;
+                border-radius: 0 0 16px 16px !important;
+                box-shadow: 0 4px 22px rgba(0, 0, 0, 0.5) !important;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
                 width: 100% !important;
+                max-width: 100% !important;
                 box-sizing: border-box !important;
-                position: sticky !important;
-                top: 6px !important;
-                z-index: 900 !important;
+                z-index: 999990 !important;
+                pointer-events: auto !important;
+            }
+
+            .mobile-top-bar-spacer {
+                display: block !important;
+                width: 100% !important;
+                height: 54px !important;
+                min-height: 54px !important;
+                max-height: 54px !important;
+                margin: 0 0 10px 0 !important;
+                padding: 0 !important;
+                pointer-events: none !important;
+                visibility: hidden !important;
             }
 
             .mobile-hamburger-btn {
@@ -3163,8 +3266,10 @@ def inject_css(theme: str | None = None):
                 }
                 .mobile-top-bar {
                     background: rgba(255, 255, 255, 0.96) !important;
-                    border: 1px solid #cbd5e1 !important;
-                    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08) !important;
+                    border: none !important;
+                    border-bottom: 1.5px solid #cbd5e1 !important;
+                    border-radius: 0 0 16px 16px !important;
+                    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.1) !important;
                 }
                 .mobile-brand-title {
                     color: #0f172a !important;
@@ -3173,6 +3278,17 @@ def inject_css(theme: str | None = None):
                     background: #f1f5f9 !important;
                     border: 1px solid #cbd5e1 !important;
                     color: #0f172a !important;
+                }
+                .mobile-hamburger-btn:hover,
+                .mobile-hamburger-btn:active {
+                    background: #2563eb !important;
+                    border-color: #1d4ed8 !important;
+                    color: #ffffff !important;
+                }
+                .mobile-page-badge {
+                    color: #0284c7 !important;
+                    background: #f0f9ff !important;
+                    border: 1px solid #bae6fd !important;
                 }
                 .mobile-drawer-backdrop {
                     background: rgba(15, 23, 42, 0.55) !important;
@@ -4165,6 +4281,34 @@ def inject_css(theme: str | None = None):
             div[data-testid="stSelectbox"] input::placeholder {
                 color: #64748b !important;
                 -webkit-text-fill-color: #64748b !important;
+            }
+
+            /* Light Mode Streamlit Password Toggle Button Protection */
+            div[data-baseweb="input"] button,
+            div[data-baseweb="base-input"] button,
+            button[data-testid*="stTextInputPasswordToggle"],
+            [data-testid="stTextInputPasswordToggle"],
+            button[aria-label*="password" i],
+            button[aria-label*="visibility" i] {
+                color: #475569 !important;
+                background: transparent !important;
+                background-color: transparent !important;
+            }
+            div[data-baseweb="input"] button:hover,
+            div[data-baseweb="base-input"] button:hover,
+            button[data-testid*="stTextInputPasswordToggle"]:hover,
+            button[aria-label*="password" i]:hover,
+            button[aria-label*="visibility" i]:hover {
+                color: #2563eb !important;
+            }
+            div[data-baseweb="input"] button svg,
+            div[data-baseweb="base-input"] button svg,
+            button[data-testid*="stTextInputPasswordToggle"] svg,
+            [data-testid="stTextInputPasswordToggle"] svg,
+            button[aria-label*="password" i] svg,
+            button[aria-label*="visibility" i] svg {
+                fill: currentColor !important;
+                color: inherit !important;
             }
 
             /* Selectbox, MultiSelect & BaseWeb Dropdown Selectors */
