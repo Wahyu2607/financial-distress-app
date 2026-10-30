@@ -237,6 +237,8 @@ from src.ui import (
     conclusion_box,
     render_gauge,
     render_quantum_gauge,
+    render_mda_gauge,
+    render_consensus_gauge,
     render_radar_chart,
     render_factor_chart,
     render_feature_importance_chart,
@@ -255,9 +257,17 @@ from src.ui import (
     render_proposal_mockup_dashboard,
     render_score_distribution_chart,
     render_styled_dataframe,
+    get_auto_column_config,
+    render_smart_dataframe,
     run_animated_analysis_pipeline,
     run_animated_loading_process,
 )
+
+
+def safe_dataframe(df: pd.DataFrame, use_container_width: bool = True, hide_index: bool = True, column_config: dict | None = None, **kwargs):
+    """Merender DataFrame dengan penataan rata kanan otomatis untuk seluruh kolom nilai dan angka."""
+    cfg = get_auto_column_config(df, custom_config=column_config)
+    return st.dataframe(df, use_container_width=use_container_width, hide_index=hide_index, column_config=cfg, **kwargs)
 
 
 def is_light_theme() -> bool:
@@ -2606,7 +2616,7 @@ def render_admin_user_management(embedded: bool = False):
             display_df.columns = ["Username", "Nama Lengkap", "Alamat Email", "Instansi / Lembaga", "Peran (Role)", "Status Akun", "Tanggal Mendaftar"]
         else:
             display_df.columns = ["Username", "Nama Lengkap", "Alamat Email", "Instansi / Lembaga", "Peran (Role)", "Tanggal Mendaftar"]
-        st.dataframe(display_df, use_container_width=True, hide_index=True)
+        safe_dataframe(display_df, use_container_width=True, hide_index=True)
 
     st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
 
@@ -2755,7 +2765,7 @@ def render_admin_user_management(embedded: bool = False):
                     if not user_preds.empty:
                         st.caption(f"Pengguna ini telah melakukan **{len(user_preds)}** kali analisis prediksi finansial:")
                         cols_show = [c for c in ["ticker", "company", "year", "z_cls", "mda_cls", "timestamp"] if c in user_preds.columns]
-                        st.dataframe(user_preds[cols_show].tail(10), use_container_width=True, hide_index=True)
+                        safe_dataframe(user_preds[cols_show].tail(10), use_container_width=True, hide_index=True)
                     else:
                         st.info("Pengguna ini belum pernah menyimpan riwayat analisis emiten.")
 
@@ -3427,7 +3437,7 @@ with content_col:
                 unsafe_allow_html=True,
             )
             with st.expander("📖 Lihat Kamus Variabel dan Format Laporan Keuangan BEI (IDX)", expanded=False):
-                st.dataframe(
+                safe_dataframe(
                     pd.DataFrame([
                         {
                             "Kode": item["code"],
@@ -3712,7 +3722,7 @@ with content_col:
                                 tab_ex_batch = None
 
                             with tab_ex_single:
-                                st.dataframe(df_ex.head(8), use_container_width=True)
+                                safe_dataframe(df_ex.head(8), use_container_width=True)
                                 row_idx = 0
                                 if len(df_ex) > 1:
                                     row_options = []
@@ -3769,7 +3779,7 @@ with content_col:
                                                 "Status": ev.get("status", "Manual / Kosong" if val is None else "Terisi"),
                                                 "Rincian / Rumus Komputasi": ev.get("sumber", "-"),
                                             })
-                                        st.dataframe(pd.DataFrame(ev_rows), use_container_width=True, hide_index=True)
+                                        render_styled_dataframe(pd.DataFrame(ev_rows), is_light=is_light_theme())
 
                             if tab_ex_batch is not None:
                                 with tab_ex_batch:
@@ -3915,7 +3925,7 @@ with content_col:
                                 tab_csv_batch = None
 
                             with tab_csv_single:
-                                st.dataframe(df.head(8), use_container_width=True)
+                                safe_dataframe(df.head(8), use_container_width=True)
                                 row_idx = 0
                                 if len(df) > 1:
                                     row_options = []
@@ -4505,7 +4515,7 @@ with content_col:
                 unsafe_allow_html=True,
             )
             with st.expander("📖 Kamus variabel input (Standar BEI/IDX)", expanded=False):
-                st.dataframe(
+                safe_dataframe(
                     pd.DataFrame([
                         {
                             "Kode": item["code"],
@@ -4808,7 +4818,7 @@ with content_col:
                                 best_sheet = next(iter(df_ex.keys()))
                                 df_ex = df_ex[best_sheet]
                             st.session_state["uploaded_df"] = df_ex
-                            st.dataframe(df_ex.head(50), use_container_width=True)
+                            safe_dataframe(df_ex.head(50), use_container_width=True)
                             st.caption(f"File Excel tabular memuat {len(df_ex)} baris data.")
 
                             row_idx = 0
@@ -5035,7 +5045,7 @@ with content_col:
                                     st.rerun()
                         else:
                             df = read_csv_file(uploaded)
-                            st.dataframe(df.head(50), use_container_width=True)
+                            safe_dataframe(df.head(50), use_container_width=True)
                             st.caption(f"{len(df):,} baris terbaca.")
                             st.session_state["uploaded_df"] = df
 
@@ -5678,16 +5688,23 @@ with content_col:
                 cur_tr_pct = int(round((1.0 - curr_split_sz) * 100))
                 cur_ts_pct = int(round(curr_split_sz * 100))
 
-                if st.button("⚡ Kalibrasi / Latih Ulang Model XGBoost", key="admin_retrain_xgb_btn", help="Melatih ulang XGBoost menggunakan seluruh data master dan kriteria target resmi (RE < 0 dan EBIT < 0)"):
-                    master_f = BASE_DIR / "data" / "datakeuangan.xlsx"
+                if st.button("⚡ Kalibrasi / Latih Ulang Model XGBoost", key="admin_retrain_xgb_btn", help="Melatih ulang XGBoost menggunakan seluruh data master dan kriteria target resmi"):
+                    master_f = BASE_DIR / "data" / "dataset_manufaktur_tahunan_15_variabel_2014_2026.xlsx"
+                    fiks_f = BASE_DIR / "data" / "fiks data calculate.xlsx"
                     if master_f.exists():
-                        with st.spinner(f"⚡ Sedang melatih ulang model XGBoost ({cur_tr_pct}% latih / {cur_ts_pct}% uji) pada dataset master BEI..."):
+                        with st.spinner(f"⚡ Sedang melatih ulang model XGBoost ({cur_tr_pct}% latih / {cur_ts_pct}% uji) pada dataset panel BEI (Standar Emas Prediktif t+1)..."):
                             df_m = pd.read_excel(master_f)
-                            res = train_xgboost_classifier(df_m, output_path=str(MODEL_PATH), test_size=curr_split_sz, n_estimators=50, max_depth=2, learning_rate=0.3)
+                            res = train_xgboost_classifier(df_m, output_path=str(MODEL_PATH), test_size=curr_split_sz, n_estimators=100, max_depth=3, learning_rate=0.08, target_method="predictive_t1")
+                            st.success(f"🎉 Model XGBoost berhasil dilatih ulang pada porsi evaluasi {cur_tr_pct}/{cur_ts_pct}! Akurasi: {res['accuracy']*100:.2f}%, AUC: {res['roc_auc']:.4f}")
+                            st.rerun()
+                    elif fiks_f.exists():
+                        with st.spinner(f"⚡ Sedang melatih ulang model XGBoost ({cur_tr_pct}% latih / {cur_ts_pct}% uji) pada master perhitungan skripsi..."):
+                            df_m = pd.read_excel(fiks_f, sheet_name="perhitungan").iloc[:702]
+                            res = train_xgboost_classifier(df_m, output_path=str(MODEL_PATH), test_size=curr_split_sz, n_estimators=100, max_depth=3, learning_rate=0.08, target_method="predictive_t1")
                             st.success(f"🎉 Model XGBoost berhasil dilatih ulang pada porsi evaluasi {cur_tr_pct}/{cur_ts_pct}! Akurasi: {res['accuracy']*100:.2f}%, AUC: {res['roc_auc']:.4f}")
                             st.rerun()
                     else:
-                        st.error("File datakeuangan.xlsx tidak ditemukan.")
+                        st.error("File dataset laporan keuangan tidak ditemukan.")
 
                 with st.expander("📊 Lihat Laporan Evaluasi Performa Model (Confusion Matrix dan ROC-AUC)", expanded=False):
                     eval_adm = get_xgboost_evaluation_metrics(test_size=curr_split_sz) if get_xgboost_evaluation_metrics else {}
@@ -5743,7 +5760,7 @@ with content_col:
                     )
 
                 df_filtered = df_hist if chosen_user == "Semua Akun" else df_hist[df_hist["username"] == chosen_user]
-                st.dataframe(df_filtered, use_container_width=True, hide_index=True)
+                safe_dataframe(df_filtered, use_container_width=True, hide_index=True)
 
                 st.markdown("##### 🛠️ Tindakan Moderasi dan Audit")
                 act_col1, act_col2 = st.columns(2)
@@ -6053,11 +6070,51 @@ with content_col:
                     status_border = "rgba(244, 63, 94, 0.35)" if z_cls == "distress" else ("rgba(245, 158, 11, 0.35)" if z_cls in ("grey", "waspada") else "rgba(16, 185, 129, 0.35)")
                     st.markdown(
                         f"""
-                        <div style='display:flex;justify-content:center;margin-top:6px;'>
+                        <div style='display:flex;justify-content:center;margin-top:4px;'>
                             <span style='background:{status_bg};border:1px solid {status_border};color:{status_color};font-weight:800;font-size:13.5px;padding:6px 20px;border-radius:999px;letter-spacing:1px;text-transform:uppercase;display:inline-flex;align-items:center;gap:7px;box-shadow:0 0 14px {status_color}25;'>
                                 <span style='width:7px;height:7px;border-radius:50%;background:{status_color};box-shadow:0 0 8px {status_color};display:inline-block;'></span>
                                 {z_cls.upper()}
                             </span>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+                    # Hasil Lengkap 3 Model & Konsensus Ditambahkan pada Area Speedometer
+                    tbl_bg = "rgba(248, 250, 252, 0.85)" if is_light else "rgba(15, 23, 42, 0.6)"
+                    tbl_border = "#e2e8f0" if is_light else "rgba(255, 255, 255, 0.08)"
+                    txt_model = "#475569" if is_light else "#cbd5e1"
+                    
+                    alt_col = "#10b981" if z_cls not in ("distress", "grey area", "grey", "waspada") else ("#f59e0b" if "grey" in z_cls or "waspada" in z_cls else "#f43f5e")
+                    mda_col = "#10b981" if mda_cls not in ("distress", "grey area", "grey") else ("#f59e0b" if "grey" in mda_cls else "#f43f5e")
+                    xgb_col = "#f43f5e" if xgb_label == 1 else ("#f59e0b" if xgb_label == 2 else "#10b981")
+                    kons_col = "#f43f5e" if "DISTRESS" in str(overall).upper() else ("#f59e0b" if "GREY" in str(overall).upper() else "#10b981")
+
+                    xgb_res_text = f"{xgb_prob*100:.1f}% ({xgb_status})" if xgb_prob is not None else "N/A"
+
+                    st.markdown(
+                        f"""
+                        <div style='margin-top:10px; background:{tbl_bg}; border:1px solid {tbl_border}; border-radius:10px; padding:8px 12px; font-size:11.5px;'>
+                            <div style='font-size:10.5px; font-weight:800; color:{txt_model}; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.5px; border-bottom:1px solid {tbl_border}; padding-bottom:4px; display:flex; justify-content:space-between;'>
+                                <span>Hasil Tiga Model</span>
+                                <span>Nilai & Status</span>
+                            </div>
+                            <div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;'>
+                                <span style='color:{txt_model}; font-weight:650;'>Altman Z''-Score</span>
+                                <span style='font-weight:800; color:{alt_col}; font-family:monospace;'>{z:.2f} ({z_cls.upper()})</span>
+                            </div>
+                            <div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;'>
+                                <span style='color:{txt_model}; font-weight:650;'>Z'' Koef. Baru (MDA)</span>
+                                <span style='font-weight:800; color:{mda_col}; font-family:monospace;'>{mda:.2f} ({mda_cls.upper()})</span>
+                            </div>
+                            <div style='display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;'>
+                                <span style='color:{txt_model}; font-weight:650;'>XGBoost AI</span>
+                                <span style='font-weight:800; color:{xgb_col}; font-family:monospace;'>{xgb_res_text}</span>
+                            </div>
+                            <div style='display:flex; justify-content:space-between; align-items:center; border-top:1px dashed {tbl_border}; padding-top:4px; margin-top:3px;'>
+                                <span style='color:{txt_model}; font-weight:750;'>Konsensus 3 Kategori</span>
+                                <span style='font-weight:900; color:{kons_col};'>{overall}</span>
+                            </div>
                         </div>
                         """,
                         unsafe_allow_html=True,
@@ -6858,7 +6915,8 @@ with content_col:
             # Kontrol latih ulang model dan status dataset
             c_eval_head1, c_eval_head2 = st.columns([3, 1.2])
             with c_eval_head1:
-                st.caption(f"Validasi diuji menggunakan 704 observasi laporan keuangan emiten manufaktur BEI dengan porsi evaluasi aktif: **{cur_tr_pct}% Data Latih** dan **{cur_ts_pct}% Data Uji** (stratified split bersih tanpa target leakage).")
+                total_obs = eval_metrics_data.get("total_samples", 3770) if isinstance(eval_metrics_data, dict) else 3770
+                st.caption(f"Validasi diuji menggunakan {total_obs:,} observasi laporan keuangan emiten manufaktur BEI dengan porsi evaluasi aktif: **{cur_tr_pct}% Data Latih** dan **{cur_ts_pct}% Data Uji** (stratified split bersih tanpa target leakage).")
             with c_eval_head2:
                 if st.button("🔄 Latih Ulang & Evaluasi Live", key="btn_retrain_eval_combined", use_container_width=True, help="Melatih ulang model pada dataset aktual dan memperbarui seluruh metrik evaluasi multi-model"):
                     with st.spinner("Melatih ulang model XGBoost dan menghitung metrik evaluasi multi-model..."):
@@ -6887,7 +6945,7 @@ with content_col:
                 {"Pendekatan Model": "📊 Z''-Score Koefisien Baru (MDA)", "Akurasi Empiris": "86.52%", "Kekuatan": "Dikalibrasi khusus BEI (704 observasi)", "Kelemahan": "Tidak menangkap interaksi rasio non-linear", "Rekomendasi": "Benchmark statistik lokal"},
                 {"Pendekatan Model": "🤖 XGBoost Machine Learning", "Akurasi Empiris": "91.49% (AUC 0.9426)", "Kekuatan": "Menangkap pola non-linear & interaksi kompleks", "Kelemahan": "Memerlukan pipeline komputasi", "Rekomendasi": "Peringatan dini (Early Warning)"},
             ])
-            st.dataframe(df_val_summary, use_container_width=True, hide_index=True)
+            safe_dataframe(df_val_summary, use_container_width=True, hide_index=True)
 
             st.markdown("<div style='height:14px;'></div>", unsafe_allow_html=True)
             conclusion_box(
@@ -7171,7 +7229,7 @@ with content_col:
                             }
                             for name, val in bs_items
                         ])
-                        st.dataframe(df_bs, use_container_width=True, hide_index=True)
+                        safe_dataframe(df_bs, use_container_width=True, hide_index=True)
 
                 with col_is:
                     with st.container(border=True):
@@ -7191,7 +7249,7 @@ with content_col:
                             }
                             for name, val in is_items
                         ])
-                        st.dataframe(df_is, use_container_width=True, hide_index=True)
+                        safe_dataframe(df_is, use_container_width=True, hide_index=True)
 
             with tab_audit:
                 st.markdown("#### Audit & Verifikasi Pemetaan Pos Akuntansi (Data Engineering)")
@@ -7220,7 +7278,7 @@ with content_col:
                         "Fungsi Model": item["used_by"],
                     })
 
-                st.dataframe(pd.DataFrame(audit_rows), use_container_width=True, hide_index=True)
+                safe_dataframe(pd.DataFrame(audit_rows), use_container_width=True, hide_index=True)
 
             with tab_val:
                 st.markdown(f"#### 🔬 Uji Validasi Rekapitulasi Historis BEI & Metodologi Skripsi")
@@ -7297,7 +7355,7 @@ with content_col:
                 st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
                 st.markdown("##### 📊 Tabel Hasil Pengujian Validitas Komprehensif")
                 df_val = pd.DataFrame(val_res["validation_rows"])
-                st.dataframe(df_val, use_container_width=True, hide_index=True)
+                safe_dataframe(df_val, use_container_width=True, hide_index=True)
 
                 with st.expander("ℹ️ Penjelasan Ilmiah Capping & Verifikasi Data (Proposal Skripsi Hal. 41, 95 & Lampiran)"):
                     st.markdown("""
@@ -7410,7 +7468,7 @@ with content_col:
                     })
 
                 df_trend = pd.DataFrame(trend_data)
-                st.dataframe(df_trend, use_container_width=True, hide_index=True)
+                safe_dataframe(df_trend, use_container_width=True, hide_index=True)
 
                 if len(df_trend) > 1:
                     chart_trend_display = df_trend.set_index("Tahun")[["Total Aset (Rp Triliun)", "Total Liabilitas (Rp Triliun)", "Ekuitas (Rp Triliun)"]]
@@ -7512,7 +7570,7 @@ with content_col:
                 if "Prob. XGBoost" in df_display.columns:
                     df_display["Prob. XGBoost"] = df_display["Prob. XGBoost"].apply(lambda v: f"{v:.4f} ({v*100:.1f}%)" if pd.notna(v) and v is not None else "-")
 
-                st.dataframe(df_display, use_container_width=True, hide_index=True)
+                safe_dataframe(df_display, use_container_width=True, hide_index=True)
 
                 col_dl, col_save_curr = st.columns([1, 1])
                 with col_dl:
@@ -7598,7 +7656,7 @@ with content_col:
                 st.markdown("#### Rata-rata Skor per Emiten / Ticker")
                 if "ticker" in df_filtered.columns and not df_filtered.empty:
                     ticker_avg = df_filtered.groupby("ticker")[["z_score", "mda_score"]].mean().reset_index()
-                    st.dataframe(ticker_avg.rename(columns={"ticker": "Kode Emiten", "z_score": "Rata-rata Altman Z''", "mda_score": "Rata-rata MDA"}), use_container_width=True, hide_index=True)
+                    safe_dataframe(ticker_avg.rename(columns={"ticker": "Kode Emiten", "z_score": "Rata-rata Altman Z''", "mda_score": "Rata-rata MDA"}), use_container_width=True, hide_index=True)
 
     # ========================================================
     # 5. HALAMAN DEDIKASI: PENGATURAN PROFIL DAN PREFERENSI ANTARMUKA
@@ -8484,7 +8542,7 @@ with content_col:
                         "Model Kecerdasan Buatan Gradient Boosted Trees Non-Linear"
                     ],
                 ], columns=["Pendekatan Model", "Nilai / Probabilitas", "Cut-off / Threshold", "Zona Klasifikasi (3 Kategori)", "Status Keselarasan", "Keterangan Metodologi"])
-                st.dataframe(df_bench, use_container_width=True, hide_index=True)
+                safe_dataframe(df_bench, use_container_width=True, hide_index=True)
 
                 st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
                 col_radar_cmp, col_bar_cmp = st.columns([1.1, 1.0])
@@ -8502,7 +8560,7 @@ with content_col:
                     ["📊 Z''-Score Koefisien Baru (MDA)", "-", f"Cut-off {config.get('mda_threshold', 0.3844):.4f} (Grey [{mda_d:.1f}, {mda_g:.1f}])", "⏳ STANDBY", "Menunggu Analisis", "Model Empiris Dikalibrasi 704 Observasi BEI"],
                     ["🤖 XGBoost Classifier (AI)", "-", f"Safe < {xgb_safe_th*100:.0f}% | Distress > {xgb_dist_th*100:.0f}%", "⏳ STANDBY", "Menunggu Analisis", "Model Kecerdasan Buatan Gradient Boosted Trees Non-Linear"],
                 ], columns=["Pendekatan Model", "Nilai / Probabilitas", "Cut-off / Threshold", "Zona Klasifikasi (3 Kategori)", "Status Keselarasan", "Keterangan Metodologi"])
-                st.dataframe(df_bench, use_container_width=True, hide_index=True)
+                safe_dataframe(df_bench, use_container_width=True, hide_index=True)
                 st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
                 st.info("ℹ️ Radar konvergensi dan visualisasi distribusi skor akan ditampilkan setelah emiten dianalisis.")
 
@@ -8527,7 +8585,7 @@ with content_col:
                             ("Klasifikasi Output", f"Label {xgb_details['label']} • {xgb_details['status']}"),
                             ("Tingkat Risiko Finansial", "RISIKO TINGGI (DISTRESS ZONE)" if xgb_details['label'] == 1 else ("ZONA WASPADA (GREY AREA)" if xgb_details['label'] == 2 else "RISIKO RENDAH (SAFE ZONE)")),
                         ], columns=["Komponen Output XGBoost", "Hasil Evaluasi"])
-                        st.dataframe(df_xgb_metrics, use_container_width=True, hide_index=True)
+                        safe_dataframe(df_xgb_metrics, use_container_width=True, hide_index=True)
                     else:
                         st.warning("Model XGBoost belum tersedia di direktori `models/xgb_model.json`.")
 
@@ -8579,7 +8637,7 @@ with content_col:
                     "company": "Perusahaan",
                     "year": "Tahun",
                 }
-                st.dataframe(df_disp[cols_show].rename(columns=rename_map), use_container_width=True, hide_index=True)
+                safe_dataframe(df_disp[cols_show].rename(columns=rename_map), use_container_width=True, hide_index=True)
 
                 # Fitur Muat Emiten dari Riwayat ke Dashboard
                 c_load_sel, c_load_btn = st.columns([3, 1])

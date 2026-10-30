@@ -2693,9 +2693,14 @@ def inject_css(theme: str | None = None):
         table td.text-right, table th.text-right,
         table td.num, table th.num,
         table td.numeric, table th.numeric,
+        table td[align="right"], table th[align="right"],
+        table td[style*="text-align:right"], table td[style*="text-align: right"],
+        table th[style*="text-align:right"], table th[style*="text-align: right"],
         .table-numeric, .table-num,
         div[data-testid="stTable"] td.text-right,
         div[data-testid="stTable"] th.text-right,
+        div[data-testid="stTable"] td[align="right"],
+        div[data-testid="stTable"] th[align="right"],
         div[data-testid="stTable"] td:has(.font-mono-num),
         div[data-testid="stTable"] td:has(.mono-num) {
             text-align: right !important;
@@ -4106,9 +4111,14 @@ def inject_css(theme: str | None = None):
             table td.text-right, table th.text-right,
             table td.num, table th.num,
             table td.numeric, table th.numeric,
+            table td[align="right"], table th[align="right"],
+            table td[style*="text-align:right"], table td[style*="text-align: right"],
+            table th[style*="text-align:right"], table th[style*="text-align: right"],
             .table-numeric, .table-num,
             div[data-testid="stTable"] td.text-right,
             div[data-testid="stTable"] th.text-right,
+            div[data-testid="stTable"] td[align="right"],
+            div[data-testid="stTable"] th[align="right"],
             div[data-testid="stTable"] td:has(.font-mono-num),
             div[data-testid="stTable"] td:has(.mono-num) {
                 text-align: right !important;

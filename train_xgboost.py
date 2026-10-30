@@ -2,188 +2,127 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+import sys
 
-import pandas as pd
-from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score
-from sklearn.model_selection import train_test_split
-from xgboost import XGBClassifier
-
-# Fitur rasio keuangan Altman Z''-Score yang digunakan oleh XGBoost
-FEATURES = ["X1", "X2", "X3", "X4"]
-
-
-def prepare_training_dataframe(df: pd.DataFrame, target_col: str | None = None) -> tuple[pd.DataFrame, pd.Series]:
-    """
-    Menyiapkan fitur X1-X4 dan target biner (1: distress, 0: non-distress).
-    Mendukung input berupa tabel rasio langsung maupun laporan keuangan mentah.
-    """
-    df = df.copy()
-
-    # Normalisasi nama kolom jika perlu
-    col_map = {c.strip(): c for c in df.columns}
-
-    # Jika rasio X1 - X4 belum ada, hitung dari akun keuangan mentah
-    has_ratios = all(f in df.columns for f in FEATURES)
-    if not has_ratios:
-        # Cek kolom akun mentah alternatif
-        wc = df["Working Capital"] if "Working Capital" in df else (df["Current Assets"] - df["Current Liabilities"] if ("Current Assets" in df and "Current Liabilities" in df) else None)
-        ta = df.get("Total Assets")
-        re_val = df.get("Retained Earnings")
-        ebit = df.get("EBIT")
-        eq = df.get("Common Stock Equity")
-        tl = df["Total Liabilities Net Minority Interest"] if "Total Liabilities Net Minority Interest" in df else df.get("Total Liabilities")
-
-        if ta is not None and tl is not None:
-            df["X1"] = wc / ta
-            df["X2"] = re_val / ta
-            df["X3"] = ebit / ta
-            df["X4"] = (eq / tl).clip(upper=3.0)
-        else:
-            missing_features = [f for f in FEATURES if f not in df.columns]
-            raise ValueError(
-                f"Dataset harus memiliki kolom rasio {missing_features} atau kolom akun laporan keuangan "
-                "(Working Capital, Total Assets, Retained Earnings, EBIT, Common Stock Equity, Total Liabilities)."
-            )
-
-    # Batasi X4 <= 3.0 sesuai teori skripsi hal. 41 & 95
-    if "X4" in df.columns:
-        df["X4"] = df["X4"].clip(upper=3.0)
-
-    # Menentukan kolom target klasifikasi (1: distress, 0: non-distress)
-    actual_target = None
-    if target_col and target_col in df.columns:
-        actual_target = target_col
-    elif "label" in df.columns:
-        actual_target = "label"
-    elif "distress" in df.columns:
-        actual_target = "distress"
-    elif "Retained Earnings" in df.columns and "EBIT" in df.columns:
-        df["distress"] = ((df["Retained Earnings"] < 0) & (df["EBIT"] < 0)).astype(int)
-        actual_target = "distress"
-    elif "Net Income" in df.columns and "Retained Earnings" in df.columns:
-        df["distress"] = ((df["Retained Earnings"] < 0) & (df["Net Income"] < 0)).astype(int)
-        actual_target = "distress"
-    else:
-        raise ValueError(
-            "Kolom target klasifikasi tidak ditemukan. Sediakan kolom 'label' atau 'distress' "
-            "dengan nilai biner (1 = distress, 0 = non-distress)."
-        )
-
-    # Bersihkan NaN
-    clean_df = df.dropna(subset=FEATURES + [actual_target]).copy()
-    X = clean_df[FEATURES].astype(float)
-    y = clean_df[actual_target].astype(int)
-
-    if y.nunique() < 2:
-        raise ValueError(f"Kolom target '{actual_target}' harus memiliki minimal dua kelas: 0 (non-distress) dan 1 (distress).")
-
+if sys.stdout.encoding and sys.stdout.encoding.lower() != 'utf-8':
     try:
-        from src.calculations import label_dataset_3categories
-        _, cat_counts = label_dataset_3categories(clean_df, method="financial_signals")
-        print("\n=== Audit Pra-Pelatihan: Distribusi 3 Kategori Operasional ===")
-        print(f"🟢 Safe Zone (Label 0): {cat_counts.get('safe', 0)} observasi")
-        print(f"🟡 Grey Area (Label 2): {cat_counts.get('grey', 0)} observasi (Zona Waspada / Tanpa Pemaksaan Biner)")
-        print(f"🔴 Distress Zone (Label 1): {cat_counts.get('distress', 0)} observasi")
+        sys.stdout.reconfigure(encoding='utf-8')
     except Exception:
         pass
 
-    return X, y
+import pandas as pd
+from src.calculations import (
+    build_features_p1,
+    build_features_p2,
+    build_distress_target,
+    train_xgboost_classifier,
+)
+
+FEATURES_P1 = ["X1", "X2", "X3", "X4"]
+FEATURES_P2 = FEATURES_P1 + [
+    "Current_Ratio", "DAR", "DER", "ROA", "ICR",
+    "CFO_to_TL", "CFO_to_CL", "Revenue_to_Assets",
+    "Revenue_Growth", "Net_Income_Growth", "Total_Assets_Growth", "OCF_Growth",
+]
 
 
-def train_model(
-    df: pd.DataFrame,
-    target_col: str | None = None,
-    output_path: str = "models/xgb_model.json",
-    test_size: float = 0.2,
-    random_state: int = 42,
-    n_estimators: int = 100,
-    max_depth: int = 3,
-    learning_rate: float = 0.08,
-):
-    X, y = prepare_training_dataframe(df, target_col=target_col)
+def print_evaluation_summary(eval_res: dict):
+    """
+    Menampilkan ringkasan komparasi evaluasi dua pengujian XGBoost dan model statistik (Altman & MDA).
+    """
+    p1 = eval_res.get("pengujian_1", {})
+    p2 = eval_res.get("pengujian_2", {})
+    alt = eval_res.get("models_evaluation", {}).get("altman", {})
+    mda = eval_res.get("models_evaluation", {}).get("mda", {})
+    split = eval_res.get("split_info", {})
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y,
-        test_size=test_size,
-        random_state=random_state,
-        stratify=y,
-    )
+    print("\n" + "=" * 80)
+    print("HASIL EVALUASI KOMPARATIF MULTI-MODEL PADA DATA TESTING INDEPENDEN (HOLD-OUT)")
+    print("=" * 80)
+    print(f"Total Sampel Data : {eval_res.get('total_samples', 0)}")
+    print(f"Data Training     : {split.get('train_samples', 0)} ({split.get('train_pct', 0)}%)")
+    print(f"Data Validation   : {split.get('val_samples', 0)}")
+    print(f"Data Testing      : {split.get('test_samples', 0)} ({split.get('test_pct', 0)}%)")
+    print("-" * 80)
+    print(f"{'Metrik Evaluasi':<25} | {'XGBoost P1 (4 Rasio)':<18} | {'XGBoost P2 (16 Fitur)':<18} | {'Altman Z\" (1995)':<18} | {'MDA Fisher BEI':<15}")
+    print("-" * 80)
 
-    model = XGBClassifier(
-        n_estimators=n_estimators,
-        max_depth=max_depth,
-        learning_rate=learning_rate,
-        subsample=0.85,
-        colsample_bytree=0.85,
-        objective="binary:logistic",
-        eval_metric="logloss",
-        random_state=random_state,
-    )
-    model.fit(X_train, y_train)
+    metrics = [
+        ("Akurasi (Accuracy)", f"{p1.get('accuracy', 0)*100:.2f}%", f"{p2.get('accuracy', 0)*100:.2f}%", f"{alt.get('accuracy', 0)*100:.2f}%", f"{mda.get('accuracy', 0)*100:.2f}%"),
+        ("ROC-AUC", f"{p1.get('roc_auc', 0):.4f}", f"{p2.get('roc_auc', 0):.4f}", f"{alt.get('roc_auc', 0):.4f}", f"{mda.get('roc_auc', 0):.4f}"),
+        ("PR-AUC", f"{p1.get('pr_auc', 0):.4f}", f"{p2.get('pr_auc', 0):.4f}", f"{alt.get('pr_auc', 0):.4f}", f"{mda.get('pr_auc', 0):.4f}"),
+        ("Presisi (Precision)", f"{p1.get('precision', 0)*100:.2f}%", f"{p2.get('precision', 0)*100:.2f}%", f"{alt.get('precision', 0)*100:.2f}%", f"{mda.get('precision', 0)*100:.2f}%"),
+        ("Recall / Sensitivitas", f"{p1.get('recall', 0)*100:.2f}%", f"{p2.get('recall', 0)*100:.2f}%", f"{alt.get('recall', 0)*100:.2f}%", f"{mda.get('recall', 0)*100:.2f}%"),
+        ("Spesifisitas", f"{p1.get('specificity', 0)*100:.2f}%", f"{p2.get('specificity', 0)*100:.2f}%", f"{alt.get('specificity', 0)*100:.2f}%", f"{mda.get('specificity', 0)*100:.2f}%"),
+        ("F1-Score", f"{p1.get('f1_score', 0):.4f}", f"{p2.get('f1_score', 0):.4f}", f"{alt.get('f1_score', 0):.4f}", f"{mda.get('f1_score', 0):.4f}"),
+        ("Youden's J Index", f"{p1.get('youden_j', 0):.4f}", f"{p2.get('youden_j', 0):.4f}", f"{alt.get('youden_j', 0):.4f}", f"{mda.get('youden_j', 0):.4f}"),
+        ("Type I Error (FP Rate)", f"{p1.get('type1_error', 0)*100:.2f}%", f"{p2.get('type1_error', 0)*100:.2f}%", f"{alt.get('type1_error', 0)*100:.2f}%", f"{mda.get('type1_error', 0)*100:.2f}%"),
+        ("Type II Error (FN Rate)", f"{p1.get('type2_error', 0)*100:.2f}%", f"{p2.get('type2_error', 0)*100:.2f}%", f"{alt.get('type2_error', 0)*100:.2f}%", f"{mda.get('type2_error', 0)*100:.2f}%"),
+    ]
 
-    pred = model.predict(X_test)
-    prob = model.predict_proba(X_test)[:, 1]
+    for label, v_p1, v_p2, v_alt, v_mda in metrics:
+        print(f"{label:<25} | {v_p1:<18} | {v_p2:<18} | {v_alt:<18} | {v_mda:<15}")
 
-    cr = classification_report(y_test, pred, digits=4, output_dict=True)
-    cm = confusion_matrix(y_test, pred)
-    auc = float(roc_auc_score(y_test, prob))
-    feat_imp = dict(zip(FEATURES, [float(v) for v in model.feature_importances_]))
+    print("-" * 80)
+    cm_p1 = p1.get("cm_details", {})
+    cm_p2 = p2.get("cm_details", {})
+    print(f"Confusion Matrix P1: TP={cm_p1.get('tp',0)}, TN={cm_p1.get('tn',0)}, FP={cm_p1.get('fp',0)}, FN={cm_p1.get('fn',0)}")
+    print(f"Confusion Matrix P2: TP={cm_p2.get('tp',0)}, TN={cm_p2.get('tn',0)}, FP={cm_p2.get('fp',0)}, FN={cm_p2.get('fn',0)}")
 
-    print("\n=== Classification Report ===")
-    print(classification_report(y_test, pred, digits=4))
-    print("=== Confusion Matrix ===")
-    print(cm)
-    print(f"ROC AUC: {auc:.4f}")
-    print(f"Feature Importances: {feat_imp}")
+    print("\nFeature Importances P1 (Altman 4 Rasio):")
+    for feat, imp in p1.get("feature_importances", {}).items():
+        print(f"  - {feat:<4}: {imp*100:.2f}%")
 
-    # Evaluasi Distribusi 3 Kategori Operasional pada Data Uji
-    cat3_preds = []
-    for p_val in prob:
-        if p_val > 0.65:
-            cat3_preds.append("Distress Zone (🔴 P > 0.65)")
-        elif p_val >= 0.35:
-            cat3_preds.append("Grey Area (🟡 0.35 <= P <= 0.65)")
-        else:
-            cat3_preds.append("Safe Zone (🟢 P < 0.35)")
-    
-    cat3_dist = pd.Series(cat3_preds).value_counts().to_dict()
-    print("\n=== Distribusi Prediksi 3 Kategori Operasional (Data Uji) ===")
-    for k, v in cat3_dist.items():
-        print(f"- {k}: {v} emiten ({v/len(cat3_preds)*100:.1f}%)")
-
-    output = Path(output_path)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    model.save_model(str(output))
-    print(f"\nModel XGBoost berhasil disimpan ke: {output}")
-
-    return {
-        "model": model,
-        "classification_report": cr,
-        "confusion_matrix": cm.tolist(),
-        "roc_auc": auc,
-        "feature_importances": feat_imp,
-        "train_samples": len(X_train),
-        "test_samples": len(X_test),
-    }
+    print("\nTop 8 Feature Importances P2 (Altman + 12 Fitur):")
+    sorted_p2 = sorted(p2.get("feature_importances", {}).items(), key=lambda x: x[1], reverse=True)[:8]
+    for feat, imp in sorted_p2:
+        print(f"  - {feat:<20}: {imp*100:.2f}%")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Train XGBoost Financial Distress Model using X1-X4 ratios")
-    parser.add_argument("--file", "--csv", required=True, help="Path ke file dataset (CSV / Excel)")
-    parser.add_argument("--target", default=None, help="Nama kolom target (default: label / distress)")
-    parser.add_argument("--output", default="models/xgb_model.json", help="Path penyimpanan model JSON")
+    parser = argparse.ArgumentParser(description="Pelatihan dan Evaluasi Dua Pengujian XGBoost Financial Distress")
+    parser.add_argument("--file", "--csv", default="data/dataset_manufaktur_tahunan_15_variabel_2014_2026.xlsx", help="Path dataset (Excel/CSV)")
+    parser.add_argument("--target", default=None, help="Nama kolom target spesifik jika ada")
+    parser.add_argument("--target-method", default="predictive_t1", choices=["contemporaneous", "predictive_t1"], help="Metode target: predictive_t1 (Standar Emas) atau contemporaneous")
+    parser.add_argument("--output", default="models/xgb_model.json", help="Path output model JSON")
+    parser.add_argument("--test-size", type=float, default=0.2, help="Ukuran data testing (default 0.2)")
+    parser.add_argument("--n-estimators", type=int, default=100, help="Jumlah decision trees (default 100)")
+    parser.add_argument("--max-depth", type=int, default=3, help="Kedalaman maksimum pohon (default 3)")
+    parser.add_argument("--learning-rate", type=float, default=0.08, help="Learning rate eta (default 0.08)")
     args = parser.parse_args()
 
     file_p = Path(args.file)
     if not file_p.exists():
-        raise FileNotFoundError(f"File dataset tidak ditemukan: {file_p}")
+        # Fallback ke dataset alternatif
+        alt_p = Path("data/datakeuangan.xlsx")
+        if alt_p.exists():
+            file_p = alt_p
+        else:
+            raise FileNotFoundError(f"File dataset tidak ditemukan: {file_p}")
 
+    print(f"Membaca dataset dari: {file_p}")
     if file_p.suffix.lower() in [".xlsx", ".xls"]:
         df = pd.read_excel(file_p)
     else:
         df = pd.read_csv(file_p)
 
-    train_model(df, target_col=args.target, output_path=args.output)
+    eval_result = train_xgboost_classifier(
+        df,
+        target_col=args.target,
+        output_path=args.output,
+        test_size=args.test_size,
+        random_state=42,
+        n_estimators=args.n_estimators,
+        max_depth=args.max_depth,
+        learning_rate=args.learning_rate,
+        target_method=args.target_method,
+    )
+
+    print_evaluation_summary(eval_result)
+    print(f"\nModel berhasil disimpan ke: {args.output}")
+    print(f"Model P1 tersimpan ke: {Path(args.output).parent / 'xgb_model_p1.json'}")
+    print(f"Model P2 tersimpan ke: {Path(args.output).parent / 'xgb_model_p2.json'}")
+    print(f"Metadata evaluasi tersimpan ke: {Path(args.output).parent / 'xgb_evaluation.json'}")
 
 
 if __name__ == "__main__":

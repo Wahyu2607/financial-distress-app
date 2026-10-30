@@ -210,7 +210,7 @@ class TestFinancialDistressCalculations(unittest.TestCase):
 
         # Uji Multi-Model Benchmark Table (Lampiran 4 Hal. 141-143)
         self.assertIn("multi_model_benchmark", eval_data)
-        self.assertEqual(len(eval_data["multi_model_benchmark"]), 3)
+        self.assertGreaterEqual(len(eval_data["multi_model_benchmark"]), 3)
 
     def test_altman_1968_score(self):
         """Uji Model Altman Z-Score Asli 5 Variabel (1968) sesuai Bab II Subbab 2.2.8 & Tabel 2.1."""

@@ -662,6 +662,150 @@ def render_quantum_gauge(prob: float, threshold: float | dict = 0.5):
     st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
 
 
+def render_mda_gauge(value: float, thresholds: dict | None = None):
+    """
+    Meteran analog modern untuk Skor Z'' Koefisien Baru (MDA Empiris BEI):
+    - 🔴 Distress Zone: [min_val, distress] -> Merah (#f43f5e) (default < 0.0)
+    - 🟡 Grey Area: [distress, grey] -> Kuning / Amber (#f59e0b) (default 0.0 - 1.0, cut-off 0.3844)
+    - 🟢 Safe Zone: [grey, max_val] -> Hijau (#10b981) (default > 1.0)
+    """
+    if thresholds is None:
+        thresholds = {"distress": 0.0, "grey": 1.0, "cutoff": 0.3844}
+    distress = float(thresholds.get("distress", 0.0))
+    grey = float(thresholds.get("grey", thresholds.get("safe", 1.0)))
+    cutoff = float(thresholds.get("cutoff", 0.3844))
+
+    min_val = min(0.0, float(np.floor(value - 0.5)))
+    max_val = max(grey * 2.0, float(np.ceil(value + 0.5)), 3.0)
+
+    if value < distress:
+        bar_color = "#f43f5e"
+    elif value <= grey:
+        bar_color = "#f59e0b"
+    else:
+        bar_color = "#10b981"
+
+    steps = [
+        {"range": [min_val, distress], "color": "rgba(244, 63, 94, 0.35)"},
+        {"range": [distress, grey], "color": "rgba(245, 158, 11, 0.35)"},
+        {"range": [grey, max_val], "color": "rgba(16, 185, 129, 0.35)"},
+    ]
+
+    is_light = is_light_theme()
+    num_color = "#0f172a" if is_light else "#f8fafc"
+    tick_color = "#0f172a" if is_light else "#cbd5e1"
+    axis_line_color = "rgba(15, 23, 42, 0.4)" if is_light else "rgba(255, 255, 255, 0.25)"
+    bg_gauge = "#f8fafc" if is_light else "rgba(15, 23, 42, 0.6)"
+    border_gauge = "rgba(15, 23, 42, 0.15)" if is_light else "rgba(255, 255, 255, 0.08)"
+
+    fig = go.Figure(
+        go.Indicator(
+            mode="gauge+number",
+            value=value,
+            number={
+                "valueformat": ".2f",
+                "font": {"size": 28, "family": "'JetBrains Mono', monospace", "color": num_color}
+            },
+            gauge={
+                "axis": {
+                    "range": [min_val, max_val],
+                    "tickvals": [min_val, distress, cutoff, grey, max_val],
+                    "ticktext": [f"{min_val:.1f}", f"Dist ({distress:.1f})", f"Cut ({cutoff:.2f})", f"Safe ({grey:.1f})", f"{max_val:.1f}"],
+                    "tickfont": {"size": 9, "family": "'JetBrains Mono', monospace", "color": tick_color},
+                    "tickcolor": axis_line_color,
+                    "tickwidth": 1.5,
+                },
+                "bar": {"color": bar_color, "thickness": 0.28},
+                "bgcolor": bg_gauge,
+                "borderwidth": 1,
+                "bordercolor": border_gauge,
+                "steps": steps,
+                "threshold": {
+                    "line": {"color": "#fbbf24", "width": 2.5},
+                    "thickness": 0.85,
+                    "value": cutoff,
+                },
+            },
+        )
+    )
+    fig.update_layout(
+        height=215,
+        margin=dict(l=16, r=16, t=12, b=10),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(family="'Plus Jakarta Sans', system-ui, sans-serif"),
+    )
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+
+def render_consensus_gauge(cat3: dict, z: float, mda: float, xgb_prob: float | None = None):
+    """
+    Speedometer Indeks Konsensus Kesehatan Finansial Tri-Model (0 - 100):
+    - 🔴 Distress Zone: [0, 35) -> Risiko Tinggi
+    - 🟡 Grey Area: [35, 65] -> Zona Waspada / Divergen
+    - 🟢 Safe Zone: (65, 100] -> Kondisi Sehat / Aman
+    """
+    status = str(cat3.get("status", "GREY AREA")).upper()
+    is_light = is_light_theme()
+
+    if "SAFE" in status:
+        idx_val = 82.5
+        bar_color = "#10b981"
+    elif "DISTRESS" in status:
+        idx_val = 18.5
+        bar_color = "#f43f5e"
+    else:
+        idx_val = 50.0
+        bar_color = "#f59e0b"
+
+    if xgb_prob is not None:
+        p_safe = (1.0 - float(xgb_prob)) * 100.0
+        idx_val = 0.55 * idx_val + 0.45 * p_safe
+        idx_val = float(np.clip(idx_val, 5.0, 95.0))
+
+    num_color = "#0f172a" if is_light else "#f8fafc"
+    tick_color = "#475569" if is_light else "#cbd5e1"
+    bg_gauge = "#f8fafc" if is_light else "rgba(15, 23, 42, 0.6)"
+    border_gauge = "rgba(15, 23, 42, 0.15)" if is_light else "rgba(255, 255, 255, 0.08)"
+
+    fig = go.Figure(
+        go.Indicator(
+            mode="gauge+number",
+            value=idx_val,
+            number={
+                "valueformat": ".1f",
+                "suffix": " / 100",
+                "font": {"size": 26, "family": "'JetBrains Mono', monospace", "color": num_color}
+            },
+            gauge={
+                "axis": {
+                    "range": [0, 100],
+                    "tickvals": [0, 35, 65, 100],
+                    "ticktext": ["0 (Distress)", "35 (Waspada)", "65 (Aman)", "100"],
+                    "tickfont": {"size": 9, "family": "'JetBrains Mono', monospace", "color": tick_color},
+                },
+                "bar": {"color": bar_color, "thickness": 0.28},
+                "bgcolor": bg_gauge,
+                "borderwidth": 1,
+                "bordercolor": border_gauge,
+                "steps": [
+                    {"range": [0, 35], "color": "rgba(244, 63, 94, 0.32)"},
+                    {"range": [35, 65], "color": "rgba(245, 158, 11, 0.35)"},
+                    {"range": [65, 100], "color": "rgba(16, 185, 129, 0.32)"},
+                ],
+            },
+        )
+    )
+    fig.update_layout(
+        height=215,
+        margin=dict(l=14, r=14, t=10, b=10),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(family="'Plus Jakarta Sans', system-ui, sans-serif"),
+    )
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+
 def render_radar_chart(ratios: dict):
     """
     Radar Konvergensi Multidimensi: Membandingkan rasio aktual emiten terhadap benchmark aman pada canvas gelap.
@@ -1734,7 +1878,7 @@ def render_confusion_matrix_section(eval_data: dict, model_key: str = "xgboost",
             "Makna Finansial & Risiko": "Perusahaan bangkrut/distress berhasil dideteksi dini (Early Warning Berhasil).",
         },
     ])
-    st.dataframe(df_cm_breakdown, use_container_width=True, hide_index=True)
+    render_smart_dataframe(df_cm_breakdown, use_container_width=True, hide_index=True)
 
     # Tabel Laporan Klasifikasi Rinci
     cr = target_eval.get("classification_report", {})
@@ -1762,7 +1906,7 @@ def render_confusion_matrix_section(eval_data: dict, model_key: str = "xgboost",
                     "F1-Score": f"{float(a_data.get('f1-score', 0.0)):.4f}",
                     "Jumlah Sampel (Support)": f"{int(a_data.get('support', 0))} sampel",
                 })
-        st.dataframe(pd.DataFrame(report_rows), use_container_width=True, hide_index=True)
+        render_smart_dataframe(pd.DataFrame(report_rows), use_container_width=True, hide_index=True)
 
 
 def render_roc_curve_section(eval_data: dict):
@@ -2042,7 +2186,7 @@ def render_model_evaluation_dashboard(eval_data: dict, config: dict | None = Non
     test_sz = float(split_info.get("test_size", eval_data.get("hyperparameters", {}).get("test_size", 0.20)))
     test_pct = int(round(test_sz * 100))
     train_pct = 100 - test_pct
-    total_samples = int(eval_data.get("total_samples", 704))
+    total_samples = int(eval_data.get("total_samples", 3770))
     test_samples = int(eval_data.get("test_samples", int(round(total_samples * test_sz))))
     train_samples = int(eval_data.get("train_samples", total_samples - test_samples))
     split_label = f"{train_pct}/{test_pct}"
@@ -2305,7 +2449,7 @@ def render_model_evaluation_dashboard(eval_data: dict, config: dict | None = Non
             st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
 
             # Tabel Komparasi Rinci
-            st.markdown("##### 📋 Matriks Komparasi Performa Lintas Porsi Evaluasi (704 Observasi BEI)")
+            st.markdown(f"##### 📋 Matriks Komparasi Performa Lintas Porsi Evaluasi ({total_samples:,} Observasi BEI)")
             table_display_rows = []
             for r in bench_splits:
                 table_display_rows.append({
@@ -2321,7 +2465,7 @@ def render_model_evaluation_dashboard(eval_data: dict, config: dict | None = Non
                     "Akurasi Altman": f"{r['altman_accuracy']*100:.2f}%",
                     "Rekomendasi": r["usage_desc"],
                 })
-            st.dataframe(pd.DataFrame(table_display_rows), use_container_width=True, hide_index=True)
+            render_smart_dataframe(pd.DataFrame(table_display_rows), use_container_width=True, hide_index=True)
 
             # Visualisasi Tren Grafik Garis Plotly
             st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
@@ -2614,7 +2758,7 @@ def render_batch_screening_results(batch_df: pd.DataFrame, stats: dict, key_pref
     st.caption(f"Menampilkan **{len(filtered_df)}** dari **{len(batch_df)}** emiten hasil evaluasi.")
 
     # 3. Tabel Interaktif Hasil
-    st.dataframe(
+    render_smart_dataframe(
         filtered_df,
         use_container_width=True,
         hide_index=True,
@@ -2884,7 +3028,7 @@ def _is_numeric_cell_value(val) -> bool:
         return False
     # Bersihkan angka, tanda baca, simbol mata uang, operator matematika, dan label statistik pendek
     clean = re.sub(
-        r'[\d\.,\s\+\-%\/():xX*&~<>=€$£¥]|(Rp|IDR|USD|Cut-off|cut-off|Probabilitas|Nilai|Ratio|Skor|Label)',
+        r'[\d\.,\s\+\-%\/():xX*&~<>=€$£¥]|(Rp|IDR|USD|Cut-off|cut-off|Probabilitas|Nilai|Ratio|Skor|Label|Triliun|Miliar|Juta|Ribu|[TMBK])',
         '',
         s,
         flags=re.IGNORECASE,
@@ -2906,16 +3050,18 @@ def _render_styled_table(headers: list[str], rows: list[list[str]], is_light: bo
     row_base = "#ffffff" if is_light else "rgba(15, 23, 42, 0.85)"
 
     NON_NUM_HEADERS = (
-        "kode", "nama", "lembar", "bagian", "sumber", "halaman", "status", "metode",
+        "kode", "nama", "pos", "lembar", "bagian", "sumber", "halaman", "status", "metode",
         "rincian", "rumus", "komputasi", "keterangan", "catatan", "pendekatan", "model",
         "username", "email", "role", "peran", "instansi", "kondisi", "kesimpulan",
-        "field", "informasi", "komponen", "parameter"
+        "field", "informasi", "komponen", "parameter", "fungsi", "asal", "verifikasi"
     )
 
     NUMERIC_HEADER_KEYWORDS = (
         "nilai", "angka", "amount", "value", "nominal", "saldo", "total", "jumlah",
         "rasio", "ratio", "skor", "score", "probabilitas", "persen", "%", "rp",
-        "harga", "biaya", "z-score", "z''-score", "z'-score", "margin", "weight", "bobot"
+        "harga", "biaya", "z-score", "z''-score", "z'-score", "margin", "weight", "bobot",
+        "latih", "uji", "observasi", "sampel", "akurasi", "roc_auc", "f1", "tahun", "year",
+        "triliun", "miliar", "penuh", "terisi"
     )
 
     # Deteksi kolom numerik
@@ -2924,9 +3070,10 @@ def _render_styled_table(headers: list[str], rows: list[list[str]], is_light: bo
         h_clean = str(h).strip().lower()
         # Jika judul kolom mengandung kata kunci eksplisit numerik (Nilai, Saldo, Rasio, dsb.)
         if any(kw in h_clean for kw in NUMERIC_HEADER_KEYWORDS):
-            num_cols.add(c_idx)
-            continue
-        if any(kw in h_clean for kw in NON_NUM_HEADERS):
+            if not any(kw in h_clean for kw in ("nama", "pos asal", "status", "fungsi", "keterangan", "rumus")):
+                num_cols.add(c_idx)
+                continue
+        if any(kw in h_clean for kw in NON_NUM_HEADERS) and not any(kw in h_clean for kw in ("nilai", "amount", "saldo", "nominal")):
             continue
         col_vals = [r[c_idx] for r in rows if len(r) > c_idx]
         if col_vals:
@@ -2941,14 +3088,16 @@ def _render_styled_table(headers: list[str], rows: list[list[str]], is_light: bo
                     num_cols.add(c_idx)
 
     html_code = f"""
-    <table style="width:100%; border-collapse:collapse; font-size:12px; font-family:'Plus Jakarta Sans',sans-serif; margin:8px 0 16px 0; border:1px solid {border_col}; border-radius:8px; overflow:hidden;">
+    <table class="custom-styled-table" style="width:100%; border-collapse:collapse; font-size:12px; font-family:'Plus Jakarta Sans',sans-serif; margin:8px 0 16px 0; border:1px solid {border_col}; border-radius:8px; overflow:hidden;">
         <thead>
             <tr style="background:{th_bg}; border-bottom:1.5px solid {border_col};">
     """
     for idx, h in enumerate(headers):
         align = "right" if idx in num_cols else "left"
+        cls_th = "text-right num table-numeric" if idx in num_cols else "text-left"
         pad = "padding:7px 14px 7px 10px;" if idx in num_cols else "padding:7px 10px;"
-        html_code += f'<th style="{pad} text-align:{align} !important; color:{th_color} !important; font-weight:750; font-size:11.5px;">{h}</th>'
+        border_cell = f"border-right:1px solid {border_col};" if idx < len(headers) - 1 else ""
+        html_code += f'<th class="{cls_th}" align="{align}" style="{pad} {border_cell} text-align:{align} !important; color:{th_color} !important; font-weight:750; font-size:11.5px;">{h}</th>'
     html_code += "</tr></thead><tbody>"
 
     for idx, r in enumerate(rows):
@@ -2957,12 +3106,82 @@ def _render_styled_table(headers: list[str], rows: list[list[str]], is_light: bo
         for c_idx, cell in enumerate(r):
             is_num = (c_idx in num_cols) or _is_numeric_cell_value(cell)
             align = "right" if is_num else "left"
-            mono_style = "font-family:'JetBrains Mono',monospace !important; font-variant-numeric:tabular-nums !important;" if is_num else ""
+            cls_num = "text-right num table-numeric" if is_num else "text-left"
+            mono_style = "font-family:'JetBrains Mono',monospace !important; font-variant-numeric:tabular-nums !important; text-align:right !important;" if is_num else "text-align:left !important;"
             pad = "padding:6px 14px 6px 10px;" if is_num else "padding:6px 10px;"
-            html_code += f'<td style="{pad} text-align:{align} !important; color:{td_color} !important; font-size:12px; font-weight:550; {mono_style}">{cell}</td>'
+            border_cell = f"border-right:1px solid {border_col};" if c_idx < len(r) - 1 else ""
+            html_code += f'<td class="{cls_num}" align="{align}" style="{pad} {border_cell} text-align:{align} !important; color:{td_color} !important; font-size:12px; font-weight:550; {mono_style}">{cell}</td>'
         html_code += "</tr>"
     html_code += "</tbody></table>"
     return html_code
+
+
+def get_auto_column_config(df: pd.DataFrame, custom_config: dict | None = None) -> dict:
+    """
+    Menghasilkan konfigurasi kolom otomatis (column_config) untuk st.dataframe / st.data_editor:
+    Secara otomatis mendeteksi kolom angka, rasio, nominal uang, persentase, dan tahun,
+    lalu menetapkan alignment='right' agar seluruh angka tersusun rata kanan secara presisi.
+    """
+    import streamlit as st
+    config = dict(custom_config or {})
+
+    NON_NUM_NAMES = {
+        "kode", "nama", "pos", "lembar", "bagian", "sumber", "halaman", "status",
+        "metode", "rincian", "rumus", "komputasi", "keterangan", "catatan",
+        "pendekatan", "model", "username", "email", "role", "peran", "instansi",
+        "kondisi", "kesimpulan", "field", "informasi", "komponen", "parameter",
+        "fungsi", "asal", "verifikasi"
+    }
+
+    NUM_NAMES = {
+        "nilai", "angka", "amount", "value", "nominal", "saldo", "total",
+        "jumlah", "rasio", "ratio", "skor", "score", "probabilitas", "persen",
+        "%", "rp", "harga", "biaya", "z-score", "z''-score", "z'-score", "margin",
+        "weight", "bobot", "latih", "uji", "observasi", "sampel", "akurasi",
+        "roc_auc", "f1", "tahun", "year", "triliun", "miliar", "penuh", "terisi"
+    }
+
+    for col in df.columns:
+        col_str = str(col).strip()
+        col_lower = col_str.lower()
+        if col_str in config:
+            continue
+
+        is_numeric = False
+
+        # 1. Cek tipe data pandas numerik murni
+        if pd.api.types.is_numeric_dtype(df[col]):
+            is_numeric = True
+        # 2. Cek apakah kolom secara eksplisit merupakan kolom nilai/angka
+        elif any(kw in col_lower for kw in NUM_NAMES):
+            if not any(kw in col_lower for kw in ("nama", "pos asal", "status", "fungsi", "keterangan", "rumus")):
+                is_numeric = True
+            elif any(kw in col_lower for kw in ("nilai", "amount", "saldo", "nominal")):
+                is_numeric = True
+
+        # 3. Jika belum yakin, lakukan sampling isi sel
+        if not is_numeric and not any(kw in col_lower for kw in ("nama", "pos", "keterangan", "status", "rumus", "fungsi")):
+            valid_vals = [v for v in df[col].dropna() if str(v).strip() not in ("-", "—", "N/A", "n/a", "", "none", "None")]
+            if valid_vals:
+                num_count = sum(1 for v in valid_vals if _is_numeric_cell_value(v))
+                if num_count / len(valid_vals) >= 0.5:
+                    is_numeric = True
+
+        if is_numeric:
+            config[col_str] = st.column_config.Column(alignment="right")
+        else:
+            config[col_str] = st.column_config.Column(alignment="left")
+
+    return config
+
+
+def render_smart_dataframe(df: pd.DataFrame, use_container_width: bool = True, hide_index: bool = True, column_config: dict | None = None, **kwargs):
+    """
+    Merender st.dataframe dengan penyelarasan rata kanan otomatis untuk seluruh kolom angka.
+    """
+    import streamlit as st
+    cfg = get_auto_column_config(df, custom_config=column_config)
+    return st.dataframe(df, use_container_width=use_container_width, hide_index=hide_index, column_config=cfg, **kwargs)
 
 
 def render_styled_dataframe(df: pd.DataFrame, is_light: bool | None = None) -> None:
@@ -3503,6 +3722,30 @@ def render_proposal_mockup_dashboard(session_data: dict, config: dict):
                             <span style="color:{text_muted} !important;">🟢 Z &gt; 2.99: AMAN</span>
                             <span style="color:{text_muted} !important;">🟡 1.81-2.99: GREY</span>
                             <span style="color:{text_muted} !important;">🔴 Z &lt; 1.81: DISTRESS</span>
+                        </div>
+                    </div>
+
+                    <!-- Ringkasan Tambahan Hasil 3 Model pada Area Speedometer -->
+                    <div style="background:{'rgba(241, 245, 249, 0.7)' if is_light else 'rgba(15, 23, 42, 0.5)'}; border:1px solid {card_border}; border-radius:10px; padding:8px 10px; margin-top:8px; font-size:11px;">
+                        <div style="font-size:10px; font-weight:800; color:{text_muted} !important; text-transform:uppercase; margin-bottom:5px; border-bottom:1px solid {card_border}; padding-bottom:3px; display:flex; justify-content:space-between;">
+                            <span>Hasil Tiga Model</span>
+                            <span>Nilai & Status</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
+                            <span style="color:{text_sub} !important; font-weight:650;">Altman Z''-Score</span>
+                            <span style="font-weight:800; color:{'#059669' if z_class == 'aman' else ('#d97706' if z_class in ('grey', 'grey area') else '#dc2626')}; font-family:monospace;">{z_val:.2f} ({z_class.upper()})</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
+                            <span style="color:{text_sub} !important; font-weight:650;">Z'' Koef. Baru (MDA)</span>
+                            <span style="font-weight:800; color:{'#059669' if mda_class == 'aman' else ('#d97706' if mda_class in ('grey', 'grey area') else '#dc2626')}; font-family:monospace;">{mda_val:.2f} ({mda_class.upper()})</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:3px;">
+                            <span style="color:{text_sub} !important; font-weight:650;">Prediksi XGBoost</span>
+                            <span style="font-weight:800; color:{'#dc2626' if xgb_prob > 0.65 else ('#d97706' if xgb_prob >= 0.35 else '#059669')}; font-family:monospace;">{xgb_pct:.1f}% ({xgb_status})</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; border-top:1px dashed {card_border}; padding-top:4px; margin-top:3px;">
+                            <span style="color:{text_sub} !important; font-weight:750;">Konsensus Tri-Model</span>
+                            <span style="font-weight:900; color:{c4_accent};">{majority_status}</span>
                         </div>
                     </div>
                 </div>
