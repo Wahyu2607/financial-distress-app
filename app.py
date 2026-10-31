@@ -12,6 +12,22 @@ import sqlite3
 import pandas as pd
 import streamlit as st
 
+hide_elements = """
+    <style>
+    /* Menghilangkan badge logo Streamlit & avatar di pojok kanan bawah */
+    [class*="viewerBadge"] {
+        display: none !important;
+    }
+    
+    /* (Opsional) Menghilangkan menu hamburger, header, dan footer */
+    #MainMenu {visibility: hidden;}
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+    </style>
+"""
+
+st.markdown(hide_elements, unsafe_allow_html=True)
+
 # st.set_page_config HARUS DI BARIS PERTAMA SEBELUM PERINTAH STREAMLIT LAINNYA
 st.set_page_config(
     page_title="Prediksi Financial Distress Industri Manufaktur BEI",
