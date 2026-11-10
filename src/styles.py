@@ -300,7 +300,7 @@ def inject_css(theme: str | None = None):
                 width: 270px !important;
                 min-width: 270px !important;
                 max-width: 270px !important;
-                padding: 14px 14px 14px 14px !important;
+                padding: 14px 14px 28px 14px !important;
                 padding-top: 14px !important;
                 margin-top: 0 !important;
                 box-sizing: border-box !important;
@@ -467,7 +467,7 @@ def inject_css(theme: str | None = None):
         div[data-testid="column"]:has(.sidebar-vault-container) [data-testid="stElementContainer"]:has(.sidebar-account-label),
         div[data-testid="stColumn"]:has(.sidebar-vault-container) [data-testid="stElementContainer"]:has(.sidebar-account-label) {
             margin-top: auto !important;
-            margin-bottom: 2px !important;
+            margin-bottom: 6px !important;
             padding: 0 !important;
             flex: 0 0 auto !important;
         }
@@ -858,7 +858,7 @@ def inject_css(theme: str | None = None):
             border: 1px solid #283150 !important;
             border-radius: 16px !important;
             padding: 7px 12px 7px 7px !important;
-            margin: 0 !important;
+            margin: 0 0 16px 0 !important;
             width: 100% !important;
             min-width: 100% !important;
             max-width: 100% !important;
@@ -1209,7 +1209,7 @@ def inject_css(theme: str | None = None):
                 z-index: 9999999 !important;
                 overflow-y: auto !important;
                 overflow-x: hidden !important;
-                padding: 14px 14px 24px 14px !important;
+                padding: 14px 14px 36px 14px !important;
                 box-sizing: border-box !important;
 
                 background: #141726 !important;
@@ -3418,7 +3418,7 @@ def inject_css(theme: str | None = None):
                 border: 1.5px solid #bfdbfe !important;
                 border-radius: 16px !important;
                 box-shadow: 0 4px 14px rgba(37, 99, 235, 0.12) !important;
-                margin: 0 auto !important;
+                margin: 0 auto 16px auto !important;
             }
             div[data-testid="column"]:has(.sidebar-vault-container) [data-testid="stHorizontalBlock"]:has(.sidebar-user-block) div,
             div[data-testid="stColumn"]:has(.sidebar-vault-container) [data-testid="stHorizontalBlock"]:has(.sidebar-user-block) div {

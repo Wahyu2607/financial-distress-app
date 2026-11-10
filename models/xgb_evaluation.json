@@ -1,6 +1,6 @@
 {
   "status": "success",
-  "output_path": "models\\xgb_model.json",
+  "output_path": "C:\\Users\\ACER\\Downloads\\financial_distress_streamlit\\models\\xgb_model.json",
   "features": [
     "X1",
     "X2",
@@ -11369,27 +11369,27 @@
   "active_sample_evaluation": {
     "has_data": true,
     "ratios": {
-      "X1": 0.1955426997642739,
-      "X2": 0.03427266143362623,
-      "X3": 0.05530058967598013,
-      "X4": 0.27233154477231664
+      "X1": 0.0,
+      "X2": 0.0,
+      "X3": 0.0,
+      "X4": 0.0
     },
     "altman": {
-      "z_score": 2.0520570713607773,
-      "classification": "grey area",
-      "is_distress": false,
+      "z_score": 0.0,
+      "classification": "distress",
+      "is_distress": true,
       "cut_off": 1.1
     },
     "mda": {
-      "mda_score": 1.5867048549389238,
-      "classification": "aman",
-      "is_distress": false,
+      "mda_score": 0.0,
+      "classification": "distress",
+      "is_distress": true,
       "cut_off": 0.3844
     },
     "xgboost": {
-      "probability": 0.13211093842983246,
-      "label": 0,
-      "status": "NON-DISTRESS",
+      "probability": 0.94916832447052,
+      "label": 1,
+      "status": "DISTRESS",
       "cut_off": 0.5
     }
   }

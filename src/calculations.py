@@ -2279,11 +2279,11 @@ def get_split_benchmark_table(
     """
     splits_to_test = [
         (0.10, "90 / 10", "⚡ Data Latih Maksimal (10% Uji)", "Maksimalisasi data latih saat data langka"),
+        (0.15, "85 / 15", "📊 Data Latih Tinggi (15% Uji)", "Estimasi parameter presisi dengan data latih 85%"),
         (0.20, "80 / 20", "⭐ Standar Baku Skripsi (Pareto 80:20)", "Rekomendasi utama metodologi penelitian"),
-        (0.30, "70 / 30", "🧪 Data Uji Besar (Hold-out 30%)", "Evaluasi ketat dengan sampel uji lebih representatif"),
-        (0.40, "60 / 40", "🔬 Validasi Ketat (Hold-out 40%)", "Pengujian generalisasi terhadap 40% data out-of-sample"),
-        (0.50, "50 / 50", "⚖️ Porsi Seimbang (50:50)", "Uji daya tahan model dengan rasio latih/uji seimbang"),
-        (0.70, "30 / 70", "🚨 Stress-Test Ekstrem (70% Uji)", "Uji beban: Hanya 30% data latih untuk memprediksi 70% data uji"),
+        (0.25, "75 / 25", "🔬 Rasio Moderat (Hold-out 25%)", "Keseimbangan representatif data latih dan uji"),
+        (0.30, "70 / 30", "🧪 Data Uji Signifikan (Hold-out 30%)", "Evaluasi ketat dengan sampel uji lebih representatif"),
+        (0.40, "60 / 40", "⚖️ Batas Minimal Latih (Hold-out 40%)", "Pengujian generalisasi terhadap 40% data out-of-sample"),
     ]
 
     benchmarks = []

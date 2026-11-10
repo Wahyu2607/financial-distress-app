@@ -1,0 +1,259 @@
+=== PAGE 1 ===
+LEMBAR USER ACCEPTANCE TEST (UAT) 
+Judul Penelitian : Prediksi Financial Distress pada Industri Manufaktur yang Terdaftar Di Bursa Efek Indonesia dengan 
+Pendekatan Extreme Gradient Boosting dan Altman Z-Score. 
+Nama Mahasiswa : Wahyu Pamungkas 
+NIM : 535220037 
+ 
+A. Identitas validator 
+Nama lengkap : 
+Jabatan/posisi : 
+Instansi : 
+Tanggal pengujian : 
+ 
+B. Petunjuk pengisisan 
+1. Lakukan pengujian terhadap aplikasi sesuai dengan skenario yang tertera pada kolom Item Pengujian. 
+2. Perhatikan kesesuaian alur kerja aplikasi, masukan pos keuangan, komputasi rasio, tampilan hasil, serta interpretasi klasifikasi 
+financial distress. 
+3. Berikan tanda centang (✓) pada kolom Status (OK) jika hasil aktual aplikasi sudah sesuai dengan hasil yang diharapkan. 
+4. Tuliskan masukan, saran, revisi, atau catatan tambahan pada kolom Catatan jika diperlukan. 
+
+=== PAGE 2 ===
+5. Lingkari keputusan akhir pada bagian Kesimpulan dan Pengesahan di akhir dokumen. 
+C. Tabel pengujian 
+Tabel berikut menyajikan instrumen User Acceptance Test  (UAT) untuk validasi aplikasi Sistem Pendukung Keputusan ( Decision 
+Support System) prediksi financial distress yang divalidasi oleh pakar /praktisi bidang analisis keuangan dan pasar modal. Fokus 
+utama pengujian ini adalah untuk menilai kesesuaian parameter pos laporan keuangan dan rasio diskriminan (𝑋1 − 𝑋5), kelancaran 
+alur ekstraksi multi -sumber data, akurasi hasil klasifika si tiga model ( Altman Z''-Score, MDA Fisher BEI, dan Machine Learning  
+XGBoost), ketepatan indikator peringatan dini (early warning), serta penegasan bahwa sistem berfungsi sebagai alat bantu skrining 
+risiko dan bukan vonis hukum kepailitan formal. 
+No Item Pengujian Skenario / Detail Pengecekan Hasil yang Diharapkan 
+Status 
+(OK) 
+Catatan 
+1 
+Validasi Parameter 
+Input dan Rasio 
+Keuangan 
+Pengecekan variabel pos neraca dan laba 
+rugi yang digunakan (Aset Lancar, Liabilitas 
+Lancar, Total Aset, Laba Ditahan, EBIT, 
+Total Liabilitas, Total Ekuitas, Pendapatan, 
+Beban Bunga) serta pembentukan rasio 
+diskriminan 𝑋1 (Working Capital/Total 
+Assets), 𝑋2 (Retained Earnings/Total 
+Assets), 𝑋3 (EBIT/Total Assets ), 𝑋4 
+(Equity/Total Liabilities  dengan aturan 
+capping 𝑋4 ≤ 3.0), dan 𝑋5 (Sales/Total 
+Assets). 
+Parameter pos laporan keuangan dan 
+formula rasio yang digunakan sudah 
+relevan, sesuai dengan standar 
+akuntansi keuangan serta kaidah 
+literatur Altman (1995/2017) dalam 
+mendeteksi tekanan likuiditas, 
+profitabilitas, produktivitas, dan 
+solvabilitas emiten manufaktur. 
+[   ]  
+
+=== PAGE 3 ===
+No Item Pengujian Skenario / Detail Pengecekan Hasil yang Diharapkan 
+Status 
+(OK) 
+Catatan 
+2 
+Kesesuaian Alur 
+dan Fleksibilitas 
+Input Data 
+Pengecekan alur pengoperasian sistem 
+mulai dari pemilihan mode input (Input 
+Manual, Impor Excel Taksonomi XBRL 
+resmi IDX, Impor berkas CSV, hingga 
+Ekstraksi Dokumen PDF Laporan 
+Tahunan), proses validasi data, hi ngga 
+eksekusi analisis. 
+Alur aplikasi sistematis, intuitif, dan 
+mudah dipahami. Sistem mampu 
+membaca dan mengekstraksi data 
+secara akurat dari berbagai format 
+berkas tanpa menimbulkan galat teknis. 
+[   ]  
+3 
+Validasi Hasil 
+Klasifikasi Multi-
+Model 
+Pengujian masukan data emiten dengan 
+kondisi fundamental sehat (contoh: ICBP) 
+dan emiten yan g mengalami kerugian/  
+restrukturisasi (contoh: AISA, ALTO, atau 
+ANDI). 
+Sistem berhasil menampilkan kalkulasi 
+dan klasifikasi kondisi kesehatan 
+keuangan secara presisi melalui tiga 
+metode: Altman Z'' -Score (Aman, Grey, 
+Distress), MDA Fisher Koefisien B aru 
+(Cut-off 0.38440.38440.3844), dan 
+model XGBoost ( Distress vs Non-
+Distress). 
+[   ]  
+4 
+Kejelasan Informasi 
+Probabilitas dan 
+Derajat Risiko 
+Pengecekan visualisasi derajat kerentanan 
+finansial, nilai probabilitas distress 
+berbasis sigmoid XGBoost, margin log-
+odds, nilai komparasi skor Altman, serta 
+penetapan konsensus 3 Kategori ( Safe 
+Zone, Grey Area, Distress Zone). 
+Aplikasi menyajikan tingkat probabilitas 
+dan zonasi risiko secara jelas, 
+komunikatif, transparan, dan mudah 
+dipahami melalui indikator visual (gauge 
+meter & lencana status risiko) tanpa 
+ambigu. 
+[   ]  
+
+=== PAGE 4 ===
+No Item Pengujian Skenario / Detail Pengecekan Hasil yang Diharapkan 
+Status 
+(OK) 
+Catatan 
+5 
+Validasi Indikator 
+Peringatan Dini 
+(Early Warning) & 
+Diagnosa 
+Pengecekan modul evaluasi 5 Faktor 
+Pemicu Tekanan Finansial ( EBIT < 0 , TIE < 
+1.0, CFO < 0, CE < 0, NWC < 0), dekomposisi 
+pemicu utama ( distress drivers ), serta 
+rekomendasi manajerial bagi pemangku 
+kepentingan ( equity investor  dan 
+perbankan/kreditur). 
+Indikator peringatan dini dan 
+rekomendasi manajerial yang 
+ditampilkan logis, relevan secara teori 
+manajemen risiko keuangan, dan 
+memberikan wawasan analitis yang 
+dapat ditindak lanjuti (actionable 
+insight). 
+[   ]  
+6 
+Penegasan Bukan 
+Vonis Pailit / Opini 
+Audit Legal 
+Pengecekan adanya klausul bat asan 
+(disclaimer) atau penegasan bahwa hasil 
+prediksi aplikasi adalah alat bantu 
+pendukung keputusan (decision support 
+system) berbasis data historis dan bukan 
+merupakan opini audit akuntan publik 
+independen atau putusan pailit legal 
+pengadilan niaga. 
+Aplikasi secara eksplisit mencantumkan 
+batasan bahwa hasil prediksi sistem 
+merupakan instrumen  skrining awal 
+mitigasi risiko dan tetap memerlukan 
+konfirmasi audit serta analisis 
+fundamental kualitatif mendalam. 
+[   ]  
+7 
+Validasi Komparasi 
+Model & Metrik 
+Evaluasi AI 
+Pengecekan menu evaluasi performa 
+model: lencana keselarasan (Model 
+Concordance Badge), visualisasi matriks 
+kesalahan (Confusion Matrix), kurva ROC -
+AUC, serta ringkasan metrik statistik 
+(Accuracy, Sensitivity/Reca ll, Precision, 
+Modul perbandingan model tersaji 
+secara objek tif, informatif, dan akurat, 
+sehingga mempermudah validator 
+dalam memahami komparasi keandalan 
+metode parametrik statistik dengan 
+algoritma machine learning. 
+[   ]  
+
+=== PAGE 5 ===
+No Item Pengujian Skenario / Detail Pengecekan Hasil yang Diharapkan 
+Status 
+(OK) 
+Catatan 
+Specificity, F1 -Score, dan Youden's J 
+Index). 
+8 
+Kemudahan 
+Pemahaman 
+Tampilan Dasbor 
+dan Visualisasi 
+Pengecekan antarmuka pengguna (UI/UX), 
+tata letak kart u ringkasan eksekutif, 
+kontras warna indikator risiko (Hijau = 
+Aman, Amber/Kuning = Waspada, Merah = 
+Distress), grafik Radar Chart, dan grafik 
+kepentingan fitur (Feature Importance). 
+Tata letak informasi terstruktur rapi, 
+kontras visual nyaman dibaca, 
+representasi grafik mudah 
+diinterpretasikan oleh analis keuangan, 
+serta tidak membingungkan pengguna 
+awam. 
+[   ]  
+9 
+Validasi Riwayat 
+Analisis dan Fitur 
+Ekspor Data 
+Pengecekan fitur penyimpanan riwayat 
+analisis ke basis data, penelusuran kembali 
+histori analisis emiten sebelumnya, filter 
+pencarian riwayat, serta fungsionalitas 
+ekspor rekapan/memo eksekutif ke 
+format Excel atau CSV. 
+Sistem berhasil menyimpan log hasil 
+prediksi dengan integritas data yang 
+konsisten, histori dapat diakses kembali 
+dengan cepat, dan berkas ekspor laporan 
+dapat diunduh tanpa kerusakan format 
+(corrupt). 
+[   ]  
+10 
+Kesesuaian Aplikasi 
+sebagai Sistem 
+Pendukung 
+Keputusan (DSS) 
+Pengecekan fungsionalitas aplikasi secara 
+komprehensif dalam membantu proses 
+mitigasi risiko inv estasi saham, analisis 
+kelayakan kredit perbankan, dan 
+pengawasan kesehatan keuangan 
+perusahaan manufaktur di BEI. 
+Aplikasi dini lai sangat layak dan andal 
+digunakan sebagai Sistem Pendukung 
+Keputusan (Decision Support System) 
+berbasis kecerdasan buatan dan analisis 
+multivariat untuk sektor manufaktur BEI. 
+[   ]  
+ 
+
+=== PAGE 6 ===
+Catatan untuk keseluruhan  
+……………………………………………………………………………………………………………………………………………………………………………………………………………
+……………………………………………………………………………………………………………………………………………………………………………………………………………
+……………………………………………………………………………………………………………………………………………………………………………………………………………
+……………………………………………………………………………………………………………………………………………………………………………………………………………
+……………………………………………………………………………………………………………………………………………………………………………………………………………
+…………………………………………………………………………………………………………………………………………………………………………………………………………… 
+D. Kesimpulan dan pengesahan 
+Berdasarkan hasil pengujian di atas,  maka website Prediksi Financial Distress pada Industri Manufaktur yang Terdaftar Di Bursa Efek Indonesia 
+dengan Pendekatan Extreme Gradient Boosting dan Altman Z-Score. 
+ 
+LAYAK / TIDAK LAYAK *) Lingkari salah satu                                                           Jakarta, ...................................2026 
+Validator/Ahli, 
+ 
+ 
+ 
+ 
+(…………………………………………….) 
+

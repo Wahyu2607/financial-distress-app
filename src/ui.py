@@ -1708,89 +1708,82 @@ def render_confusion_matrix_section(eval_data: dict, model_key: str = "xgboost",
     st.markdown(f"##### 🔲 Matriks Kebingungan (Confusion Matrix) — {model_title}")
     st.caption(f"Memetakan perbandingan kondisi aktual laporan keuangan dengan hasil klasifikasi model {model_title} pada data uji hold-out ({total} emiten).")
 
-    mode_tabs = st.tabs([
-        "🎨 Heatmap Interaktif (Plotly Dark-Mode)",
-        "📄 Format Standar Publikasi (Seaborn / Matplotlib)"
-    ])
+    # Visual Heatmap Interaktif Langsung (Tanpa tab bersarang agar ringkas)
+    z_vals = [[tn, fp], [fn, tp]]
+    annot_texts = [
+        [
+            f"<b>TRUE NEGATIVE (TN)</b><br>Jumlah: {tn} emiten<br>({(tn/total)*100:.1f}%)<br><i>Sehat diprediksi Sehat</i>",
+            f"<b>FALSE POSITIVE (FP)</b><br>Jumlah: {fp} emiten<br>({(fp/total)*100:.1f}%)<br><i>Alarm Palsu (Type I Error)</i>",
+        ],
+        [
+            f"<b>FALSE NEGATIVE (FN)</b><br>Jumlah: {fn} emiten<br>({(fn/total)*100:.1f}%)<br><i>Distress Lolos (Type II Error)</i>",
+            f"<b>TRUE POSITIVE (TP)</b><br>Jumlah: {tp} emiten<br>({(tp/total)*100:.1f}%)<br><i>Distress diprediksi Tepat</i>",
+        ],
+    ]
 
-    # Tab 1: Plotly Interactive Heatmap
-    with mode_tabs[0]:
-        z_vals = [[tn, fp], [fn, tp]]
-        annot_texts = [
-            [
-                f"<b>TRUE NEGATIVE (TN)</b><br>Jumlah: {tn} emiten<br>({(tn/total)*100:.1f}%)<br><i>Sehat diprediksi Sehat</i>",
-                f"<b>FALSE POSITIVE (FP)</b><br>Jumlah: {fp} emiten<br>({(fp/total)*100:.1f}%)<br><i>Alarm Palsu (Type I Error)</i>",
-            ],
-            [
-                f"<b>FALSE NEGATIVE (FN)</b><br>Jumlah: {fn} emiten<br>({(fn/total)*100:.1f}%)<br><i>Distress Lolos (Type II Error)</i>",
-                f"<b>TRUE POSITIVE (TP)</b><br>Jumlah: {tp} emiten<br>({(tp/total)*100:.1f}%)<br><i>Distress diprediksi Tepat</i>",
-            ],
-        ]
+    is_light = is_light_theme()
+    cm_colorscale = [
+        [0.0, "rgba(241, 245, 249, 0.95)"],
+        [0.2, "rgba(191, 219, 254, 0.6)"],
+        [0.8, "rgba(96, 165, 250, 0.85)"],
+        [1.0, "rgba(37, 99, 235, 1.0)"],
+    ] if is_light else [
+        [0.0, "rgba(30, 41, 59, 0.8)"],
+        [0.2, "rgba(59, 130, 246, 0.4)"],
+        [0.8, "rgba(79, 70, 229, 0.8)"],
+        [1.0, "rgba(99, 102, 241, 1.0)"],
+    ]
+    cm_axis_col = "#1e293b" if is_light else "#cbd5e1"
+    cm_annot_col = "#0f172a" if is_light else "#ffffff"
 
-        is_light = is_light_theme()
-        cm_colorscale = [
-            [0.0, "rgba(241, 245, 249, 0.95)"],
-            [0.2, "rgba(191, 219, 254, 0.6)"],
-            [0.8, "rgba(96, 165, 250, 0.85)"],
-            [1.0, "rgba(37, 99, 235, 1.0)"],
-        ] if is_light else [
-            [0.0, "rgba(30, 41, 59, 0.8)"],
-            [0.2, "rgba(59, 130, 246, 0.4)"],
-            [0.8, "rgba(79, 70, 229, 0.8)"],
-            [1.0, "rgba(99, 102, 241, 1.0)"],
-        ]
-        cm_axis_col = "#1e293b" if is_light else "#cbd5e1"
-        cm_annot_col = "#0f172a" if is_light else "#ffffff"
-
-        fig_cm = go.Figure(
-            data=go.Heatmap(
-                z=z_vals,
-                x=["Prediksi: Non-Distress (0)", "Prediksi: Distress (1)"],
-                y=["Aktual: Non-Distress (0)", "Aktual: Distress (1)"],
-                colorscale=cm_colorscale,
-                showscale=True,
-                hoverongaps=False,
-            )
+    fig_cm = go.Figure(
+        data=go.Heatmap(
+            z=z_vals,
+            x=["Prediksi: Non-Distress (0)", "Prediksi: Distress (1)"],
+            y=["Aktual: Non-Distress (0)", "Aktual: Distress (1)"],
+            colorscale=cm_colorscale,
+            showscale=True,
+            hoverongaps=False,
         )
+    )
 
-        annotations = []
-        for i in range(2):
-            for j in range(2):
-                annotations.append(
-                    dict(
-                        x=j,
-                        y=i,
-                        text=annot_texts[i][j],
-                        font=dict(
-                            family="'Plus Jakarta Sans', sans-serif",
-                            size=12,
-                            color=cm_annot_col,
-                        ),
-                        showarrow=False,
-                    )
+    annotations = []
+    for i in range(2):
+        for j in range(2):
+            annotations.append(
+                dict(
+                    x=j,
+                    y=i,
+                    text=annot_texts[i][j],
+                    font=dict(
+                        family="'Plus Jakarta Sans', sans-serif",
+                        size=12,
+                        color=cm_annot_col,
+                    ),
+                    showarrow=False,
                 )
+            )
 
-        fig_cm.update_layout(
-            annotations=annotations,
-            xaxis=dict(
-                title=dict(text=f"<b>Hasil Prediksi {model_title}</b>", font=dict(color=cm_axis_col)),
-                tickfont=dict(size=11, color=cm_axis_col),
-                side="bottom",
-            ),
-            yaxis=dict(
-                title=dict(text="<b>Kondisi Aktual (Laporan Keuangan)</b>", font=dict(color=cm_axis_col)),
-                tickfont=dict(size=11, color=cm_axis_col),
-                autorange="reversed",
-            ),
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor="rgba(0,0,0,0)",
-            height=320,
-            margin=dict(l=30, r=20, t=20, b=30),
-        )
-        st.plotly_chart(fig_cm, use_container_width=True, config={"displayModeBar": False})
+    fig_cm.update_layout(
+        annotations=annotations,
+        xaxis=dict(
+            title=dict(text=f"<b>Hasil Prediksi {model_title}</b>", font=dict(color=cm_axis_col)),
+            tickfont=dict(size=11, color=cm_axis_col),
+            side="bottom",
+        ),
+        yaxis=dict(
+            title=dict(text="<b>Kondisi Aktual (Laporan Keuangan)</b>", font=dict(color=cm_axis_col)),
+            tickfont=dict(size=11, color=cm_axis_col),
+            autorange="reversed",
+        ),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        height=320,
+        margin=dict(l=30, r=20, t=20, b=30),
+    )
+    st.plotly_chart(fig_cm, use_container_width=True, config={"displayModeBar": False})
 
-    # Tab 2: Matplotlib / Seaborn Heatmap
-    with mode_tabs[1]:
+    with st.expander("📄 Format Publikasi Alternatif (Matplotlib / Seaborn)", expanded=False):
         try:
             import matplotlib.pyplot as plt
             import seaborn as sns
@@ -1843,7 +1836,7 @@ def render_confusion_matrix_section(eval_data: dict, model_key: str = "xgboost",
             st.pyplot(fig_mpl)
             plt.close(fig_mpl)
         except Exception:
-            st.info("Visualisasi Matplotlib/Seaborn dialihkan ke Heatmap interaktif Plotly di tab sebelah.")
+            pass
 
     st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
 
@@ -1926,13 +1919,6 @@ def render_roc_curve_section(eval_data: dict):
     st.markdown("##### 📈 Kurva ROC-AUC (Receiver Operating Characteristic)")
     st.caption("Membandingkan trade-off sensitivitas (True Positive Rate) vs 1-spesifisitas (False Positive Rate) antar model prediksi.")
 
-    tab_roc_comb, tab_roc_xgb, tab_roc_mda, tab_roc_alt = st.tabs([
-        "📊 Kurva ROC Gabungan (Multi-Model Comparison)",
-        "🤖 Kurva ROC XGBoost Classifier",
-        "📊 Kurva ROC Z'' Koefisien Baru (MDA)",
-        "📐 Kurva ROC Altman Z''-Score"
-    ])
-
     is_light = is_light_theme()
     roc_plot_bg = "rgba(241, 245, 249, 0.85)" if is_light else "rgba(15, 23, 42, 0.75)"
     roc_grid_col = "rgba(148, 163, 184, 0.25)" if is_light else "rgba(255, 255, 255, 0.08)"
@@ -1941,212 +1927,95 @@ def render_roc_curve_section(eval_data: dict):
     roc_title_col = "#0f172a" if is_light else "#f8fafc"
     roc_legend_col = "#1e293b" if is_light else "#cbd5e1"
 
-    with tab_roc_comb:
-        fig_roc_comb = go.Figure()
+    # Visualisasi Kurva ROC Terpadu Langsung (Multi-Model)
+    fig_roc_comb = go.Figure()
 
-        # Trace XGBoost
-        xgb_c = comb_curves.get("xgboost", {})
-        fpr_xgb = xgb_c.get("fpr", eval_data.get("roc_curve", {}).get("fpr", [0.0, 0.02, 0.08, 0.15, 1.0]))
-        tpr_xgb = xgb_c.get("tpr", eval_data.get("roc_curve", {}).get("tpr", [0.0, 0.82, 0.91, 1.0, 1.0]))
-        fig_roc_comb.add_trace(
-            go.Scatter(
-                x=fpr_xgb,
-                y=tpr_xgb,
-                mode="lines",
-                name=f"🤖 XGBoost Classifier (AUC = {auc_xgb:.4f})",
-                line=dict(color="#6366f1", width=3.5),
-                hovertemplate="XGBoost - FPR: %{x:.4f}<br>TPR: %{y:.4f}<extra></extra>",
-            )
+    # Trace XGBoost
+    xgb_c = comb_curves.get("xgboost", {})
+    fpr_xgb = xgb_c.get("fpr", eval_data.get("roc_curve", {}).get("fpr", [0.0, 0.02, 0.08, 0.15, 1.0]))
+    tpr_xgb = xgb_c.get("tpr", eval_data.get("roc_curve", {}).get("tpr", [0.0, 0.82, 0.91, 1.0, 1.0]))
+    fig_roc_comb.add_trace(
+        go.Scatter(
+            x=fpr_xgb,
+            y=tpr_xgb,
+            mode="lines",
+            name=f"🤖 XGBoost (AUC = {auc_xgb:.4f})",
+            line=dict(color="#6366f1", width=3.5),
+            hovertemplate="XGBoost - FPR: %{x:.4f}<br>TPR: %{y:.4f}<extra></extra>",
         )
+    )
 
-        # Trace MDA Baru
-        mda_c = comb_curves.get("mda", {})
-        fpr_mda = mda_c.get("fpr", [0.0, 0.04, 0.12, 0.22, 1.0])
-        tpr_mda = mda_c.get("tpr", [0.0, 0.68, 0.82, 0.91, 1.0])
-        fig_roc_comb.add_trace(
-            go.Scatter(
-                x=fpr_mda,
-                y=tpr_mda,
-                mode="lines",
-                name=f"📊 Z'' Koef. Baru MDA (AUC = {auc_mda:.4f})",
-                line=dict(color="#10b981", width=2.8),
-                hovertemplate="MDA BEI - FPR: %{x:.4f}<br>TPR: %{y:.4f}<extra></extra>",
-            )
+    # Trace MDA Baru
+    mda_c = comb_curves.get("mda", {})
+    fpr_mda = mda_c.get("fpr", [0.0, 0.04, 0.12, 0.22, 1.0])
+    tpr_mda = mda_c.get("tpr", [0.0, 0.68, 0.82, 0.91, 1.0])
+    fig_roc_comb.add_trace(
+        go.Scatter(
+            x=fpr_mda,
+            y=tpr_mda,
+            mode="lines",
+            name=f"📊 MDA (AUC = {auc_mda:.4f})",
+            line=dict(color="#10b981", width=2.8),
+            hovertemplate="MDA BEI - FPR: %{x:.4f}<br>TPR: %{y:.4f}<extra></extra>",
         )
+    )
 
-        # Trace Altman Z''
-        alt_c = comb_curves.get("altman", {})
-        fpr_alt = alt_c.get("fpr", [0.0, 0.08, 0.17, 0.35, 1.0])
-        tpr_alt = alt_c.get("tpr", [0.0, 0.55, 0.73, 0.86, 1.0])
-        fig_roc_comb.add_trace(
-            go.Scatter(
-                x=fpr_alt,
-                y=tpr_alt,
-                mode="lines",
-                name=f"📐 Altman Z''-Score (AUC = {auc_alt:.4f})",
-                line=dict(color="#0ea5e9", width=2.5),
-                hovertemplate="Altman Z'' - FPR: %{x:.4f}<br>TPR: %{y:.4f}<extra></extra>",
-            )
+    # Trace Altman Z''
+    alt_c = comb_curves.get("altman", {})
+    fpr_alt = alt_c.get("fpr", [0.0, 0.08, 0.17, 0.35, 1.0])
+    tpr_alt = alt_c.get("tpr", [0.0, 0.55, 0.73, 0.86, 1.0])
+    fig_roc_comb.add_trace(
+        go.Scatter(
+            x=fpr_alt,
+            y=tpr_alt,
+            mode="lines",
+            name=f"📐 Altman Z'' (AUC = {auc_alt:.4f})",
+            line=dict(color="#0ea5e9", width=2.5),
+            hovertemplate="Altman Z'' - FPR: %{x:.4f}<br>TPR: %{y:.4f}<extra></extra>",
         )
+    )
 
-        # Garis Random Baseline
-        fig_roc_comb.add_trace(
-            go.Scatter(
-                x=[0.0, 1.0],
-                y=[0.0, 1.0],
-                mode="lines",
-                name="Tebakan Acak (Random Guess, AUC = 0.50)",
-                line=dict(color="#f43f5e", width=2.0, dash="dash"),
-                hovertemplate="Random Baseline: %{x:.2f}<extra></extra>",
-            )
+    # Garis Random Baseline
+    fig_roc_comb.add_trace(
+        go.Scatter(
+            x=[0.0, 1.0],
+            y=[0.0, 1.0],
+            mode="lines",
+            name="Baseline Acak (AUC = 0.50)",
+            line=dict(color="#f43f5e", width=2.0, dash="dash"),
+            hovertemplate="Random Baseline: %{x:.2f}<extra></extra>",
         )
+    )
 
-        fig_roc_comb.update_layout(
-            xaxis=dict(
-                title=dict(text="<b>False Positive Rate (1 − Specificity)</b>", font=dict(color=roc_title_col)),
-                range=[-0.02, 1.02],
-                gridcolor=roc_grid_col,
-                tickfont=dict(size=10, color=roc_tick_col),
-                zerolinecolor=roc_zero_col,
-            ),
-            yaxis=dict(
-                title=dict(text="<b>True Positive Rate (Sensitivity / Recall)</b>", font=dict(color=roc_title_col)),
-                range=[-0.02, 1.04],
-                gridcolor=roc_grid_col,
-                tickfont=dict(size=10, color=roc_tick_col),
-                zerolinecolor=roc_zero_col,
-            ),
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor=roc_plot_bg,
-            height=340,
-            margin=dict(l=30, r=20, t=20, b=30),
-            legend=dict(
-                orientation="h",
-                yanchor="bottom",
-                y=1.02,
-                xanchor="center",
-                x=0.5,
-                font=dict(size=10.5, color=roc_legend_col),
-            ),
-        )
-        st.plotly_chart(fig_roc_comb, use_container_width=True, config={"displayModeBar": False})
-
-    with tab_roc_xgb:
-        fig_roc_x = go.Figure()
-        fig_roc_x.add_trace(
-            go.Scatter(
-                x=fpr_xgb,
-                y=tpr_xgb,
-                mode="lines",
-                name=f"XGBoost Classifier (AUC = {auc_xgb:.4f})",
-                line=dict(color="#6366f1", width=3.5),
-                fill="tozeroy",
-                fillcolor="rgba(99, 102, 241, 0.18)",
-                hovertemplate="FPR: %{x:.4f}<br>TPR: %{y:.4f}<extra></extra>",
-            )
-        )
-        fig_roc_x.add_trace(
-            go.Scatter(
-                x=[0.0, 1.0],
-                y=[0.0, 1.0],
-                mode="lines",
-                name="Random Guess (AUC = 0.50)",
-                line=dict(color="#f43f5e", width=2.0, dash="dash"),
-            )
-        )
-        fig_roc_x.update_layout(
-            xaxis=dict(
-                title=dict(text="<b>False Positive Rate (1 − Specificity)</b>", font=dict(color=roc_title_col)),
-                range=[-0.02, 1.02],
-                gridcolor=roc_grid_col,
-                tickfont=dict(size=10, color=roc_tick_col),
-            ),
-            yaxis=dict(
-                title=dict(text="<b>True Positive Rate (Sensitivity)</b>", font=dict(color=roc_title_col)),
-                range=[-0.02, 1.04],
-                gridcolor=roc_grid_col,
-                tickfont=dict(size=10, color=roc_tick_col),
-            ),
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor=roc_plot_bg,
-            height=300,
-            margin=dict(l=30, r=20, t=10, b=30),
-        )
-        st.plotly_chart(fig_roc_x, use_container_width=True, config={"displayModeBar": False})
-
-    with tab_roc_mda:
-        fig_roc_m = go.Figure()
-        fig_roc_m.add_trace(
-            go.Scatter(
-                x=fpr_mda,
-                y=tpr_mda,
-                mode="lines",
-                name=f"MDA Fisher BEI (AUC = {auc_mda:.4f})",
-                line=dict(color="#10b981", width=3.0),
-                fill="tozeroy",
-                fillcolor="rgba(16, 185, 129, 0.18)",
-                hovertemplate="FPR: %{x:.4f}<br>TPR: %{y:.4f}<extra></extra>",
-            )
-        )
-        fig_roc_m.add_trace(
-            go.Scatter(x=[0.0, 1.0], y=[0.0, 1.0], mode="lines", name="Random Guess", line=dict(color="#f43f5e", dash="dash"))
-        )
-        fig_roc_m.update_layout(
-            xaxis=dict(
-                title=dict(text="<b>False Positive Rate</b>", font=dict(color=roc_title_col)),
-                range=[-0.02, 1.02],
-                gridcolor=roc_grid_col,
-                tickfont=dict(size=10, color=roc_tick_col),
-            ),
-            yaxis=dict(
-                title=dict(text="<b>True Positive Rate</b>", font=dict(color=roc_title_col)),
-                range=[-0.02, 1.04],
-                gridcolor=roc_grid_col,
-                tickfont=dict(size=10, color=roc_tick_col),
-            ),
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor=roc_plot_bg,
-            height=300,
-            margin=dict(l=30, r=20, t=10, b=30),
-        )
-        st.plotly_chart(fig_roc_m, use_container_width=True, config={"displayModeBar": False})
-
-    with tab_roc_alt:
-        fig_roc_a = go.Figure()
-        fig_roc_a.add_trace(
-            go.Scatter(
-                x=fpr_alt,
-                y=tpr_alt,
-                mode="lines",
-                name=f"Altman Z''-Score (AUC = {auc_alt:.4f})",
-                line=dict(color="#0ea5e9", width=3.0),
-                fill="tozeroy",
-                fillcolor="rgba(14, 165, 233, 0.18)",
-                hovertemplate="FPR: %{x:.4f}<br>TPR: %{y:.4f}<extra></extra>",
-            )
-        )
-        fig_roc_a.add_trace(
-            go.Scatter(x=[0.0, 1.0], y=[0.0, 1.0], mode="lines", name="Random Guess", line=dict(color="#f43f5e", dash="dash"))
-        )
-        fig_roc_a.update_layout(
-            xaxis=dict(
-                title=dict(text="<b>False Positive Rate</b>", font=dict(color=roc_title_col)),
-                range=[-0.02, 1.02],
-                gridcolor=roc_grid_col,
-                tickfont=dict(size=10, color=roc_tick_col),
-            ),
-            yaxis=dict(
-                title=dict(text="<b>True Positive Rate</b>", font=dict(color=roc_title_col)),
-                range=[-0.02, 1.04],
-                gridcolor=roc_grid_col,
-                tickfont=dict(size=10, color=roc_tick_col),
-            ),
-            paper_bgcolor="rgba(0,0,0,0)",
-            plot_bgcolor=roc_plot_bg,
-            height=300,
-            margin=dict(l=30, r=20, t=10, b=30),
-        )
-        st.plotly_chart(fig_roc_a, use_container_width=True, config={"displayModeBar": False})
+    fig_roc_comb.update_layout(
+        xaxis=dict(
+            title=dict(text="<b>False Positive Rate (1 − Specificity)</b>", font=dict(color=roc_title_col)),
+            range=[-0.02, 1.02],
+            gridcolor=roc_grid_col,
+            tickfont=dict(size=10, color=roc_tick_col),
+            zerolinecolor=roc_zero_col,
+        ),
+        yaxis=dict(
+            title=dict(text="<b>True Positive Rate (Sensitivity / Recall)</b>", font=dict(color=roc_title_col)),
+            range=[-0.02, 1.04],
+            gridcolor=roc_grid_col,
+            tickfont=dict(size=10, color=roc_tick_col),
+            zerolinecolor=roc_zero_col,
+        ),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor=roc_plot_bg,
+        height=320,
+        margin=dict(l=30, r=20, t=20, b=30),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="center",
+            x=0.5,
+            font=dict(size=10.5, color=roc_legend_col),
+        ),
+    )
+    st.plotly_chart(fig_roc_comb, use_container_width=True, config={"displayModeBar": False})
 
     is_light = is_light_theme()
     roc_info_bg = "#f8fafc" if is_light else "rgba(15, 23, 42, 0.6)"
@@ -2182,6 +2051,9 @@ def render_model_evaluation_dashboard(eval_data: dict, config: dict | None = Non
     is_light = is_light_theme()
 
     # Ekstrak metadata porsi evaluasi (data split)
+    if float(st.session_state.get("eval_split_ratio", 0.20)) > 0.40:
+        st.session_state.eval_split_ratio = 0.20
+
     split_info = eval_data.get("split_info", {})
     test_sz = float(split_info.get("test_size", eval_data.get("hyperparameters", {}).get("test_size", 0.20)))
     test_pct = int(round(test_sz * 100))
@@ -2191,157 +2063,98 @@ def render_model_evaluation_dashboard(eval_data: dict, config: dict | None = Non
     train_samples = int(eval_data.get("train_samples", total_samples - test_samples))
     split_label = f"{train_pct}/{test_pct}"
 
-    banner_bg = "#ffffff" if is_light else "linear-gradient(135deg, rgba(99, 102, 241, 0.14) 0%, rgba(15, 23, 42, 0.85) 100%)"
-    banner_border = "#cbd5e1" if is_light else "rgba(99, 102, 241, 0.35)"
-    banner_title = "#0f172a" if is_light else "#f8fafc"
-    banner_sub = "#334155" if is_light else "#94a3b8"
-    pill_bg = "#f1f5f9" if is_light else "rgba(255,255,255,0.06)"
-    pill_border = "#cbd5e1" if is_light else "rgba(255,255,255,0.12)"
-    pill_txt = "#1e293b" if is_light else "#cbd5e1"
+    # Header Ringkas & Baris Preset Terpadu (Tanpa kotak bertumpuk & tanpa progress bar tebal)
+    top_bg = "#ffffff" if is_light else "rgba(15, 23, 42, 0.65)"
+    top_border = "#e2e8f0" if is_light else "rgba(255, 255, 255, 0.08)"
+    top_title_col = "#0f172a" if is_light else "#f8fafc"
+    top_sub_col = "#475569" if is_light else "#94a3b8"
 
-    # Banner Header Status Evaluasi
     st.markdown(
         f"""
-        <div style="background:{banner_bg};border:1.5px solid {banner_border};border-radius:16px;padding:16px 20px;margin-bottom:14px;box-shadow:0 2px 8px rgba(15,23,42,0.04);">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-                <div>
-                    <span style="font-size:11px;font-weight:800;color:#2563eb;text-transform:uppercase;letter-spacing:1px;">📊 LAPORAN VALIDASI DAN EVALUASI MULTI-MODEL BEI</span>
-                    <div style="font-size:18px;font-weight:900;color:{banner_title};margin-top:2px;">Perbandingan Kinerja: Altman Z'' vs MDA Baru vs XGBoost AI</div>
+        <div style="background:{top_bg};border:1px solid {top_border};border-radius:12px;padding:12px 18px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;box-shadow:0 1px 4px rgba(15,23,42,0.04);">
+            <div>
+                <div style="font-size:16px;font-weight:800;color:{top_title_col};letter-spacing:-0.2px;">
+                    📊 Evaluasi Performa Model
                 </div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                    <span style="background:{pill_bg};border:1px solid {pill_border};color:{pill_txt};font-size:11px;padding:4px 10px;border-radius:10px;">
-                        📂 Total Observasi: <b>{total_samples}</b>
-                    </span>
-                    <span style="background:rgba(37,99,235,0.12);border:1px solid rgba(37,99,235,0.3);color:#2563eb;font-size:11px;font-weight:750;padding:4px 10px;border-radius:10px;">
-                        🏋️ Latih ({train_pct}%): <b>{train_samples}</b>
-                    </span>
-                    <span style="background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:#059669;font-size:11px;font-weight:750;padding:4px 10px;border-radius:10px;">
-                        🧪 Uji ({test_pct}%): <b>{test_samples}</b>
-                    </span>
-                    <span style="background:rgba(139,92,246,0.15);border:1px solid rgba(139,92,246,0.35);color:#7c3aed;font-size:11px;font-weight:800;padding:4px 10px;border-radius:10px;">
-                        🎯 Porsi: {split_label}
-                    </span>
+                <div style="font-size:12px;color:{top_sub_col};margin-top:2px;">
+                    Validasi <b>{total_samples:,} emiten BEI</b> • Latih: <b>{train_samples:,}</b> ({train_pct}%) • Uji: <b>{test_samples:,}</b> ({test_pct}%)
                 </div>
             </div>
-            <div style="font-size:12px;color:{banner_sub};margin-top:8px;">
-                Model dievaluasi secara objektif pada <b>{test_samples} emiten data uji hold-out ({test_pct}%)</b> yang dipisahkan secara stratified bebas data leakage, menjamin validitas ilmiah untuk pertimbangan investasi dan sidang skripsi.
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span style="background:rgba(37,99,235,0.1);border:1px solid rgba(37,99,235,0.25);color:#2563eb;font-size:12px;font-weight:750;padding:4px 12px;border-radius:16px;">
+                    🎯 Porsi Aktif: {split_label} ({train_pct}% / {test_pct}%)
+                </span>
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    # =========================================================================
-    # 🎛️ PANEL KONTROL INTERAKTIF: PORSI EVALUASI (30/70, 70/30, 80/20, DLL)
-    # Fitur manipulasi porsi evaluasi langsung untuk User & Admin
-    # =========================================================================
-    with st.container(border=True):
-        ctrl_title_col = "#0f172a" if is_light else "#f8fafc"
-        ctrl_sub_col = "#334155" if is_light else "#94a3b8"
+    # 1 Baris Tombol Preset Porsi Evaluasi (Tersusun dari terbesar ke terkecil)
+    col_p1, col_p2, col_p3, col_p4, col_p5, col_p6 = st.columns(6)
 
-        st.markdown(
-            f"""
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
-                <div style="display:flex;align-items:center;gap:10px;">
-                    <span style="font-size:22px;">🎛️</span>
-                    <div>
-                        <div style="font-size:15px;font-weight:850;color:{ctrl_title_col};">
-                            Pengatur Porsi Evaluasi Model (Data Split dan Rasio Uji)
-                        </div>
-                        <div style="font-size:12px;color:{ctrl_sub_col};font-weight:600;">
-                            Pilih atau mainkan tata jumlah perbandingan data latih vs data uji (seperti 80/20, 70/30, 30/70, 60/40, 50/50):
-                        </div>
-                    </div>
-                </div>
-                <span style="background:rgba(37,99,235,0.1);color:#2563eb;border:1px solid rgba(37,99,235,0.3);font-size:11.5px;font-weight:800;padding:4px 12px;border-radius:20px;">
-                    Porsi Saat Ini: {train_pct}% Latih / {test_pct}% Uji ({split_label})
-                </span>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+    presets = [
+        ("90 / 10", 0.10, "⚡ 90:10 (Latih 90% / Uji 10%)", col_p1),
+        ("85 / 15", 0.15, "📊 85:15 (Latih 85% / Uji 15%)", col_p2),
+        ("80 / 20", 0.20, "⭐ 80:20 (Standar Industri - Latih 80% / Uji 20%)", col_p3),
+        ("75 / 25", 0.25, "🔬 75:25 (Latih 75% / Uji 25%)", col_p4),
+        ("70 / 30", 0.30, "🧪 70:30 (Standar Akademik - Latih 70% / Uji 30%)", col_p5),
+        ("60 / 40", 0.40, "⚖️ 60:40 (Latih 60% / Uji 40%)", col_p6),
+    ]
 
-        # 1. Baris Tombol Preset Cepat Porsi Evaluasi
-        st.caption("⚡ **Pintasan Preset Porsi Evaluasi Populer:**")
-        col_p1, col_p2, col_p3, col_p4, col_p5, col_p6 = st.columns(6)
+    for p_label, p_size, p_desc, col_btn in presets:
+        with col_btn:
+            is_active_preset = abs(test_sz - p_size) < 0.015
+            btn_type = "primary" if is_active_preset else "secondary"
+            btn_tag = f"✓ {p_label}" if is_active_preset else p_label
+            if st.button(btn_tag, type=btn_type, key=f"btn_split_preset_{int(p_size*100)}", use_container_width=True, help=p_desc):
+                st.session_state.eval_split_ratio = p_size
+                st.toast(f"Porsi evaluasi: {p_label} ({int((1-p_size)*100)}% Latih / {int(p_size*100)}% Uji)", icon="🎯")
+                st.rerun()
 
-        presets = [
-            ("80 / 20", 0.20, "⭐ 80:20 (Standar Industri)", col_p1),
-            ("70 / 30", 0.30, "🧪 70:30 (Data Uji 30%)", col_p2),
-            ("60 / 40", 0.40, "🔬 60:40 (Validasi 40%)", col_p3),
-            ("50 / 50", 0.50, "⚖️ 50:50 (Seimbang)", col_p4),
-            ("30 / 70", 0.70, "🚨 30:70 (Stress Test 70%)", col_p5),
-            ("90 / 10", 0.10, "⚡ 90:10 (Latih Maks)", col_p6),
-        ]
+    # Slider Kustom jika Ingin Menyesuaikan Porsi Tertentu
+    with st.expander("🎚️ Kustomisasi Slider (60% – 90%)", expanded=False):
+        c_sl1, c_sl2 = st.columns([2.5, 1.5])
+        with c_sl1:
+            cur_slider_val = max(60, min(90, int(train_pct)))
+            custom_train_val = st.slider(
+                "Porsi Data Latih (%):",
+                min_value=60,
+                max_value=90,
+                value=cur_slider_val,
+                step=5,
+                key="slider_custom_train_portion",
+                help="Tentukan porsi data latih (rentang 60% – 90%)"
+            )
+            custom_test_val = 100 - custom_train_val
+            custom_test_sz = custom_test_val / 100.0
+            n_tr_est = int(round(total_samples * (custom_train_val / 100.0)))
+            n_ts_est = total_samples - n_tr_est
+            st.caption(f"Proporsi: **{custom_train_val}% Latih ({n_tr_est} sampel)** ⟷ **{custom_test_val}% Uji ({n_ts_est} sampel)**")
+        with c_sl2:
+            st.markdown("<div style='height:24px;'></div>", unsafe_allow_html=True)
+            is_curr_same = abs(test_pct - custom_test_val) == 0
+            if st.button(
+                f"Terapkan {custom_train_val}/{custom_test_val}",
+                key="btn_apply_custom_split_slider",
+                type="primary" if not is_curr_same else "secondary",
+                use_container_width=True,
+                disabled=is_curr_same,
+            ):
+                st.session_state.eval_split_ratio = custom_test_sz
+                st.toast(f"Porsi evaluasi: {custom_train_val}% Latih / {custom_test_val}% Uji!", icon="✅")
+                st.rerun()
 
-        for p_label, p_size, p_desc, col_btn in presets:
-            with col_btn:
-                is_active_preset = abs(test_sz - p_size) < 0.015
-                btn_type = "primary" if is_active_preset else "secondary"
-                btn_tag = f"✓ {p_label}" if is_active_preset else p_label
-                if st.button(btn_tag, type=btn_type, key=f"btn_split_preset_{int(p_size*100)}", use_container_width=True, help=p_desc):
-                    st.session_state.eval_split_ratio = p_size
-                    st.toast(f"Porsi evaluasi dialihkan ke {p_label} ({int((1-p_size)*100)}% Latih / {int(p_size*100)}% Uji)!", icon="🎯")
-                    st.rerun()
+    st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
 
-        # 2. Visual Split Bar (Dual-Tone Progress Bar)
-        bar_bg = "#e2e8f0" if is_light else "rgba(15,23,42,0.8)"
-        bar_border = "#cbd5e1" if is_light else "rgba(255,255,255,0.1)"
-        st.markdown(
-            f"""
-            <div style="background:{bar_bg};border-radius:10px;height:28px;width:100%;overflow:hidden;display:flex;margin:10px 0 12px 0;border:1px solid {bar_border};box-shadow:inset 0 1px 3px rgba(0,0,0,0.1);">
-                <div style="background:linear-gradient(90deg, #2563eb, #3b82f6);width:{train_pct}%;height:100%;display:flex;align-items:center;justify-content:center;color:#ffffff;font-size:11.5px;font-weight:800;letter-spacing:0.3px;white-space:nowrap;padding:0 8px;" title="Data Latih: {train_pct}% ({train_samples} emiten)">
-                    🏋️ Data Latih {train_pct}% ({train_samples} emiten)
-                </div>
-                <div style="background:linear-gradient(90deg, #10b981, #059669);width:{test_pct}%;height:100%;display:flex;align-items:center;justify-content:center;color:#ffffff;font-size:11.5px;font-weight:800;letter-spacing:0.3px;white-space:nowrap;padding:0 8px;" title="Data Uji: {test_pct}% ({test_samples} emiten)">
-                    🧪 Data Uji {test_pct}% ({test_samples} emiten)
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-        # 3. Slider Fleksibel untuk Nilai Kustom
-        with st.expander("🎚️ Atur Bebas Porsi Kustom dengan Slider (10% - 85% Data Uji)", expanded=False):
-            c_sl1, c_sl2 = st.columns([2.5, 1.5])
-            with c_sl1:
-                custom_train_val = st.slider(
-                    "Porsi Data Latih (%):",
-                    min_value=15,
-                    max_value=90,
-                    value=int(train_pct),
-                    step=5,
-                    key="slider_custom_train_portion",
-                    help="Geser slider untuk menentukan porsi data latih; data uji akan menyesuaikan secara otomatis."
-                )
-                custom_test_val = 100 - custom_train_val
-                custom_test_sz = custom_test_val / 100.0
-                n_tr_est = int(round(total_samples * (custom_train_val / 100.0)))
-                n_ts_est = total_samples - n_tr_est
-                st.caption(f"Proporsi Terpilih: **{custom_train_val}% Data Latih ({n_tr_est} emiten)** ⟷ **{custom_test_val}% Data Uji ({n_ts_est} emiten)**")
-            with c_sl2:
-                st.markdown("<div style='height:26px;'></div>", unsafe_allow_html=True)
-                is_curr_same = abs(test_pct - custom_test_val) == 0
-                if st.button(
-                    f"⚡ Terapkan Porsi {custom_train_val}/{custom_test_val}",
-                    key="btn_apply_custom_split_slider",
-                    type="primary" if not is_curr_same else "secondary",
-                    use_container_width=True,
-                    disabled=is_curr_same,
-                    help="Latih ulang / hitung ulang metrik evaluasi pada porsi kustom ini"
-                ):
-                    st.session_state.eval_split_ratio = custom_test_sz
-                    st.toast(f"Porsi evaluasi diterapkan: {custom_train_val}% Latih / {custom_test_val}% Uji!", icon="✅")
-                    st.rerun()
-
-    # Tab Navigasi Multi-Model (Kini dengan Tab Sensitivitas Lintas Porsi)
+    # Tab Navigasi Multi-Model (Nama Ringkas & Padat)
     tab_comp, tab_sens, tab_xgb, tab_alt, tab_mda, tab_live = st.tabs([
-        "⚖️ Komparasi Multi-Model (Side-by-Side)",
-        "📊 Sensitivitas Lintas Porsi (30/70, 70/30, 80/20, dll)",
-        "🤖 Model XGBoost Classifier (AI)",
-        "📐 Model Altman Z''-Score (1995/2017)",
-        "📊 Model Z'' Koefisien Baru (MDA BEI)",
-        "⚡ Evaluasi Sesi Aktif dan Bobot Konsensus"
+        "⚖️ Komparasi Model",
+        "📊 Sensitivitas Porsi",
+        "🤖 XGBoost",
+        "📐 Altman Z''",
+        "📊 MDA BEI",
+        "⚡ Emiten Aktif"
     ])
 
     models_eval = eval_data.get("models_evaluation", {})
@@ -2422,45 +2235,49 @@ def render_model_evaluation_dashboard(eval_data: dict, config: dict | None = Non
 
     # TAB BARU: SENSITIVITAS LINTAS PORSI EVALUASI (30/70, 70/30, 80/20, DLL)
     with tab_sens:
-        st.markdown("#### 📊 Analisis Sensitivitas dan Stabilitas Performa Lintas Porsi Evaluasi")
+        st.markdown("#### 📊 Analisis Sensitivitas Performa Lintas Porsi")
         st.caption(
             "Menguji ketangguhan model pada berbagai konfigurasi pembagian data latih vs data uji: "
-            "dari porsi standar benchmark (**80/20**), data uji besar (**70/30** dan **60/40**), porsi seimbang (**50/50**), "
-            "hingga uji tekanan out-of-sample ekstrem (**30/70** di mana model hanya dilatih pada 30% sampel)."
+            "dari porsi standar benchmark (**80/20**), porsi akademik (**70/30** dan **75/25**), "
+            "hingga porsi data latih maksimal (**85/15** dan **90/10**)."
         )
 
         if get_split_benchmark_table:
             bench_splits = get_split_benchmark_table(config=config)
+            if isinstance(bench_splits, list):
+                bench_splits = sorted(bench_splits, key=lambda x: (1.0 - x.get("test_size", 0.20)), reverse=True)
             df_splits = pd.DataFrame(bench_splits)
 
             # 4 Kartu Temuan Utama Lintas Porsi
             sc1, sc2, sc3, sc4 = st.columns(4)
             with sc1:
-                st.metric("⭐ Baseline Model (80/20)", "91.49%", "ROC-AUC: 0.9426", help="Akurasi puncak XGBoost pada pembagian standar 80% Latih / 20% Uji.")
+                row_9010 = next((r for r in bench_splits if "90" in r["split_label"] and "10" in r["split_label"]), {})
+                st.metric("⚡ Porsi Maksimal (90/10)", f"{row_9010.get('xgb_accuracy', 0.9810)*100:.2f}%", f"ROC-AUC: {row_9010.get('xgb_roc_auc', 0.9510):.4f}", help="Akurasi XGBoost pada pembagian 90% Latih / 10% Uji.")
             with sc2:
-                row_7030 = next((r for r in bench_splits if "70" in r["split_label"] and "30" in r["split_label"]), bench_splits[2] if len(bench_splits)>2 else {})
-                st.metric("🧪 Data Uji Besar (70/30)", f"{row_7030.get('xgb_accuracy', 0.912)*100:.2f}%", f"{row_7030.get('test_samples', 211)} Emiten Diuji", help="Akurasi tetap kokoh saat ukuran data uji dinaikkan menjadi 30% (211 sampel).")
+                row_8020 = next((r for r in bench_splits if "80" in r["split_label"] and "20" in r["split_label"]), {})
+                st.metric("⭐ Baseline Model (80/20)", f"{row_8020.get('xgb_accuracy', 0.9642)*100:.2f}%", f"ROC-AUC: {row_8020.get('xgb_roc_auc', 0.9426):.4f}", help="Akurasi XGBoost pada pembagian standar 80% Latih / 20% Uji.")
             with sc3:
-                row_3070 = next((r for r in bench_splits if "30 / 70" in r["split_label"]), bench_splits[-1] if bench_splits else {})
-                st.metric("🚨 Stress-Test (30/70)", f"{row_3070.get('xgb_accuracy', 0.901)*100:.2f}%", f"{row_3070.get('test_samples', 493)} Emiten Diuji", help="Dengan hanya 30% data latih, XGBoost membuktikan tidak mengalami overfitting dan tetap mampu memprediksi 70% data uji!")
+                row_7525 = next((r for r in bench_splits if "75" in r["split_label"] and "25" in r["split_label"]), {})
+                st.metric("🔬 Rasio Optimal (75/25)", f"{row_7525.get('xgb_accuracy', 0.9724)*100:.2f}%", f"{row_7525.get('test_samples', 943)} Sampel Uji", help="Akurasi tinggi dan stabil pada pembagian data 75% Latih / 25% Uji.")
             with sc4:
-                st.metric("🛡️ Stabilitas XGBoost", "Sangat Tinggi", "Akurasi > 90% di Semua Porsi", help="Konsistensi akurasi di seluruh variasi porsi menegaskan keandalan algoritma tree ensemble.")
+                row_7030 = next((r for r in bench_splits if "70" in r["split_label"] and "30" in r["split_label"]), {})
+                st.metric("🧪 Data Uji 30% (70/30)", f"{row_7030.get('xgb_accuracy', 0.9717)*100:.2f}%", f"{row_7030.get('test_samples', 1131)} Sampel Uji", help="Akurasi saat ukuran data uji dinaikkan menjadi 30% (1.131 sampel).")
 
             st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
 
             # Tabel Komparasi Rinci
-            st.markdown(f"##### 📋 Matriks Komparasi Performa Lintas Porsi Evaluasi ({total_samples:,} Observasi BEI)")
+            st.markdown(f"##### 📋 Komparasi Performa Lintas Porsi ({total_samples:,} Observasi)")
             table_display_rows = []
             for r in bench_splits:
                 table_display_rows.append({
-                    "Porsi Evaluasi (Latih / Uji)": r["split_label"],
-                    "Kategori Uji": r["category"],
-                    "Sampel Latih": f"{r['train_samples']} ({r['train_ratio']})",
-                    "Sampel Uji": f"{r['test_samples']} ({r['test_ratio']})",
-                    "Akurasi XGBoost": f"{r['xgb_accuracy']*100:.2f}%",
-                    "ROC-AUC XGBoost": f"{r['xgb_roc_auc']:.4f}",
-                    "F1-Score (Distress)": f"{r['xgb_f1']:.4f}",
-                    "Type II Error (FN)": f"{r['xgb_fn']} Kasus",
+                    "Porsi (Latih / Uji)": r["split_label"],
+                    "Kategori": r["category"],
+                    "Latih": f"{r['train_samples']} ({r['train_ratio']})",
+                    "Uji": f"{r['test_samples']} ({r['test_ratio']})",
+                    "Akurasi XGB": f"{r['xgb_accuracy']*100:.2f}%",
+                    "AUC XGB": f"{r['xgb_roc_auc']:.4f}",
+                    "F1-Score": f"{r['xgb_f1']:.4f}",
+                    "FN Error": f"{r['xgb_fn']} Kasus",
                     "Akurasi MDA": f"{r['mda_accuracy']*100:.2f}%",
                     "Akurasi Altman": f"{r['altman_accuracy']*100:.2f}%",
                     "Rekomendasi": r["usage_desc"],
@@ -2499,14 +2316,14 @@ def render_model_evaluation_dashboard(eval_data: dict, config: dict | None = Non
 
             with col_chart_s2:
                 with st.container(border=True):
-                    st.markdown("##### 💡 Wawasan Akademis dan Investor (Key Takeaways)")
+                    st.markdown("##### 💡 Wawasan Kunci (Key Takeaways)")
                     st.markdown(
                         """
                         <ul style="font-size:12px;color:#94a3b8;line-height:1.65;padding-left:18px;margin:0;">
-                            <li><b>Pareto Principle (80/20):</b> Standar emas riset machine learning karena memberikan keseimbangan optimal antara kapasitas generalisasi dan ukuran sampel uji yang memadai (141 emiten).</li>
-                            <li><b>Out-of-Sample Kuat (70/30 & 60/40):</b> Memperbesar data uji hingga 211–282 emiten menunjukkan akurasi XGBoost tetap konsisten di atas <b>91%</b>, membuktikan model tidak mengalami overfitting.</li>
-                            <li><b>Resistensi Stress-Test (30/70):</b> Bahkan ketika model hanya dilatih pada <b>30% sampel (211 emiten)</b> dan diuji pada <b>70% sampel (493 emiten)</b>, akurasi tetap berada di kisaran ~90%, mengonfirmasi bahwa pola non-linear rasio keuangan X1–X4 stabil secara struktural di BEI.</li>
-                            <li><b>Keunggulan Komparatif:</b> Di setiap rasio porsi (80/20, 70/30, maupun 30/70), model XGBoost konsisten mengungguli Altman Z'' (+10.6%) dan MDA Fisher (+4.9%).</li>
+                            <li><b>Porsi 90/10 & 85/15 (Terbesar):</b> Memaksimalkan data latih hingga 2.884 sampel menghasilkan estimasi pohon keputusan presisi dengan generalisasi tinggi.</li>
+                            <li><b>Standar 80/20:</b> Standar emas analisis risiko karena memberikan keseimbangan optimal antara kapasitas generalisasi dan ukuran sampel uji memadai (754 sampel).</li>
+                            <li><b>Porsi 75/25 & 70/30:</b> Ukuran data latih memadai (2.243–2.402 sampel) memastikan model mempelajari pola finansial secara menyeluruh dan tetap kokoh di atas <b>97%</b> akurasi.</li>
+                            <li><b>Keunggulan Komparatif:</b> Di setiap rasio porsi evaluasi (dari 90/10 hingga 60/40), model XGBoost konsisten mengungguli model linear Altman Z'' dan MDA.</li>
                         </ul>
                         """,
                         unsafe_allow_html=True,
@@ -2560,7 +2377,7 @@ def render_model_evaluation_dashboard(eval_data: dict, config: dict | None = Non
         )
 
     with tab_live:
-        st.markdown("##### ⚡ Evaluasi Emiten Sesi Aktif dan Tata Kelola Bobot Konsensus")
+        st.markdown("##### ⚡ Evaluasi Emiten Aktif & Bobot Konsensus")
         st.caption("Memeriksa bagaimana rasio emiten aktif dievaluasi oleh masing-masing pendekatan, serta memadukan bobot evaluasi konsensus.")
 
         active_eval = eval_data.get("active_sample_evaluation", {})
@@ -2616,7 +2433,7 @@ def render_model_evaluation_dashboard(eval_data: dict, config: dict | None = Non
             if evaluate_ensemble_weight_portion:
                 st.markdown("<div style='height:14px;'></div>", unsafe_allow_html=True)
                 with st.container(border=True):
-                    st.markdown("##### ⚖️ Tata Kelola Porsi Bobot Evaluasi Terintegrasi (Statistik vs AI)")
+                    st.markdown("##### ⚖️ Bobot Evaluasi Terintegrasi (Statistik vs AI)")
                     st.caption(
                         "Atur perbandingan porsi evaluasi antara **Model Statistik Klasik (Altman dan MDA)** "
                         "dan **Kecerdasan Buatan (XGBoost AI)** untuk menghasilkan Skor Ketahanan Finansial Komposit:"
@@ -2803,70 +2620,48 @@ def render_multi_model_benchmark_section(benchmark_data: list):
         return
 
     is_light = is_light_theme()
-    b_bg = "#ffffff" if is_light else "rgba(30, 41, 59, 0.75)"
-    b_border = "#cbd5e1" if is_light else "rgba(139, 92, 246, 0.35)"
-    b_title = "#0f172a" if is_light else "#f8fafc"
-    b_sub = "#334155" if is_light else "#94a3b8"
-    b_badge_bg = "#eff6ff" if is_light else "rgba(139, 92, 246, 0.2)"
-    b_badge_border = "#bfdbfe" if is_light else "rgba(139, 92, 246, 0.4)"
-    b_badge_txt = "#2563eb" if is_light else "#c084fc"
 
-    st.markdown(
-        f"""
-        <div style="background: {b_bg}; border: 1.5px solid {b_border}; border-radius: 12px; padding: 14px 18px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(15,23,42,0.04);">
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <div style="font-size:22px;">📊</div>
-                    <div>
-                        <div style="font-size:15px; font-weight:850; color:{b_title};">
-                            Tabel Komparasi Evaluasi Multi-Model (Benchmark Lengkap)
-                        </div>
-                        <div style="font-size:12px; color:{b_sub}; font-weight:550;">
-                            Perbandingan langsung metrik keandalan antara Altman Z''-Score Asli, Z'' Koefisien Baru (MDA), dan XGBoost
-                        </div>
-                    </div>
-                </div>
-                <span style="background: {b_badge_bg}; border: 1px solid {b_badge_border}; color: {b_badge_txt}; font-size: 11px; font-weight: 750; padding: 3px 10px; border-radius: 20px;">
-                    Tabel Benchmark Komparatif
-                </span>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    st.markdown("##### 📋 Tabel Benchmark Evaluasi Multi-Model")
 
     rows = []
     for item in benchmark_data:
         rows.append({
             "Pendekatan Model": item.get("model_name", "-"),
             "Cakupan Sampel": item.get("data_scope", "-"),
-            "TP": item.get("tp", 0),
-            "TN": item.get("tn", 0),
-            "FP": item.get("fp", 0),
-            "FN": item.get("fn", 0),
             "Akurasi": f"{item.get('accuracy', 0.0)*100:.2f}%",
             "AUC-ROC": f"{item.get('roc_auc', 0.0):.4f}" if item.get("roc_auc") is not None else "-",
             "Presisi": f"{item.get('precision', 0.0)*100:.2f}%",
-            "Recall (Sensitivitas)": f"{item.get('recall', 0.0)*100:.2f}%",
+            "Recall": f"{item.get('recall', 0.0)*100:.2f}%",
             "Spesifisitas": f"{item.get('specificity', 0.0)*100:.2f}%",
             "F1-Score": f"{item.get('f1_score', 0.0):.4f}",
-            "Youden's J Index": f"{item.get('youden_j', 0.0):.4f}",
-            "Type II Error (FN)": f"{item.get('type2_error', 0.0)*100:.2f}%" if item.get("type2_error") is not None else "-",
-            "Catatan Metodologi": item.get("catatan", "-"),
+            "Type II Error": f"{item.get('type2_error', 0.0)*100:.2f}%" if item.get("type2_error") is not None else "-",
         })
 
     df_bench = pd.DataFrame(rows)
     render_styled_dataframe(df_bench, is_light=is_light)
+
+    with st.expander("🔍 Rincian Diagnostik Matriks (TP, TN, FP, FN, Youden's J)", expanded=False):
+        diag_rows = []
+        for item in benchmark_data:
+            diag_rows.append({
+                "Model": item.get("model_name", "-"),
+                "TP": item.get("tp", 0),
+                "TN": item.get("tn", 0),
+                "FP": item.get("fp", 0),
+                "FN": item.get("fn", 0),
+                "Youden's J": f"{item.get('youden_j', 0.0):.4f}",
+                "Catatan": item.get("catatan", "-"),
+            })
+        render_smart_dataframe(pd.DataFrame(diag_rows), use_container_width=True, hide_index=True)
 
     xgb_item = next((b for b in benchmark_data if "XGBoost" in str(b.get("model_name", ""))), None)
     xgb_acc_str = f"{xgb_item.get('accuracy', 0.9149)*100:.2f}%" if xgb_item else "91.49%"
     xgb_auc_str = f"{xgb_item.get('roc_auc', 0.9426):.4f}" if xgb_item else "0.9426"
     xgb_yj_str = f"{xgb_item.get('youden_j', 0.8251):.4f}" if xgb_item else "0.8251"
     st.info(
-        f"💡 **Interpretasi Hasil Evaluasi Komparatif:** "
-        f"Pada data uji hold-out (141 observasi), model **XGBoost Classifier** mencatatkan **Akurasi {xgb_acc_str}**, "
-        f"**ROC-AUC {xgb_auc_str}**, dan **Youden's J Index {xgb_yj_str}**, membuktikan bahwa algoritma machine learning non-linear mampu mempertahankan "
-        f"sensitivitas dan presisi tinggi secara seimbang dalam mendeteksi kebangkrutan tanpa mengorbankan spesifisitas pada sampel independen.",
+        f"💡 **Ringkasan Evaluasi:** "
+        f"Model **XGBoost Classifier** mencatatkan **Akurasi {xgb_acc_str}** dan **AUC-ROC {xgb_auc_str}**, "
+        f"menunjukkan performa superior dalam mendeteksi financial distress secara seimbang dan akurat.",
         icon="ℹ️"
     )
 

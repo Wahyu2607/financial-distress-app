@@ -167,9 +167,43 @@ from src.io_utils import (
     get_idx_document_years,
     parse_financial_number,
     get_pdf_document_years,
+    get_sample_template_dataframe,
     get_sample_template_csv_bytes,
     get_sample_template_excel_bytes,
 )
+
+
+def format_rupiah_idr(val: float | int | str | None) -> str:
+    """Format angka nominal menjadi representasi mata uang Rupiah standar Indonesia (titik pemisah ribuan) beserta skala teks ringkas."""
+    if val is None or val == "":
+        return "Rp 0"
+    try:
+        fval = float(val)
+    except (ValueError, TypeError):
+        return str(val)
+    if math.isnan(fval) or math.isinf(fval):
+        return "Rp 0"
+    is_neg = fval < 0
+    abs_v = abs(fval)
+    sign = "-" if is_neg else ""
+    if float(abs_v).is_integer():
+        str_num = f"{int(abs_v):,}".replace(",", ".")
+    else:
+        str_num = f"{abs_v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    if abs_v >= 1e12:
+        scale_txt = f"{abs_v / 1e12:.2f}".replace(".", ",") + " Triliun"
+        return f"{sign}Rp {str_num} ({sign}Rp {scale_txt})"
+    elif abs_v >= 1e9:
+        scale_txt = f"{abs_v / 1e9:.2f}".replace(".", ",") + " Miliar"
+        return f"{sign}Rp {str_num} ({sign}Rp {scale_txt})"
+    elif abs_v >= 1e6:
+        scale_txt = f"{abs_v / 1e6:.2f}".replace(".", ",") + " Juta"
+        return f"{sign}Rp {str_num} ({sign}Rp {scale_txt})"
+    else:
+        return f"{sign}Rp {str_num}"
+
+
+VARIABLE_SCHEMA_MAP = {item["key"]: item for item in VARIABLE_SCHEMA}
 
 
 def format_display_value(key: str, val):
@@ -656,12 +690,13 @@ def determine_3category_status(z, z_cls, mda, mda_cls, xgb_prob, xgb_thresh=0.5,
 PAGE_ALIASES_ADMIN = {
     "Dashboard Sistem": "Dashboard",
     "Dashboard Prediksi": "Dashboard",
-    "Data Perusahaan": "Data dan Laporan Keuangan",
-    "Laporan Keuangan": "Data dan Laporan Keuangan",
-    "Input Data": "Data dan Laporan Keuangan",
-    "Input Data Keuangan": "Data dan Laporan Keuangan",
-    "Data & Laporan Keuangan": "Data dan Laporan Keuangan",
-    "Data dan Laporan Keuangan": "Data dan Laporan Keuangan",
+    "Input Data Keuangan": "Input Data Keuangan",
+    "Data dan Laporan Keuangan": "Input Data Keuangan",
+    "Data & Laporan Keuangan": "Input Data Keuangan",
+    "Data Keuangan": "Input Data Keuangan",
+    "Data Perusahaan": "Input Data Keuangan",
+    "Laporan Keuangan": "Input Data Keuangan",
+    "Input Data": "Input Data Keuangan",
     "Rasio Keuangan": "Rasio dan Hasil Prediksi",
     "Hasil Prediksi": "Rasio dan Hasil Prediksi",
     "Rasio & Hasil Prediksi": "Rasio dan Hasil Prediksi",
@@ -674,8 +709,10 @@ PAGE_ALIASES_ADMIN = {
     "Manajemen Pengguna": "Pengaturan Model",
     "Data Pengguna": "Pengaturan Model",
     "Data Pengguna Terdaftar": "Pengaturan Model",
-    "Integrasi API Pasar": "Integrasi API (Tahun)",
-    "Integrasi API Tahun": "Integrasi API (Tahun)",
+    "Integrasi API Bursa": "Integrasi API Bursa",
+    "Integrasi API (Tahun)": "Integrasi API Bursa",
+    "Integrasi API Pasar": "Integrasi API Bursa",
+    "Integrasi API Tahun": "Integrasi API Bursa",
     "Pengaturan Profil": "Pengaturan Profil",
     "Pengaturan Akun": "Pengaturan Profil",
     "Profil": "Pengaturan Profil",
@@ -688,12 +725,13 @@ PAGE_ALIASES_USER = {
     "Dashboard & Analisis": "Dashboard",
     "Dashboard dan Analisis": "Dashboard",
     "Dashboard Prediksi": "Hasil Prediksi",
-    "Data & Laporan Keuangan": "Data dan Laporan Keuangan",
-    "Data dan Laporan Keuangan": "Data dan Laporan Keuangan",
-    "Data Perusahaan": "Data dan Laporan Keuangan",
-    "Laporan Keuangan": "Data dan Laporan Keuangan",
-    "Input Data": "Data dan Laporan Keuangan",
-    "Input Data Keuangan": "Data dan Laporan Keuangan",
+    "Input Data Keuangan": "Input Data Keuangan",
+    "Data dan Laporan Keuangan": "Input Data Keuangan",
+    "Data & Laporan Keuangan": "Input Data Keuangan",
+    "Data Keuangan": "Input Data Keuangan",
+    "Data Perusahaan": "Input Data Keuangan",
+    "Laporan Keuangan": "Input Data Keuangan",
+    "Input Data": "Input Data Keuangan",
     "Rasio Keuangan": "Hasil Prediksi",
     "Rasio & Hasil Prediksi": "Hasil Prediksi",
     "Rasio dan Hasil Prediksi": "Hasil Prediksi",
@@ -701,8 +739,10 @@ PAGE_ALIASES_USER = {
     "Perbandingan dan Evaluasi Model": "Perbandingan dan Evaluasi Model",
     "Perbandingan Hasil": "Perbandingan dan Evaluasi Model",
     "Evaluasi Model": "Perbandingan dan Evaluasi Model",
-    "Integrasi API Pasar": "Integrasi API (Tahun)",
-    "Integrasi API Tahun": "Integrasi API (Tahun)",
+    "Integrasi API Bursa": "Integrasi API Bursa",
+    "Integrasi API (Tahun)": "Integrasi API Bursa",
+    "Integrasi API Pasar": "Integrasi API Bursa",
+    "Integrasi API Tahun": "Integrasi API Bursa",
     "Pengaturan Profil": "Pengaturan Profil",
     "Pengaturan Akun": "Pengaturan Profil",
     "Profil": "Pengaturan Profil",
@@ -2162,27 +2202,29 @@ if st.session_state.role == "admin":
     # Menu admin: Modul terpadu dengan Integrasi API di akhir (Pengaturan Profil diakses eksklusif via foto profil akun di bawah)
     MENU_ITEMS = [
         "Dashboard",
-        "Data dan Laporan Keuangan",
+        "Input Data Keuangan",
         "Rasio dan Hasil Prediksi",
         "Perbandingan dan Evaluasi Model",
         "Histori Prediksi",
         "Pengaturan Model",
-        "Integrasi API (Tahun)",
+        "Integrasi API Bursa",
     ]
 else:
     # Menu user: Memisahkan Dashboard & Input, Hasil Prediksi komprehensif, dan Integrasi API di paling akhir
     MENU_ITEMS = [
         "Dashboard",
-        "Data dan Laporan Keuangan",
+        "Input Data Keuangan",
         "Hasil Prediksi",
         "Perbandingan Hasil",
-        "Integrasi API (Tahun)",
+        "Integrasi API Bursa",
     ]
 
 MENU_ICONS = {
     "Dashboard": "🏠",
+    "Input Data Keuangan": "📑",
     "Data dan Laporan Keuangan": "📑",
     "Data & Laporan Keuangan": "📑",
+    "Data Keuangan": "📑",
     "Rasio dan Hasil Prediksi": "📈",
     "Rasio & Hasil Prediksi": "📈",
     "Hasil Prediksi": "📈",
@@ -2197,6 +2239,7 @@ MENU_ICONS = {
     "Pengaturan Akun": "👤",
     "Profil": "👤",
     "Profile": "👤",
+    "Integrasi API Bursa": "🌐",
     "Integrasi API (Tahun)": "🌐",
     "Integrasi API Pasar": "🌐",
     "Integrasi API Tahun": "🌐",
@@ -2212,8 +2255,10 @@ MENU_ICONS = {
 
 MENU_TEXTS = {
     "Dashboard": "Dashboard",
-    "Data dan Laporan Keuangan": "Data Keuangan",
-    "Data & Laporan Keuangan": "Data Keuangan",
+    "Input Data Keuangan": "Input Data Keuangan",
+    "Data dan Laporan Keuangan": "Input Data Keuangan",
+    "Data & Laporan Keuangan": "Input Data Keuangan",
+    "Data Keuangan": "Input Data Keuangan",
     "Rasio dan Hasil Prediksi": "Hasil Prediksi",
     "Rasio & Hasil Prediksi": "Hasil Prediksi",
     "Hasil Prediksi": "Hasil Prediksi",
@@ -2228,9 +2273,10 @@ MENU_TEXTS = {
     "Pengaturan Akun": "Pengaturan Profil",
     "Profil": "Pengaturan Profil",
     "Profile": "Pengaturan Profil",
-    "Integrasi API (Tahun)": "Integrasi API",
-    "Integrasi API Pasar": "Integrasi API",
-    "Integrasi API Tahun": "Integrasi API",
+    "Integrasi API Bursa": "Integrasi API Bursa",
+    "Integrasi API (Tahun)": "Integrasi API Bursa",
+    "Integrasi API Pasar": "Integrasi API Bursa",
+    "Integrasi API Tahun": "Integrasi API Bursa",
     "Dashboard Sistem": "Dashboard",
     "Dashboard dan Analisis": "Dashboard",
     "Dashboard & Analisis": "Dashboard",
@@ -2389,6 +2435,8 @@ if st.session_state.sidebar_visible:
                     set_page("Pengaturan Profil")
                 st.session_state.active_account_modal = None
                 st.rerun()
+
+        st.markdown("<div class='sidebar-bottom-clearance' style='height: 14px; margin-bottom: 8px;'></div>", unsafe_allow_html=True)
 
 else:
     content_col = st.container()
@@ -3204,8 +3252,8 @@ with content_col:
         header_sub_display = """
         <span class="header-platform-tag">SISTEM AKUN</span>
         <span class="header-sub-sep">•</span>
-        <span class="header-sub-desc">Pengaturan Profil &amp; Kredensial Akses Pengguna</span>
-        <span class="header-status-pill standby-pill">🔒 Akun Terotentikasi</span>
+        <span class="header-sub-desc">Pengaturan Profil Pengguna</span>
+        <span class="header-status-pill standby-pill">🔒 Terotentikasi</span>
         """
     elif is_analyzed:
         comp_elem = f'<span class="header-company-name">— {comp_display}</span>' if comp_display else ""
@@ -3217,14 +3265,14 @@ with content_col:
             <span class="emiten-pill-year">({year_display})</span>
         </span>
         {comp_elem}
-        <span class="header-status-pill active-pill">🟢 Teranalisis Multi-Model</span>
+        <span class="header-status-pill active-pill">🟢 Teranalisis</span>
         """
     else:
         header_sub_display = """
-        <span class="header-platform-tag">BEI RISK INTELLIGENCE</span>
+        <span class="header-platform-tag">PREDIKSI RISIKO</span>
         <span class="header-sub-sep">•</span>
-        <span class="header-sub-desc">Multi-Model Corporate Financial Distress Analytics Platform</span>
-        <span class="header-status-pill standby-pill">⚪ Siaga Analisis</span>
+        <span class="header-sub-desc">Sistem Prediksi Financial Distress Emiten BEI</span>
+        <span class="header-status-pill standby-pill">⚪ Siap Analisis</span>
         """
 
     # -------------------------------------------------------------
@@ -3429,8 +3477,8 @@ with content_col:
                 <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
                     <div style="width:38px;height:38px;border-radius:12px;background:rgba(20,184,166,0.18);color:#2dd4bf;display:flex;align-items:center;justify-content:center;font-size:20px;border:1px solid rgba(20,184,166,0.3);box-shadow:0 0 12px rgba(20,184,166,0.2);">📄</div>
                     <div>
-                        <div style="font-size:16px;font-weight:850;color:#f8fafc;line-height:1.2;">2. Sumber Data dan Impor Laporan Keuangan</div>
-                        <div style="font-size:12px;color:#94a3b8;font-weight:500;margin-top:2px;">Pilih metode masukan data via input manual, unggah file CSV, atau dokumen PDF BEI/IDX</div>
+                        <div style="font-size:16px;font-weight:850;color:#f8fafc;line-height:1.2;">2. Sumber Data & Impor Laporan Keuangan</div>
+                        <div style="font-size:12px;color:#94a3b8;font-weight:500;margin-top:2px;">Pilih metode: Unggah Excel/CSV/PDF, Tarik API Bursa, atau Input Manual</div>
                     </div>
                 </div>
                 """,
@@ -3454,7 +3502,7 @@ with content_col:
                 col_tpl1, col_tpl2 = st.columns(2)
                 with col_tpl1:
                     st.download_button(
-                        "📥 Unduh Format Template CSV Standar (.csv)",
+                        "📥 Unduh Template CSV (.csv)",
                         get_sample_template_csv_bytes(),
                         file_name="template_laporan_keuangan_distress.csv",
                         mime="text/csv",
@@ -3462,7 +3510,7 @@ with content_col:
                     )
                 with col_tpl2:
                     st.download_button(
-                        "📥 Unduh Format Template Excel Standar (.xlsx)",
+                        "📥 Unduh Template Excel (.xlsx)",
                         get_sample_template_excel_bytes(),
                         file_name="template_laporan_keuangan_distress.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -3474,7 +3522,7 @@ with content_col:
 
             fin0 = st.session_state.get("financials", {})
 
-            if mode == "🌐 Tarik Otomatis API Bursa (IDX)":
+            if mode in ("🌐 API Bursa (IDX)", "🌐 Tarik Otomatis API Bursa (IDX)"):
                 st.markdown("##### ⚡ Tarik Laporan Keuangan Otomatis via API IDX / Yahoo Finance")
                 st.caption("Sistem akan menghubungi API pasar modal, mengambil laporan keuangan tahunan, dan mengisi seluruh variabel proyek secara otomatis.")
                 
@@ -4175,16 +4223,33 @@ with content_col:
             cols = st.columns(2)
             for i, (key, label) in enumerate(fields):
                 with cols[i % 2]:
+                    schema_item = VARIABLE_SCHEMA_MAP.get(key, {})
+                    code_str = schema_item.get("code", f"{i+1:02d}")
+                    is_lt = is_light_theme()
+
                     if key == "ticker":
                         current_ticker_val = str(fin0.get("ticker", st.session_state.ticker or "ICBP")).strip().upper()
                         txt_input = st.text_input(
-                            label,
+                            f"{label} [Identitas Emiten]",
                             value=current_ticker_val,
                             placeholder="Contoh: ICBP",
                             key="user_input_ticker",
                         ).upper()
                         fin0[key] = txt_input
                         st.session_state.ticker = txt_input
+                        tick_disp = txt_input if txt_input else "Belum diisi"
+                        st.markdown(
+                            f"""
+                            <div style="display:flex;align-items:center;justify-content:space-between;background:{'#f0fdf4' if is_lt else 'rgba(16,185,129,0.08)'};border:1px solid {'#bbf7d0' if is_lt else 'rgba(16,185,129,0.22)'};padding:4px 9px;border-radius:6px;margin-top:2px;margin-bottom:6px;font-size:12px;">
+                                <span style="font-weight:750;color:{'#15803d' if is_lt else '#86efac'};display:inline-flex;align-items:center;gap:4px;">
+                                    <span style="background:{'#16a34a' if is_lt else 'rgba(16,185,129,0.25)'};color:#ffffff;padding:1px 6px;border-radius:4px;font-size:10.5px;font-weight:800;">Kode {code_str}</span>
+                                    <span>Identitas Emiten:</span>
+                                </span>
+                                <span style="font-weight:800;color:{'#14532d' if is_lt else '#4ade80'};font-family:monospace;">{tick_disp}</span>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
                     elif key == "report_year":
                         active_yr = int(st.session_state.year) if str(st.session_state.get("year", "")).isdigit() else 2024
                         if fin0.get("report_year") is not None and str(fin0["report_year"]).isdigit():
@@ -4204,7 +4269,7 @@ with content_col:
                                 st.session_state.financials["report_year"] = new_y
 
                         chosen_year_val = st.number_input(
-                            label,
+                            f"{label} [Tahun Buku]",
                             min_value=1900,
                             max_value=2100,
                             value=active_yr,
@@ -4216,6 +4281,19 @@ with content_col:
                         st.session_state.year = int(chosen_year_val)
                         if "financials" in st.session_state and isinstance(st.session_state.financials, dict):
                             st.session_state.financials["report_year"] = int(chosen_year_val)
+
+                        st.markdown(
+                            f"""
+                            <div style="display:flex;align-items:center;justify-content:space-between;background:{'#f0fdf4' if is_lt else 'rgba(16,185,129,0.08)'};border:1px solid {'#bbf7d0' if is_lt else 'rgba(16,185,129,0.22)'};padding:4px 9px;border-radius:6px;margin-top:2px;margin-bottom:6px;font-size:12px;">
+                                <span style="font-weight:750;color:{'#15803d' if is_lt else '#86efac'};display:inline-flex;align-items:center;gap:4px;">
+                                    <span style="background:{'#16a34a' if is_lt else 'rgba(16,185,129,0.25)'};color:#ffffff;padding:1px 6px;border-radius:4px;font-size:10.5px;font-weight:800;">Kode {code_str}</span>
+                                    <span>Tahun Periode Buku:</span>
+                                </span>
+                                <span style="font-weight:800;color:{'#14532d' if is_lt else '#4ade80'};font-family:monospace;">Tahun {int(fin0[key])}</span>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
                     else:
                         current_val = fin0.get(key)
                         if current_val in (None, ""):
@@ -4228,9 +4306,9 @@ with content_col:
                         else:
                             str_val = str(current_val)
                         txt_input = st.text_input(
-                            label,
+                            f"{label} [Satuan: Rp]",
                             value=str_val,
-                            placeholder="Contoh: 1500000000",
+                            placeholder="Contoh: 15000000000",
                             key=f"user_input_{key}",
                         )
                         parsed_val = parse_financial_number(txt_input)
@@ -4239,10 +4317,35 @@ with content_col:
                         elif key not in fin0:
                             fin0[key] = 0.0
 
-                        if parsed_val is not None and abs(parsed_val) >= 1000:
-                            st.caption(f"💰 Nilai Penuh: Rp {int(parsed_val):,}")
-                        elif parsed_val == 0:
-                            st.caption("💰 Nilai: Rp 0")
+                        if parsed_val is not None:
+                            rupiah_display = format_rupiah_idr(parsed_val)
+                            st.markdown(
+                                f"""
+                                <div style="display:flex;align-items:center;justify-content:space-between;background:{'#f0f9ff' if is_lt else 'rgba(56,189,248,0.08)'};border:1px solid {'#bae6fd' if is_lt else 'rgba(56,189,248,0.22)'};padding:4px 9px;border-radius:6px;margin-top:2px;margin-bottom:6px;font-size:12px;">
+                                    <span style="font-weight:750;color:{'#0369a1' if is_lt else '#93c5fd'};display:inline-flex;align-items:center;gap:4px;">
+                                        <span style="background:{'#0284c7' if is_lt else 'rgba(56,189,248,0.25)'};color:#ffffff;padding:1px 6px;border-radius:4px;font-size:10.5px;font-weight:800;">Kode {code_str}</span>
+                                        <span>Nilai Rupiah (IDR):</span>
+                                    </span>
+                                    <span style="font-weight:800;color:{'#0c4a6e' if is_lt else '#38bdf8'};font-family:monospace;letter-spacing:0.3px;">
+                                        {rupiah_display}
+                                    </span>
+                                </div>
+                                """,
+                                unsafe_allow_html=True,
+                            )
+                        else:
+                            st.markdown(
+                                f"""
+                                <div style="display:flex;align-items:center;justify-content:space-between;background:{'#f8fafc' if is_lt else 'rgba(148,163,184,0.06)'};border:1px dashed {'#cbd5e1' if is_lt else 'rgba(148,163,184,0.2)'};padding:4px 9px;border-radius:6px;margin-top:2px;margin-bottom:6px;font-size:12px;">
+                                    <span style="font-weight:700;color:{'#64748b' if is_lt else '#94a3b8'};display:inline-flex;align-items:center;gap:4px;">
+                                        <span style="background:{'#94a3b8' if is_lt else 'rgba(148,163,184,0.2)'};color:#ffffff;padding:1px 6px;border-radius:4px;font-size:10.5px;font-weight:800;">Kode {code_str}</span>
+                                        <span>Nilai Rupiah:</span>
+                                    </span>
+                                    <span style="color:{'#94a3b8' if is_lt else '#64748b'};font-style:italic;font-size:11.5px;">Belum diisi (Default: Rp 0)</span>
+                                </div>
+                                """,
+                                unsafe_allow_html=True,
+                            )
 
             # Perbarui Working Capital berdasarkan nilai form saat ini
             ca = float(fin0.get("current_assets", 0.0) or 0.0)
@@ -4314,7 +4417,7 @@ with content_col:
     # 2. HALAMAN INPUT: DATA PERUSAHAAN DAN LAPORAN KEUANGAN
     # Terpisah dari Dashboard Utama (Standar Terpadu Admin & User)
     # ========================================================
-    elif page in ("Data dan Laporan Keuangan", "Data & Laporan Keuangan", "Data Perusahaan", "Laporan Keuangan", "Input Data", "Input Data Keuangan"):
+    elif page in ("Input Data Keuangan", "Data dan Laporan Keuangan", "Data & Laporan Keuangan", "Data Perusahaan", "Laporan Keuangan", "Input Data"):
         allow_analysis = config.get("allow_user_analysis", True)
         if not allow_analysis and st.session_state.role != "admin":
             st.warning("⚠️ **Mode Pemeliharaan:** Administrator sedang memperbarui parameter model. Tombol eksekusi analisis dinonaktifkan sementara.")
@@ -4323,10 +4426,10 @@ with content_col:
         # Header Halaman dan Tombol Aksi di Pojok Kanan Atas (Satu Baris dengan Judul)
         c_title, c_top_act1, c_top_act2 = st.columns([2.5, 1.15, 1.35], gap="small")
         with c_title:
-            section_title("Data Perusahaan dan Laporan Keuangan", "Identitas emiten dan impor pos laporan keuangan untuk analisis prediksi multi-model", tone="blue")
+            section_title("Input Data Keuangan", "Identitas emiten dan impor pos laporan keuangan untuk analisis prediksi", tone="blue")
         with c_top_act1:
             st.markdown("<div style='height:4px;'></div>", unsafe_allow_html=True)
-            if st.button("🔄 Kosongkan Semua Form", key="btn_reset_adm_data_lap", help="Mengosongkan semua data emiten dan nilai laporan keuangan ke awal (kosong)", use_container_width=True):
+            if st.button("🔄 Reset Form", key="btn_reset_adm_data_lap", help="Mengosongkan semua formulir masukan", use_container_width=True):
                 st.session_state.company = ""
                 st.session_state.ticker = ""
                 st.session_state.sector = ""
@@ -4358,7 +4461,7 @@ with content_col:
                 st.rerun()
         with c_top_act2:
             st.markdown("<div style='height:4px;'></div>", unsafe_allow_html=True)
-            if st.button("💡 Muat Contoh Data (Demo)", key="btn_load_demo_adm_data_lap", help="Memuat data contoh ICBP 2024 ke seluruh formulir", use_container_width=True):
+            if st.button("💡 Muat Data Contoh", key="btn_load_demo_adm_data_lap", help="Memuat data contoh ICBP 2024 ke formulir", use_container_width=True):
                 st.session_state.company = "PT Indofood CBP Sukses Makmur Tbk"
                 st.session_state.ticker = "ICBP"
                 st.session_state.sector = "Consumer Non-Cyclicals / Food dan Beverage"
@@ -4405,8 +4508,8 @@ with content_col:
                 <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
                     <div style="width:38px;height:38px;border-radius:12px;background:rgba(99,102,241,0.18);color:#818cf8;display:flex;align-items:center;justify-content:center;font-size:20px;border:1px solid rgba(99,102,241,0.3);box-shadow:0 0 12px rgba(99,102,241,0.2);">🏢</div>
                     <div>
-                        <div style="font-size:16px;font-weight:850;color:#f8fafc;line-height:1.2;">1. Profil dan Identitas Emiten</div>
-                        <div style="font-size:12px;color:#94a3b8;font-weight:500;margin-top:2px;">Identitas emiten dan periode tahun laporan keuangan yang dianalisis</div>
+                        <div style="font-size:16px;font-weight:850;color:#f8fafc;line-height:1.2;">1. Identitas Emiten</div>
+                        <div style="font-size:12px;color:#94a3b8;font-weight:500;margin-top:2px;">Informasi dasar dan periode laporan keuangan</div>
                     </div>
                 </div>
                 """,
@@ -4514,7 +4617,108 @@ with content_col:
                 """,
                 unsafe_allow_html=True,
             )
-            with st.expander("📖 Kamus variabel input (Standar BEI/IDX)", expanded=False):
+            with st.expander("💡 Contoh Format & Panduan Input Data (ICBP 2024)", expanded=False):
+                st.markdown("##### 📁 Format File yang Didukung")
+                st.markdown(
+                    """
+                    <div style="font-size:13px;line-height:1.6;margin-bottom:10px;">
+                        Sistem mendukung 5 metode masukan data laporan keuangan emiten. Berikut adalah format dan spesifikasi berkas yang diterima:
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                file_format_specs = [
+                    {
+                        "Metode / Jalur Input": "📊 Berkas Excel (.xlsx / .xls)",
+                        "Format File yang Diterima": ".xlsx, .xls",
+                        "Struktur & Ketentuan File": "1. Format Resmi Unduhan BEI/IDX (multi-sheet taksonomi XBRL: Sheet 1000000, 1110000, 1210000, 1311000, dsb)\n2. Atau Berkas Excel Tabular 15 kolom sesuai template standar",
+                        "Keterangan Penggunaan": "Direkomendasikan untuk laporan tahunan resmi yang diunduh langsung dari situs BEI (idx.co.id). Sistem otomatis mendeteksi tahun dan memetakan akun neraca & laba rugi.",
+                    },
+                    {
+                        "Metode / Jalur Input": "📄 Berkas CSV (.csv)",
+                        "Format File yang Diterima": ".csv (Comma Separated Values)",
+                        "Struktur & Ketentuan File": "Teks tabular berpemisah koma (,) atau titik koma (;), encoding UTF-8. Baris pertama wajib memuat 15 nama kolom baku sesuai template (ticker, report_year, ebit, total_assets, dst).",
+                        "Keterangan Penggunaan": "Sangat praktis untuk memasukkan data tabular emiten tunggal maupun multi-emiten. Template CSV siap pakai dapat diunduh di bawah.",
+                    },
+                    {
+                        "Metode / Jalur Input": "📑 Dokumen PDF (.pdf)",
+                        "Format File yang Diterima": ".pdf (Portable Document Format)",
+                        "Struktur & Ketentuan File": "Dokumen Laporan Keuangan Audited Tahunan atau Annual Report resmi publikasi emiten di Bursa Efek Indonesia (memuat lembar Neraca, Laba Rugi, dan CALK).",
+                        "Keterangan Penggunaan": "Sistem mengekstrak tabel angka secara digital dari dokumen PDF resmi BEI tanpa perlu konversi manual.",
+                    },
+                    {
+                        "Metode / Jalur Input": "🌐 Tarik Otomatis API Bursa (IDX)",
+                        "Format File yang Diterima": "Kode Saham (Ticker 4 Huruf)",
+                        "Struktur & Ketentuan File": "Ketik 4 huruf kapital kode saham emiten BEI (misal: ICBP, INDF, BBCA, ASII, KLBF) dan pilih tahun pelaporan (2020 s.d. 2025).",
+                        "Keterangan Penggunaan": "Penarikan langsung secara live dan otomatis dari server bursa tanpa perlu mengunggah berkas dokumen apa pun.",
+                    },
+                    {
+                        "Metode / Jalur Input": "📝 Input Manual Langsung",
+                        "Format File yang Diterima": "Angka Numerik (Rupiah Penuh)",
+                        "Struktur & Ketentuan File": "Ketik angka nominal dalam satuan Rupiah penuh (Rp) per akun neraca/laba rugi. Mendukung tanda minus (-) untuk akun yang mengalami defisit/rugi.",
+                        "Keterangan Penggunaan": "Cocok untuk memasukkan atau mengoreksi data secara mandiri dan cepat.",
+                    },
+                ]
+                render_styled_dataframe(pd.DataFrame(file_format_specs), is_light=is_light_theme())
+
+                st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
+                st.markdown("##### 📋 Contoh Nilai Pos Akun (ICBP 2024)")
+                st.markdown(
+                    """
+                    <div style="font-size:13px;line-height:1.6;margin-bottom:12px;">
+                        📌 <b>Ketentuan Satuan & Format Pengisian Nilai:</b>
+                        <ul style="margin-top:4px;margin-bottom:8px;padding-left:20px;">
+                            <li><b>Satuan Nilai:</b> Seluruh pos akun keuangan dimasukkan dalam <b>satuan Rupiah Penuh (Rp)</b> tanpa tanda baca titik/koma pemisah (misal: <code>14900000000000</code> untuk Rp 14,9 Triliun). Sistem akan otomatis memformat dan menampilkan nilai Rupiahnya.</li>
+                            <li><b>Nilai Negatif / Defisit:</b> Untuk pos yang mengalami defisit (seperti rugi bersih tahun berjalan atau arus kas negatif), sertakan tanda minus <code>-</code> (misal: <code>-500000000</code> untuk defisit Rp 500 Juta).</li>
+                            <li><b>Unggah Berkas (CSV / Excel):</b> Pastikan baris pertama berisi nama kolom baku (huruf kecil sesuai kolom di bawah). Anda dapat mengunduh berkas template siap pakai.</li>
+                        </ul>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                example_financial_records = [
+                    {"Kode": "01", "Nama Pos Akun Keuangan": "Kode Saham (Ticker)", "Kolom (CSV/Excel)": "ticker", "Contoh Input": "ICBP", "Format Nilai Rupiah": "ICBP (Emiten Saham)", "Pos / Catatan Laporan Keuangan BEI": "Profil Ringkasan Emiten BEI"},
+                    {"Kode": "02", "Nama Pos Akun Keuangan": "Tahun Laporan Keuangan", "Kolom (CSV/Excel)": "report_year", "Contoh Input": "2024", "Format Nilai Rupiah": "Tahun 2024 (Tahunan)", "Pos / Catatan Laporan Keuangan BEI": "Periode Tutup Buku Laporan Keuangan"},
+                    {"Kode": "03", "Nama Pos Akun Keuangan": "EBIT (Laba Sebelum Bunga & Pajak)", "Kolom (CSV/Excel)": "ebit", "Contoh Input": "14900000000000", "Format Nilai Rupiah": "Rp 14.900.000.000.000 (Rp 14,90 T)", "Pos / Catatan Laporan Keuangan BEI": "Laba Rugi: Laba Usaha / PBT + Beban Bunga"},
+                    {"Kode": "04", "Nama Pos Akun Keuangan": "Interest Expense (Beban Bunga)", "Kolom (CSV/Excel)": "interest_expense", "Contoh Input": "2100000000000", "Format Nilai Rupiah": "Rp 2.100.000.000.000 (Rp 2,10 T)", "Pos / Catatan Laporan Keuangan BEI": "Laba Rugi / CALK: Biaya Keuangan & Beban Bunga Pinjaman"},
+                    {"Kode": "05", "Nama Pos Akun Keuangan": "Total Assets (Jumlah Aset)", "Kolom (CSV/Excel)": "total_assets", "Contoh Input": "115300000000000", "Format Nilai Rupiah": "Rp 115.300.000.000.000 (Rp 115,30 T)", "Pos / Catatan Laporan Keuangan BEI": "Neraca / Posisi Keuangan: Jumlah Aset Keseluruhan"},
+                    {"Kode": "06", "Nama Pos Akun Keuangan": "Current Assets (Jumlah Aset Lancar)", "Kolom (CSV/Excel)": "current_assets", "Contoh Input": "42100000000000", "Format Nilai Rupiah": "Rp 42.100.000.000.000 (Rp 42,10 T)", "Pos / Catatan Laporan Keuangan BEI": "Neraca / Posisi Keuangan: Jumlah Aset Lancar"},
+                    {"Kode": "07", "Nama Pos Akun Keuangan": "Total Liabilities (Jumlah Liabilitas)", "Kolom (CSV/Excel)": "total_liabilities", "Contoh Input": "58400000000000", "Format Nilai Rupiah": "Rp 58.400.000.000.000 (Rp 58,40 T)", "Pos / Catatan Laporan Keuangan BEI": "Neraca / Posisi Keuangan: Jumlah Liabilitas Keseluruhan"},
+                    {"Kode": "08", "Nama Pos Akun Keuangan": "Current Liabilities (Liabilitas Lancar)", "Kolom (CSV/Excel)": "current_liabilities", "Contoh Input": "25600000000000", "Format Nilai Rupiah": "Rp 25.600.000.000.000 (Rp 25,60 T)", "Pos / Catatan Laporan Keuangan BEI": "Neraca / Posisi Keuangan: Jumlah Liabilitas Jangka Pendek"},
+                    {"Kode": "09", "Nama Pos Akun Keuangan": "Common Stock Equity (Ekuitas Induk)", "Kolom (CSV/Excel)": "common_stock_equity", "Contoh Input": "56900000000000", "Format Nilai Rupiah": "Rp 56.900.000.000.000 (Rp 56,90 T)", "Pos / Catatan Laporan Keuangan BEI": "Neraca: Ekuitas Yang Diatribusikan Kepada Pemilik Entitas Induk"},
+                    {"Kode": "10", "Nama Pos Akun Keuangan": "Retained Earnings (Saldo Laba Ditahan)", "Kolom (CSV/Excel)": "retained_earnings", "Contoh Input": "38200000000000", "Format Nilai Rupiah": "Rp 38.200.000.000.000 (Rp 38,20 T)", "Pos / Catatan Laporan Keuangan BEI": "Neraca: Saldo Laba Yang Belum Ditentukan Penggunaannya"},
+                    {"Kode": "11", "Nama Pos Akun Keuangan": "Working Capital (Modal Kerja)", "Kolom (CSV/Excel)": "working_capital", "Contoh Input": "16500000000000", "Format Nilai Rupiah": "Rp 16.500.000.000.000 (Rp 16,50 T)", "Pos / Catatan Laporan Keuangan BEI": "Komputasi: Aset Lancar − Liabilitas Jangka Pendek (CA − CL)"},
+                    {"Kode": "12", "Nama Pos Akun Keuangan": "Operating Cash Flow (Arus Kas Operasi)", "Kolom (CSV/Excel)": "operating_cash_flow", "Contoh Input": "13500000000000", "Format Nilai Rupiah": "Rp 13.500.000.000.000 (Rp 13,50 T)", "Pos / Catatan Laporan Keuangan BEI": "Laporan Arus Kas: Kas Bersih Diperoleh Dari Aktivitas Operasi"},
+                    {"Kode": "13", "Nama Pos Akun Keuangan": "Total Revenue (Pendapatan Usaha)", "Kolom (CSV/Excel)": "total_revenue", "Contoh Input": "67900000000000", "Format Nilai Rupiah": "Rp 67.900.000.000.000 (Rp 67,90 T)", "Pos / Catatan Laporan Keuangan BEI": "Laporan Laba Rugi: Penjualan Bersih / Pendapatan Usaha"},
+                    {"Kode": "14", "Nama Pos Akun Keuangan": "Net Income (Laba Bersih Entitas Induk)", "Kolom (CSV/Excel)": "net_income", "Contoh Input": "9800000000000", "Format Nilai Rupiah": "Rp 9.800.000.000.000 (Rp 9,80 T)", "Pos / Catatan Laporan Keuangan BEI": "Laba Rugi: Laba Bersih Periode Berjalan Pemilik Induk"},
+                    {"Kode": "15", "Nama Pos Akun Keuangan": "Total Debt (Utang Berbunga / Bank)", "Kolom (CSV/Excel)": "total_debt", "Contoh Input": "32000000000000", "Format Nilai Rupiah": "Rp 32.000.000.000.000 (Rp 32,00 T)", "Pos / Catatan Laporan Keuangan BEI": "CALK: Jumlah Utang Bank Jangka Pendek + Utang Jangka Panjang"},
+                ]
+                render_styled_dataframe(pd.DataFrame(example_financial_records), is_light=is_light_theme())
+
+                st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
+                st.markdown("##### 📊 3. Pratinjau Format File Standar CSV / Excel (Contoh 2 Emiten Manufaktur BEI)")
+                render_styled_dataframe(get_sample_template_dataframe(), is_light=is_light_theme())
+
+                st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
+                col_ex_act1, col_ex_act2 = st.columns([1.5, 1])
+                with col_ex_act1:
+                    if st.button("💡 Gunakan Contoh Data Ini (ICBP 2024)", key="btn_apply_sample_data_to_form", use_container_width=True, help="Otomatis mengisi form input dengan contoh data ICBP 2024"):
+                        load_demo_data_icbp()
+                        st.toast("Contoh data laporan keuangan (ICBP 2024) berhasil dimuat ke formulir!", icon="✅")
+                        st.rerun()
+                with col_ex_act2:
+                    st.download_button(
+                        "📥 Unduh Template CSV Contoh (.csv)",
+                        get_sample_template_csv_bytes(),
+                        file_name="template_laporan_keuangan_distress.csv",
+                        mime="text/csv",
+                        use_container_width=True,
+                        key="btn_dl_sample_csv_example_sec",
+                    )
+
+            with st.expander("📖 Kamus Variabel Pos Akun", expanded=False):
                 safe_dataframe(
                     pd.DataFrame([
                         {
@@ -4532,7 +4736,7 @@ with content_col:
                 col_tpl1, col_tpl2 = st.columns(2)
                 with col_tpl1:
                     st.download_button(
-                        "📥 Unduh Format Template CSV Standar (.csv)",
+                        "📥 Unduh Template CSV (.csv)",
                         get_sample_template_csv_bytes(),
                         file_name="template_laporan_keuangan_distress.csv",
                         mime="text/csv",
@@ -4540,7 +4744,7 @@ with content_col:
                     )
                 with col_tpl2:
                     st.download_button(
-                        "📥 Unduh Format Template Excel Standar (.xlsx)",
+                        "📥 Unduh Template Excel (.xlsx)",
                         get_sample_template_excel_bytes(),
                         file_name="template_laporan_keuangan_distress.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -4549,15 +4753,15 @@ with content_col:
 
             fin0 = st.session_state.get("financials", {})
 
-            source_options = ["Input Manual", "🌐 Tarik Otomatis API Bursa (IDX)", "📊 Excel (BEI/IDX)", "CSV", "PDF"]
+            source_options = ["Input Manual", "🌐 API Bursa (IDX)", "📊 Excel (BEI/IDX)", "CSV", "PDF"]
             saved_mode = st.session_state.get("source_mode", "📊 Excel (BEI/IDX)" if st.session_state.get("saved_extraction_rows") else "Input Manual")
             default_mode_idx = source_options.index(saved_mode) if saved_mode in source_options else 0
             mode = st.radio("Sumber Data", source_options, index=default_mode_idx, horizontal=True, key="adm_source_mode_radio")
             st.session_state.source_mode = mode
 
-            if mode == "🌐 Tarik Otomatis API Bursa (IDX)":
-                st.markdown("##### ⚡ Tarik Laporan Keuangan Otomatis via API IDX / Yahoo Finance (Mode Admin)")
-                st.caption("Admin dapat menarik data laporan keuangan live emiten langsung ke sesi aktif dan mencatatnya ke database.")
+            if mode in ("🌐 API Bursa (IDX)", "🌐 Tarik Otomatis API Bursa (IDX)"):
+                st.markdown("##### ⚡ Tarik Laporan Keuangan via API Bursa")
+                st.caption("Tarik data laporan keuangan live emiten langsung dari feed bursa.")
                 
                 c_api_adm_t, c_api_adm_yr, c_api_adm_b = st.columns([2, 1.2, 1.5])
                 with c_api_adm_t:
@@ -4566,7 +4770,7 @@ with content_col:
                     adm_yr_opt = st.selectbox("Periode", ["Tahun Terbaru (Latest)", "2025", "2024", "2023", "2022", "2021", "2020"], key="adm_api_yr_opt")
                 with c_api_adm_b:
                     st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-                    adm_btn_pull = st.button("🚀 Tarik dan Hitung Rasio Otomatis", type="primary", use_container_width=True, key="adm_btn_pull_api")
+                    adm_btn_pull = st.button("🚀 Tarik Data & Hitung Rasio", type="primary", use_container_width=True, key="adm_btn_pull_api")
 
                 adm_picked = render_emiten_shortcuts("adm_api")
                 if adm_picked:
@@ -4688,6 +4892,7 @@ with content_col:
             elif mode == "📊 Excel (BEI/IDX)":
                 st.markdown("##### 📊 Impor Langsung File Excel Resmi BEI / IDX (.xlsx, .xls)")
                 st.caption("Unggah file Excel laporan keuangan resmi yang diunduh langsung dari situs Bursa Efek Indonesia (idx.co.id). Sistem akan otomatis mengenali format XBRL/multi-sheet, mendeteksi emiten dan tahun, dan mengekstrak 15 variabel proyek secara cerdas.")
+                st.info("📌 Format file: **.xlsx** atau **.xls** (Laporan resmi BEI atau format tabular). Maksimal ukuran berkas: 200 MB.")
 
                 uploaded_excel = st.file_uploader(
                     "Unggah file Excel Laporan Keuangan (.xlsx, .xls)",
@@ -4940,7 +5145,9 @@ with content_col:
                         st.rerun()
 
             elif mode == "CSV":
-                uploaded = st.file_uploader("Upload CSV laporan keuangan", type=["csv"])
+                st.markdown("##### 📄 Impor Berkas Data Tabular CSV (.csv)")
+                st.info("📌 Format file: **.csv** (UTF-8, pemisah koma `,` atau titik koma `;`). Baris pertama wajib memuat 15 nama kolom baku sesuai template. Maksimal ukuran berkas: 50 MB.")
+                uploaded = st.file_uploader("Unggah berkas CSV laporan keuangan (.csv)", type=["csv"], help="Pilih file tabular berekstensi .csv")
                 if uploaded:
                     try:
                         if is_idx_xbrl_data(uploaded):
@@ -5248,7 +5455,9 @@ with content_col:
                         st.rerun()
 
             elif mode == "PDF":
-                uploaded = st.file_uploader("Upload PDF laporan tahunan/laporan keuangan", type=["pdf"])
+                st.markdown("##### 📑 Ekstraksi Otomatis Dokumen Laporan Keuangan PDF (.pdf)")
+                st.info("📌 Format file: **.pdf** resmi publikasi BEI (Laporan Keuangan Audited). Sistem membaca teks pada tabel Neraca, Laba Rugi, dan CALK. Maksimal ukuran berkas: 100 MB.")
+                uploaded = st.file_uploader("Unggah dokumen PDF laporan keuangan / tahunan (.pdf)", type=["pdf"], help="Pilih dokumen PDF resmi BEI/IDX")
                 if uploaded:
                     try:
                         pages = extract_pdf_pages(uploaded)
@@ -5416,8 +5625,8 @@ with content_col:
                 <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
                     <div style="width:38px;height:38px;border-radius:12px;background:rgba(139,92,246,0.18);color:#c084fc;display:flex;align-items:center;justify-content:center;font-size:20px;border:1px solid rgba(139,92,246,0.3);box-shadow:0 0 12px rgba(139,92,246,0.2);">📝</div>
                     <div>
-                        <div style="font-size:16px;font-weight:850;color:#f8fafc;line-height:1.2;">2. Input Manual / Koreksi Nilai Akun</div>
-                        <div style="font-size:12px;color:#94a3b8;font-weight:500;margin-top:2px;">Format kolom: Nomor. Nama Akun (kolom: nama_kolom). Nilai dalam satuan Rupiah penuh.</div>
+                        <div style="font-size:16px;font-weight:850;color:#f8fafc;line-height:1.2;">Input Manual & Koreksi Nilai Akun</div>
+                        <div style="font-size:12px;color:#94a3b8;font-weight:500;margin-top:2px;">Periksa dan sesuaikan pos akun keuangan dalam satuan Rupiah (Rp):</div>
                     </div>
                 </div>
                 """,
@@ -5457,12 +5666,30 @@ with content_col:
             cols = st.columns(2)
             for i, (key, label) in enumerate(fields):
                 with cols[i % 2]:
+                    schema_item = VARIABLE_SCHEMA_MAP.get(key, {})
+                    code_str = schema_item.get("code", f"{i+1:02d}")
+                    is_lt = is_light_theme()
+
                     if key == "ticker":
+                        cur_ticker = str(fin0.get(key, st.session_state.ticker) or "").upper()
                         fin0[key] = st.text_input(
-                            label,
-                            value=str(fin0.get(key, st.session_state.ticker) or ""),
-                            placeholder="Contoh: BBCA"
+                            f"{label} [Identitas Emiten]",
+                            value=cur_ticker,
+                            placeholder="Contoh: ICBP"
                         ).upper()
+                        tick_disp = fin0[key] if fin0[key] else "Belum diisi"
+                        st.markdown(
+                            f"""
+                            <div style="display:flex;align-items:center;justify-content:space-between;background:{'#f0fdf4' if is_lt else 'rgba(16,185,129,0.08)'};border:1px solid {'#bbf7d0' if is_lt else 'rgba(16,185,129,0.22)'};padding:4px 9px;border-radius:6px;margin-top:2px;margin-bottom:6px;font-size:12px;">
+                                <span style="font-weight:750;color:{'#15803d' if is_lt else '#86efac'};display:inline-flex;align-items:center;gap:4px;">
+                                    <span style="background:{'#16a34a' if is_lt else 'rgba(16,185,129,0.25)'};color:#ffffff;padding:1px 6px;border-radius:4px;font-size:10.5px;font-weight:800;">Kode {code_str}</span>
+                                    <span>Identitas Emiten:</span>
+                                </span>
+                                <span style="font-weight:800;color:{'#14532d' if is_lt else '#4ade80'};font-family:monospace;">{tick_disp}</span>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
                     elif key == "report_year":
                         active_yr = int(st.session_state.year) if str(st.session_state.get("year", "")).isdigit() else 2024
                         if fin0.get("report_year") is not None and str(fin0["report_year"]).isdigit():
@@ -5482,7 +5709,7 @@ with content_col:
                                 st.session_state.financials["report_year"] = new_y
 
                         fin0[key] = st.number_input(
-                            label,
+                            f"{label} [Tahun Buku]",
                             min_value=1900,
                             max_value=2100,
                             value=active_yr,
@@ -5493,6 +5720,19 @@ with content_col:
                         st.session_state.year = int(fin0[key])
                         if "financials" in st.session_state and isinstance(st.session_state.financials, dict):
                             st.session_state.financials["report_year"] = int(fin0[key])
+
+                        st.markdown(
+                            f"""
+                            <div style="display:flex;align-items:center;justify-content:space-between;background:{'#f0fdf4' if is_lt else 'rgba(16,185,129,0.08)'};border:1px solid {'#bbf7d0' if is_lt else 'rgba(16,185,129,0.22)'};padding:4px 9px;border-radius:6px;margin-top:2px;margin-bottom:6px;font-size:12px;">
+                                <span style="font-weight:750;color:{'#15803d' if is_lt else '#86efac'};display:inline-flex;align-items:center;gap:4px;">
+                                    <span style="background:{'#16a34a' if is_lt else 'rgba(16,185,129,0.25)'};color:#ffffff;padding:1px 6px;border-radius:4px;font-size:10.5px;font-weight:800;">Kode {code_str}</span>
+                                    <span>Tahun Periode Buku:</span>
+                                </span>
+                                <span style="font-weight:800;color:{'#14532d' if is_lt else '#4ade80'};font-family:monospace;">Tahun {int(fin0[key])}</span>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
                     else:
                         current_val = fin0.get(key)
                         if current_val in (None, ""):
@@ -5505,11 +5745,11 @@ with content_col:
                         else:
                             str_val = str(current_val)
                         txt_input = st.text_input(
-                            label,
+                            f"{label} [Satuan: Rp]",
                             value=str_val,
-                            placeholder="Contoh: 1500000000",
+                            placeholder="Contoh: 15000000000",
                             key=f"manual_{key}",
-                            help="Masukkan nilai sesuai laporan keuangan. Kolom dapat dihapus atau dikosongkan.",
+                            help="Masukkan nilai nominal akun dalam satuan Rupiah penuh. Kolom dapat dikosongkan.",
                         )
                         parsed_val = parse_financial_number(txt_input)
                         if parsed_val is not None:
@@ -5517,10 +5757,35 @@ with content_col:
                         elif key not in fin0:
                             fin0[key] = 0.0
 
-                        if parsed_val is not None and abs(parsed_val) >= 1000:
-                            st.caption(f"💰 Nilai Penuh: Rp {int(parsed_val):,}")
-                        elif parsed_val == 0:
-                            st.caption("💰 Nilai: Rp 0")
+                        if parsed_val is not None:
+                            rupiah_display = format_rupiah_idr(parsed_val)
+                            st.markdown(
+                                f"""
+                                <div style="display:flex;align-items:center;justify-content:space-between;background:{'#f0f9ff' if is_lt else 'rgba(56,189,248,0.08)'};border:1px solid {'#bae6fd' if is_lt else 'rgba(56,189,248,0.22)'};padding:4px 9px;border-radius:6px;margin-top:2px;margin-bottom:6px;font-size:12px;">
+                                    <span style="font-weight:750;color:{'#0369a1' if is_lt else '#93c5fd'};display:inline-flex;align-items:center;gap:4px;">
+                                        <span style="background:{'#0284c7' if is_lt else 'rgba(56,189,248,0.25)'};color:#ffffff;padding:1px 6px;border-radius:4px;font-size:10.5px;font-weight:800;">Kode {code_str}</span>
+                                        <span>Nilai Rupiah (IDR):</span>
+                                    </span>
+                                    <span style="font-weight:800;color:{'#0c4a6e' if is_lt else '#38bdf8'};font-family:monospace;letter-spacing:0.3px;">
+                                        {rupiah_display}
+                                    </span>
+                                </div>
+                                """,
+                                unsafe_allow_html=True,
+                            )
+                        else:
+                            st.markdown(
+                                f"""
+                                <div style="display:flex;align-items:center;justify-content:space-between;background:{'#f8fafc' if is_lt else 'rgba(148,163,184,0.06)'};border:1px dashed {'#cbd5e1' if is_lt else 'rgba(148,163,184,0.2)'};padding:4px 9px;border-radius:6px;margin-top:2px;margin-bottom:6px;font-size:12px;">
+                                    <span style="font-weight:700;color:{'#64748b' if is_lt else '#94a3b8'};display:inline-flex;align-items:center;gap:4px;">
+                                        <span style="background:{'#94a3b8' if is_lt else 'rgba(148,163,184,0.2)'};color:#ffffff;padding:1px 6px;border-radius:4px;font-size:10.5px;font-weight:800;">Kode {code_str}</span>
+                                        <span>Nilai Rupiah:</span>
+                                    </span>
+                                    <span style="color:{'#94a3b8' if is_lt else '#64748b'};font-style:italic;font-size:11.5px;">Belum diisi (Default: Rp 0)</span>
+                                </div>
+                                """,
+                                unsafe_allow_html=True,
+                            )
 
             current_assets = float(fin0.get("current_assets", 0.0) or 0.0)
             current_liabilities = float(fin0.get("current_liabilities", 0.0) or 0.0)
@@ -5531,7 +5796,7 @@ with content_col:
             st.session_state.financials = fin0
 
             st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
-            if st.button("🚀 Hitung Rasio X1–X5 dan Simpan ke Database", type="primary", use_container_width=True):
+            if st.button("🚀 Hitung Rasio & Simpan Riwayat", type="primary", use_container_width=True):
                 def _do_execute_admin_analysis():
                     set_ratios_from_financials(fin0)
                     st.session_state.has_analyzed = True
@@ -5567,15 +5832,9 @@ with content_col:
 
             if st.session_state.get("has_analyzed", False):
                 st.markdown("<div style='height:8px;'></div>", unsafe_allow_html=True)
-                c_btn_a, c_btn_b = st.columns(2)
-                with c_btn_a:
-                    if st.button("📊 Buka Hasil Prediksi, Diagnosa dan Rekomendasi 🚀", type="primary", use_container_width=True, key="btn_goto_pred_from_adm_dl"):
-                        set_page("Hasil Prediksi")
-                        st.rerun()
-                with c_btn_b:
-                    if st.button("🏠 Buka Dashboard Terintegrasi 🚀", type="secondary", use_container_width=True, key="btn_goto_dash_from_adm_dl"):
-                        set_page("Dashboard")
-                        st.rerun()
+                if st.button("📊 Buka Hasil Prediksi ➔", type="primary", use_container_width=True, key="btn_goto_pred_from_adm_dl"):
+                    set_page("Hasil Prediksi")
+                    st.rerun()
 
     elif page == "Manajemen Pengguna":
         set_page("Pengaturan Model")
@@ -5891,8 +6150,8 @@ with content_col:
     # ========================================================
     elif page in ("Hasil Prediksi", "Rasio dan Hasil Prediksi", "Rasio & Hasil Prediksi", "Rasio Keuangan", "Dashboard Prediksi"):
         section_title(
-            "Hasil Prediksi dan Analisis Komprehensif",
-            "Evaluasi variabel rasio X1–X5, status konsensus 3 kategori operasional, diagnosa mendalam, dan intelijen strategis finansial",
+            "Hasil Prediksi",
+            ("Evaluasi variabel rasio X1–X5, status konsensus 3 kategori operasional, diagnosa mendalam, dan intelijen finansial" if st.session_state.role == "admin" else "Status kesehatan keuangan emiten berdasarkan multi-model prediksi."),
             tone="purple",
         )
 
@@ -5914,34 +6173,22 @@ with content_col:
                 if f"input_ratio_{_k}" in st.session_state:
                     st.session_state.ratios[_k] = float(st.session_state[f"input_ratio_{_k}"])
 
-        # Top Bar Emiten Aktif dan Navigasi Cepat (Single-Level Columns, Anti-Tertumpuk & Sisi Rapi)
-        c_top_rh1, c_r_b1, c_r_b2 = st.columns([2.1, 1.15, 0.75], gap="small")
-        with c_top_rh1:
-            bar_em_bg = "#ffffff" if is_light else "rgba(15, 23, 42, 0.75)"
-            bar_em_border = "#cbd5e1" if is_light else "rgba(255, 255, 255, 0.08)"
-            bar_em_txt = "#334155" if is_light else "#cbd5e1"
-            bar_em_name = "#0f172a" if is_light else "#ffffff"
-            st.markdown(
-                f"""
-                <div style="background:{bar_em_bg};border:1.5px solid {bar_em_border};border-radius:10px;min-height:40px;height:auto;padding:8px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 6px rgba(15,23,42,0.04);box-sizing:border-box;">
-                    <span style="font-size:16px;line-height:1;flex-shrink:0;">🏢</span>
-                    <div style="font-size:12px;color:{bar_em_txt};line-height:1.35;word-break:break-word;">
-                        Emiten Teranalisis: <b style="color:{bar_em_name};">{st.session_state.company or 'Belum Dipilih'} ({st.session_state.ticker or '-'})</b> • Tahun Laporan: <b style="color:#2563eb;">{st.session_state.year if is_analyzed else '-'}</b>
-                    </div>
+        # Bar Identitas Emiten Teranalisis (Lebar Penuh, Bersih & Tanpa Tombol Navigasi Ganda)
+        bar_em_bg = "#ffffff" if is_light else "rgba(15, 23, 42, 0.75)"
+        bar_em_border = "#cbd5e1" if is_light else "rgba(255, 255, 255, 0.08)"
+        bar_em_txt = "#334155" if is_light else "#cbd5e1"
+        bar_em_name = "#0f172a" if is_light else "#ffffff"
+        st.markdown(
+            f"""
+            <div style="background:{bar_em_bg};border:1.5px solid {bar_em_border};border-radius:10px;min-height:38px;padding:8px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 4px rgba(15,23,42,0.04);box-sizing:border-box;">
+                <span style="font-size:16px;line-height:1;flex-shrink:0;">🏢</span>
+                <div style="font-size:12.5px;color:{bar_em_txt};line-height:1.35;">
+                    Emiten Teranalisis: <b style="color:{bar_em_name};">{st.session_state.company or 'Belum Dipilih'} ({st.session_state.ticker or '-'})</b> • Tahun Laporan: <b style="color:#2563eb;">{st.session_state.year if is_analyzed else '-'}</b>
                 </div>
-                """,
-                unsafe_allow_html=True,
-            )
-        with c_r_b1:
-            if st.button("📑 Edit Data/Laporan", key="btn_goto_dl_from_rh", use_container_width=True, help="Kembali ke formulir data dan laporan keuangan"):
-                set_page("Data dan Laporan Keuangan")
-                st.rerun()
-        with c_r_b2:
-            if st.button("🏠 Buka Dashboard", key="btn_goto_dash_from_rh", use_container_width=True, help="Buka dashboard utama"):
-                set_page("Dashboard")
-                st.rerun()
-
-        st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
         # Hasil Prediksi Multi-Model dan Status 3 Kategori
         xgb_thresh = float(config.get("xgb_threshold", 0.5))
@@ -6033,7 +6280,7 @@ with content_col:
 
             with left:
                 with st.container(border=True):
-                    section_title("Data Perusahaan", tone="blue")
+                    section_title("Profil Emiten", tone="blue")
                     info_table([
                         ("Nama Perusahaan", st.session_state.company or "-"),
                         ("Kode Perusahaan", st.session_state.ticker or "-"),
@@ -6044,7 +6291,7 @@ with content_col:
 
             with mid:
                 with st.container(border=True):
-                    section_title("Rasio Keuangan (Input Model)", tone="purple")
+                    section_title("Rasio Keuangan Model (X1–X4)", tone="purple")
                     ratio_labels = {
                         "X1": "X1 • Modal Kerja / Total Aset",
                         "X2": "X2 • Laba Ditahan / Total Aset",
@@ -6063,7 +6310,7 @@ with content_col:
             with right:
                 with st.container(border=True):
                     status_tone = "red" if z_cls == "distress" else ("amber" if z_cls in ("grey", "waspada") else "emerald")
-                    section_title("Status Financial Distress", tone=status_tone)
+                    section_title("Tingkat Risiko Distress", tone=status_tone)
                     render_gauge(z, config["altman_thresholds"])
                     status_color = "#f43f5e" if z_cls == "distress" else ("#f59e0b" if z_cls in ("grey", "waspada") else "#10b981")
                     status_bg = "rgba(244, 63, 94, 0.12)" if z_cls == "distress" else ("rgba(245, 158, 11, 0.12)" if z_cls in ("grey", "waspada") else "rgba(16, 185, 129, 0.12)")
@@ -6136,7 +6383,7 @@ with content_col:
 
             with left:
                 with st.container(border=True):
-                    section_title("Data Perusahaan", tone="blue")
+                    section_title("Profil Emiten", tone="blue")
                     info_table([
                         ("Nama Perusahaan", st.session_state.company or "Belum Dipilih"),
                         ("Kode Perusahaan", st.session_state.ticker or "-"),
@@ -6176,67 +6423,93 @@ with content_col:
 
         st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
 
-        # 1. Variabel Rasio Keuangan Model (X1–X5) - Diletakkan tepat di atas bagian metode
-        with st.container(border=True):
-            st.markdown(
-                """
-                <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
-                    <div style="width:38px;height:38px;border-radius:12px;background:rgba(99,102,241,0.18);color:#818cf8;display:flex;align-items:center;justify-content:center;font-size:20px;border:1px solid rgba(99,102,241,0.3);box-shadow:0 0 12px rgba(99,102,241,0.2);">📊</div>
-                    <div>
-                        <div style="font-size:16px;font-weight:850;color:#f8fafc;line-height:1.2;">1. Variabel Rasio Keuangan Model (X1–X5)</div>
-                        <div style="font-size:12px;color:#94a3b8;font-weight:500;margin-top:2px;">Rasio keuangan yang dihitung dari pos laporan keuangan dan menjadi masukan model Altman Z'', MDA, dan XGBoost</div>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-            r = st.session_state.ratios
-            cols = st.columns(5)
-            labels = {
-                "X1": "Working Capital / Total Assets (WC/TA)",
-                "X2": "Retained Earnings / Total Assets (RE/TA)",
-                "X3": "EBIT / Total Assets (EBIT/TA)",
-                "X4": "Common Stock Equity / Total Liabilities (CSE/TL)",
-                "X5": "Sales / Total Assets (S/TA - Altman 1968)",
-            }
-            keys_list = ["X1", "X2", "X3", "X4", "X5"]
-            for col, key in zip(cols, keys_list):
-                with col:
-                    new_val = st.number_input(
-                        key,
-                        value=float(r.get(key, 0.0)),
-                        format="%.4f",
-                        help=labels.get(key, key),
-                        key=f"input_ratio_{key}"
-                    )
-                    r[key] = new_val
-                    st.caption(labels.get(key, key))
-            st.session_state.ratios = r
+        # 1. Variabel Rasio Keuangan Model (X1–X5) - Desain Ringkas (Tertutup jika sudah teranalisis)
+        if is_analyzed:
+            with st.expander("✏️ Koreksi / Sesuaikan Nilai Rasio (X1–X5) Manual", expanded=False):
+                r = st.session_state.ratios
+                cols = st.columns(5)
+                labels = {
+                    "X1": "Working Capital / Total Assets (WC/TA)",
+                    "X2": "Retained Earnings / Total Assets (RE/TA)",
+                    "X3": "EBIT / Total Assets (EBIT/TA)",
+                    "X4": "Common Stock Equity / Total Liabilities (CSE/TL)",
+                    "X5": "Sales / Total Assets (S/TA - Altman 1968)",
+                }
+                keys_list = ["X1", "X2", "X3", "X4", "X5"]
+                for col, key in zip(cols, keys_list):
+                    with col:
+                        new_val = st.number_input(
+                            key,
+                            value=float(r.get(key, 0.0)),
+                            format="%.4f",
+                            help=labels.get(key, key),
+                            key=f"input_ratio_{key}"
+                        )
+                        r[key] = new_val
+                        st.caption(labels.get(key, key))
+                st.session_state.ratios = r
+                if st.button("🔄 Hitung Ulang Prediksi dengan Rasio Baru", key="btn_recalc_manual_hp", type="primary"):
+                    st.rerun()
 
-            if not is_analyzed:
-                st.info("💡 **Status Siaga:** Belum ada data emiten yang aktif dianalisis. Anda dapat menginput rasio di atas lalu klik tombol eksekusi manual, atau impor laporan keuangan di menu Data dan Laporan Keuangan.")
+            cap_audit = st.session_state.get("capping_audit", {})
+            if "X4" in cap_audit:
+                st.caption(f"🛡️ *Capping Rasio X4 Aktif:* `{cap_audit['X4']['raw']:.4f}` ➔ **{cap_audit['X4']['capped']:.4f}** (Maks 3.0)")
+        else:
+            with st.container(border=True):
+                st.markdown(
+                    """
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+                        <div style="width:38px;height:38px;border-radius:12px;background:rgba(99,102,241,0.18);color:#818cf8;display:flex;align-items:center;justify-content:center;font-size:20px;border:1px solid rgba(99,102,241,0.3);box-shadow:0 0 12px rgba(99,102,241,0.2);">📊</div>
+                        <div>
+                            <div style="font-size:16px;font-weight:850;color:#f8fafc;line-height:1.2;">Input Rasio Keuangan (X1–X5)</div>
+                            <div style="font-size:12px;color:#94a3b8;font-weight:500;margin-top:2px;">Masukkan rasio atau klik tombol Jalankan Prediksi</div>
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                r = st.session_state.ratios
+                cols = st.columns(5)
+                labels = {
+                    "X1": "Working Capital / Total Assets (WC/TA)",
+                    "X2": "Retained Earnings / Total Assets (RE/TA)",
+                    "X3": "EBIT / Total Assets (EBIT/TA)",
+                    "X4": "Common Stock Equity / Total Liabilities (CSE/TL)",
+                    "X5": "Sales / Total Assets (S/TA - Altman 1968)",
+                }
+                keys_list = ["X1", "X2", "X3", "X4", "X5"]
+                for col, key in zip(cols, keys_list):
+                    with col:
+                        new_val = st.number_input(
+                            key,
+                            value=float(r.get(key, 0.0)),
+                            format="%.4f",
+                            help=labels.get(key, key),
+                            key=f"input_ratio_{key}"
+                        )
+                        r[key] = new_val
+                        st.caption(labels.get(key, key))
+                st.session_state.ratios = r
+
+                st.info("💡 **Status Siaga:** Belum ada data emiten yang aktif dianalisis. Masukkan rasio di atas lalu klik Jalankan Prediksi, atau impor di menu Input Data Keuangan.")
                 c_mb1, c_mb2 = st.columns(2)
                 with c_mb1:
-                    if st.button("🚀 Eksekusi Prediksi dari Rasio di Atas", key="btn_exec_manual_ratios_hp", use_container_width=True):
+                    if st.button("🚀 Jalankan Prediksi", key="btn_exec_manual_ratios_hp", use_container_width=True):
                         st.session_state.has_analyzed = True
                         if not st.session_state.get("ticker"):
                             st.session_state.ticker = "MANUAL"
                             st.session_state.company = "Input Rasio Manual"
                         st.rerun()
                 with c_mb2:
-                    if st.button("💡 Muat Data Demo (ICBP 2024)", key="btn_load_demo_from_hp_top", use_container_width=True):
+                    if st.button("💡 Muat Data Contoh", key="btn_load_demo_from_hp_top", use_container_width=True):
                         load_demo_data_icbp()
                         st.rerun()
 
-            cap_audit = st.session_state.get("capping_audit", {})
-            if is_analyzed and "X4" in cap_audit:
-                st.info(f"🛡️ **Capping Rasio X4 Aktif:** Nilai mentah $X_4$ (`{cap_audit['X4']['raw']:.4f}`) telah dibatasi menjadi **{cap_audit['X4']['capped']:.4f}** agar emiten dengan utang mendekati nol tidak mendistorsi skor Altman Z'' dan MDA.")
-
         st.markdown("<div style='height:14px;'></div>", unsafe_allow_html=True)
-        t1, t2, t3 = st.tabs(["📐 1. ALTMAN Z''-SCORE", "📊 2. Z''-SCORE KOEFISIEN BARU", "🤖 3. PREDIKSI XGBOOST (MACHINE LEARNING)"])
+        t1, t2, t3 = st.tabs(["📐 Altman Z''-Score", "📊 Z''-Score MDA Baru", "🤖 Prediksi XGBoost"])
 
         with t1:
-            st.markdown("**Metode Statistik Tradisional (Altman Z''-Score Model)**")
+            st.markdown("**Model Altman Z''-Score (1995)**")
             st.latex(altman_formula(config["altman_coefficients"], latex=True))
             st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
             if is_analyzed:
@@ -6270,7 +6543,7 @@ with content_col:
             )
 
         with t2:
-            st.markdown("**Z''-Score dengan Koefisien Baru (MDA Empiris BEI)**")
+            st.markdown("**Model Z''-Score Koefisien Baru (MDA Empiris BEI)**")
             st.caption(
                 "Model ini mengestimasi ulang koefisien diskriminan rasio $X_1$ sampai $X_4$ "
                 "berdasarkan seluruh 704 observasi perusahaan manufaktur di BEI:"
@@ -6312,7 +6585,7 @@ with content_col:
             )
         
         with t3:
-            st.markdown("### Metode Kecerdasan Buatan (XGBoost Classifier)")
+            st.markdown("### Model Kecerdasan Buatan (XGBoost Classifier)")
             st.caption(
                 "Model XGBoost memprediksi probabilitas financial distress menggunakan **4 rasio keuangan (X1 sampai X4)** "
                 "dengan pengelompokan 3 Kategori Operasional: **Safe Zone**, **Grey Area**, dan **Distress Zone**."
@@ -6384,7 +6657,7 @@ with content_col:
                 st.info("ℹ️ **Model XGBoost Siap:** Silakan masukkan data keuangan emiten atau klik tombol Muat Data Demo untuk melihat estimasi probabilitas kebangkrutan AI.")
 
         st.markdown("###")
-        section_title("Perbandingan Kinerja Model Penelitian (3 Kategori Operasional)")
+        section_title("Ringkasan Perbandingan Model (3 Kategori)")
         alt_d_val = float(config['altman_thresholds']['distress'])
         alt_g_val = float(config['altman_thresholds'].get('grey', 2.99))
 
@@ -6404,13 +6677,12 @@ with content_col:
                 ["📐 Altman Z''-Score (Benchmark)", f"{z:.2f}", f"Distress < {alt_d_val:.2f} | Safe > {alt_g_val:.2f}", alt_badge_str, "Model Teoretis Klasik (Altman 1995/2017)"],
                 ["📊 Z''-Score (Koefisien Baru)", f"{mda:.2f}", f"Cut-off {config.get('mda_threshold', 0.3844):.4f} (Grey [{mda_d:.1f}, {mda_g:.1f}])", mda_badge_str, "Model Empiris Diskriminan BEI"],
                 ["🤖 XGBoost Machine Learning", xgb_val_str, xgb_thresh_str, xgb_badge_str, "Model Non-Linear AI"],
-            ], columns=["Pendekatan Model", "Nilai / Probabilitas", "Cut-off / Threshold (3 Zona)", "Zona Klasifikasi (3 Kategori)", "Keterangan Metodologi"])
+            ], columns=["Model Prediksi", "Nilai / Skor", "Ambang Batas (3 Zona)", "Hasil Klasifikasi", "Keterangan"])
             render_styled_dataframe(comparison, is_light=is_light_theme())
 
             conclusion_box(
-                "Kesimpulan Analisis Komparatif (3 Kategori)",
-                f"Sistem menampilkan perbandingan independen dari tiga pendekatan. Hasil konsensus sistem berada pada zona <b>{overall}</b>. "
-                "Data pada Grey Area diperlakukan sebagai zona waspada/ketidakpastian tanpa pemaksaan biner, memberikan wawasan analitis yang lebih mendalam untuk pengambilan keputusan manajerial dan investasi."
+                "Kesimpulan Perbandingan Model",
+                f"Hasil konsensus sistem berada pada zona <b>{overall}</b>. Kategori Grey Area berfungsi sebagai zona waspada tanpa pemaksaan biner, memberikan wawasan analitis yang lebih akurat untuk pengambilan keputusan."
             )
 
             st.markdown("###")
@@ -6418,7 +6690,7 @@ with content_col:
             with save_col1:
                 st.caption("💾 **Dokumentasikan Hasil:** Simpan analisis emiten ini ke database riwayat untuk audit dan dokumentasi.")
             with save_col2:
-                if st.button("Simpan ke Riwayat Prediksi", key="btn_save_pred_hp", use_container_width=True):
+                if st.button("💾 Simpan ke Riwayat", key="btn_save_pred_hp", use_container_width=True):
                     save_prediction_to_db(
                         st.session_state.username,
                         st.session_state.company,
@@ -6432,7 +6704,7 @@ with content_col:
                 ["📐 Altman Z''-Score (Benchmark)", "-", f"Distress < {alt_d_val:.2f} | Safe > {alt_g_val:.2f}", "⏳ STANDBY", "Model Teoretis Klasik (Altman 1995/2017)"],
                 ["📊 Z''-Score (Koefisien Baru)", "-", f"Cut-off {config.get('mda_threshold', 0.3844):.4f} (Grey [{mda_d:.1f}, {mda_g:.1f}])", "⏳ STANDBY", "Model Empiris Diskriminan BEI"],
                 ["🤖 XGBoost Machine Learning", "-", f"Safe < {xgb_th_cfg.get('safe', 0.35)*100:.0f}% | Distress > {xgb_th_cfg.get('distress', 0.65)*100:.0f}%", "⏳ STANDBY", "Model Non-Linear AI"],
-            ], columns=["Pendekatan Model", "Nilai / Probabilitas", "Cut-off / Threshold (3 Zona)", "Zona Klasifikasi (3 Kategori)", "Keterangan Metodologi"])
+            ], columns=["Model Prediksi", "Nilai / Skor", "Ambang Batas (3 Zona)", "Hasil Klasifikasi", "Keterangan"])
             render_styled_dataframe(comparison, is_light=is_light_theme())
 
             conclusion_box(
@@ -6441,271 +6713,262 @@ with content_col:
             )
             st.caption("ℹ️ Tombol simpan ke basis data riwayat akan aktif setelah analisis emiten dijalankan.")
 
-        st.markdown("---")
-        section_title(
-            "💡 Intelijen Finansial & Analisis Keputusan (Beyond Prediction)",
-            "Peralatan analisis strategis bagi Investor, Analis Kredit, dan Manajemen: Diagnosa akar masalah, radar solvabilitas, rekomendasi aksi nyata, simulator what-if, dan memorandum investasi"
-        )
+        if st.session_state.role == 'admin':
+            st.markdown("---")
+            section_title(
+                "💡 Intelijen Finansial & Analisis Keputusan (Beyond Prediction)",
+                "Peralatan analisis strategis bagi Investor, Analis Kredit, dan Manajemen: Diagnosa akar masalah, radar solvabilitas, rekomendasi aksi nyata, simulator what-if, dan memorandum investasi"
+            )
 
-        if not is_analyzed:
-            with st.container(border=True):
-                st.info("💡 **Intelijen Finansial & Analisis Keputusan Siaga:** Seluruh instrumen evaluasi lanjutan (Analisis Investor Saham, Mitigasi Kreditur Perbankan, Diagnosa Titik Kritis, Radar Solvabilitas & Arus Kas, Panduan Stakeholder, Simulator 'What-If', dan Memorandum Eksekutif) akan otomatis aktif dan terkalkulasi setelah data laporan keuangan emiten dianalisis.")
-                col_c1, col_c2 = st.columns(2)
-                with col_c1:
-                    if st.button("💡 Muat Data Demo (ICBP 2024)", key="btn_load_demo_from_hp_beyond", use_container_width=True):
-                        load_demo_data_icbp()
-                        st.rerun()
-                with col_c2:
-                    if st.button("📑 Input Data Laporan Keuangan", key="btn_goto_dl_from_hp_beyond", use_container_width=True):
-                        set_page("Data & Laporan Keuangan")
-                        st.rerun()
-        else:
-            drivers = diagnose_distress_drivers(st.session_state.ratios, config["altman_coefficients"], config["altman_thresholds"])
-            adv_metrics = calculate_advanced_metrics(st.session_state.financials)
-            resilience = evaluate_financial_resilience(z, z_cls, mda, mda_cls, xgb_prob, adv_metrics)
-            recommendations = generate_stakeholder_recommendations(z, z_cls, xgb_prob, drivers, adv_metrics, st.session_state.financials)
-            breakeven = calculate_distress_breakeven(st.session_state.financials, config["altman_coefficients"], config["altman_thresholds"])
-            equity_analysis = analyze_equity_investor(z, z_cls, mda, mda_cls, xgb_prob, st.session_state.ratios, st.session_state.financials)
-            lender_analysis = analyze_lender_creditor(z, z_cls, mda, mda_cls, xgb_prob, st.session_state.ratios, st.session_state.financials)
-
-            tab_intel_eq, tab_intel_cred, tab_intel1, tab_intel2, tab_intel3, tab_intel4, tab_intel5 = st.tabs([
-                "📈 1. Khusus Investor Saham",
-                "🏦 2. Khusus Kreditur & Perbankan",
-                "🩺 3. Diagnosa Akar Masalah",
-                "📊 4. Radar Solvabilitas & Arus Kas",
-                "🎯 5. Panduan Stakeholder",
-                "🧪 6. Simulator 'What-If'",
-                "📑 7. Memorandum Eksekutif",
-            ])
-
-            with tab_intel_eq:
-                st.markdown("#### 📈 Analisis Keputusan Strategis: Investor Saham (Equity Investors)")
-                st.caption("Evaluasi posisi investasi taktis, kepatuhan legal dividen, serta deteksi risiko dilusi modal akibat Rights Issue diskon atau Debt-to-Equity swap.")
-                render_equity_investor_dashboard(equity_analysis)
-
-            with tab_intel_cred:
-                st.markdown("#### 🏦 Penilaian Risiko Kreditur & Lembaga Perbankan (Lenders & Creditors)")
-                st.caption("Mitigasi risiko kredit bermasalah (NPL), penetapan kebijakan plafon, pengetatan klausul covenants kontraktual, serta mekanisme pengamanan agunan dan cash sweep.")
-                render_lender_creditor_dashboard(lender_analysis)
-
-            with tab_intel1:
-                st.markdown("#### 🩺 Dekomposisi Faktor & Diagnosa Titik Kritis")
-                st.caption("Mengetahui rasio mana yang menjadi beban penyeret skor (bottleneck) dan rasio mana yang menjadi penopang utama kesehatan perusahaan.")
-
-                c_d1, c_d2 = st.columns(2)
-                with c_d1:
-                    st.error(f"**🚨 Faktor Penekan Terberat (Worst Driver):**\n\n**{drivers['worst_driver_label']}** (Kontribusi: `{drivers['contributions'][drivers['worst_driver']]:+.2f}` poin)")
-                with c_d2:
-                    st.success(f"**🛡️ Faktor Penopang Terkuat (Best Driver):**\n\n**{drivers['best_driver_label']}** (Kontribusi: `{drivers['contributions'][drivers['best_driver']]:+.2f}` poin)")
-
-                render_factor_chart(drivers)
-
-                st.markdown("##### Rincian Analisis Komprehensif Masing-Masing Rasio:")
-                for item in drivers["findings"]:
-                    sev_icon = "🚨" if item["severity"] == "KRITIS" else ("⚠️" if item["severity"] in ("WASPADA", "Waspada") else "✅")
-                    with st.expander(f"{sev_icon} [{item['severity']}] {item['name']} (Nilai: {item['value']:.4f} | Kontribusi: {item['contribution']:+.2f} poin)", expanded=(item["severity"] == "KRITIS")):
-                        st.markdown(f"**Analisis Dampak Finansial:**\n{item['analysis']}")
-                        st.info(f"💡 **Rekomendasi Tindakan Korektif:**\n{item['recommendation']}")
-
-            with tab_intel2:
-                st.markdown("#### 📊 Indeks Ketahanan Finansial Komposit & Rasio Pelengkap")
-                st.caption("Analisis menyeluruh mencakup likuiditas jangka pendek, beban bunga (ICR), struktur utang (DER), dan arus kas operasional.")
-
-                render_resilience_card(resilience)
-
-                st.markdown("##### 🔍 6 Rasio Kunci Likuiditas, Arus Kas & Produktivitas")
-                g1, g2, g3 = st.columns(3)
-                g4, g5, g6 = st.columns(3)
-                grid_cols = [g1, g2, g3, g4, g5, g6]
-                metric_keys = ["current_ratio", "icr", "der", "ocf_to_liab", "roa", "npm"]
-
-                for col, m_key in zip(grid_cols, metric_keys):
-                    m_info = adv_metrics.get(m_key, {})
-                    with col:
-                        val = m_info.get("val")
-                        val_disp = f"{val:.2f}{m_info.get('unit', '')}" if val is not None else "N/A"
-                        status = m_info.get("status", "N/A")
-                        if status == "Aman":
-                            status_badge = "<span style='padding:3px 8px;border-radius:8px;background:rgba(20,184,166,0.18);color:#2dd4bf;border:1px solid rgba(20,184,166,0.35);font-size:10.5px;font-weight:800;'>🟢 AMAN</span>"
-                            card_bg = "linear-gradient(135deg, rgba(20, 184, 166, 0.12) 0%, rgba(15, 23, 42, 0.85) 100%)"
-                            card_border = "rgba(20, 184, 166, 0.35)"
-                            card_num_color = "#2dd4bf"
-                        elif status in ("WASPADA", "Waspada"):
-                            status_badge = "<span style='padding:3px 8px;border-radius:8px;background:rgba(245,158,11,0.18);color:#fbbf24;border:1px solid rgba(245,158,11,0.35);font-size:10.5px;font-weight:800;'>🟡 WASPADA</span>"
-                            card_bg = "linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(15, 23, 42, 0.85) 100%)"
-                            card_border = "rgba(245, 158, 11, 0.35)"
-                            card_num_color = "#fbbf24"
-                        elif status in ("Bahaya", "BAHAYA"):
-                            status_badge = "<span style='padding:3px 8px;border-radius:8px;background:rgba(244,63,94,0.18);color:#fb7185;border:1px solid rgba(244,63,94,0.35);font-size:10.5px;font-weight:800;'>🔴 BAHAYA</span>"
-                            card_bg = "linear-gradient(135deg, rgba(244, 63, 94, 0.14) 0%, rgba(15, 23, 42, 0.85) 100%)"
-                            card_border = "rgba(244, 63, 94, 0.35)"
-                            card_num_color = "#fb7185"
-                        else:
-                            status_badge = "<span style='padding:3px 8px;border-radius:8px;background:rgba(148,163,184,0.14);color:#cbd5e1;border:1px solid rgba(148,163,184,0.25);font-size:10.5px;font-weight:800;'>⚪ N/A</span>"
-                            card_bg = "rgba(15, 23, 42, 0.8)"
-                            card_border = "rgba(255, 255, 255, 0.08)"
-                            card_num_color = "#f8fafc"
-
-                        with st.container(border=True):
-                            st.markdown(
-                                f"""
-                                <div style="background:{card_bg};border:1px solid {card_border};border-radius:14px;padding:12px 14px;margin-bottom:8px;box-shadow:0 4px 16px rgba(0,0,0,0.35);backdrop-filter:blur(10px);">
-                                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                                        <span style="font-size:12px;font-weight:750;color:#cbd5e1;">{html.escape(m_info.get('name', m_key))}</span>
-                                        {status_badge}
-                                    </div>
-                                    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:8px;">
-                                        <div style="font-size:24px;font-weight:900;color:{card_num_color};font-family:'JetBrains Mono', monospace;text-shadow:0 0 12px {card_num_color}40;">
-                                            {val_disp}
-                                        </div>
-                                        <span style="font-size:13px;color:{card_num_color};">↗</span>
-                                    </div>
-                                </div>
-                                """,
-                                unsafe_allow_html=True,
-                            )
-                            st.caption(f"Tolok Ukur: **{m_info.get('benchmark', '-')}** • {m_info.get('desc', '')}")
-
-            with tab_intel3:
-                st.markdown("#### 🎯 Matriks Panduan Tindakan Strategis Multi-Stakeholder")
-                st.caption("Bukan sekadar label distress/aman, berikut adalah rekomendasi aksi nyata yang dapat langsung diterapkan oleh berbagai pihak berkepentingan:")
-
-                render_recommendation_card(
-                    "Bagi Investor Saham (Equity Investors)",
-                    recommendations["investor"]["stance"],
-                    recommendations["investor"]["points"],
-                    recommendations["investor"]["tone"]
-                )
-
-                render_recommendation_card(
-                    "Bagi Kreditur & Lembaga Perbankan (Lenders / Banks)",
-                    recommendations["kreditur"]["stance"],
-                    recommendations["kreditur"]["points"],
-                    recommendations["kreditur"]["tone"]
-                )
-
-                render_recommendation_card(
-                    "Bagi Manajemen Emiten & Dewan Direksi (Corporate Turnaround)",
-                    recommendations["manajemen"]["stance"],
-                    recommendations["manajemen"]["points"],
-                    recommendations["manajemen"]["tone"]
-                )
-
-            with tab_intel4:
-                st.markdown("#### 🧪 Simulator Skenario 'What-If' & Uji Sensitivitas Ketahanan")
-                st.caption("Simulasikan skenario pemulihan (*turnaround*) atau tekanan pasar (*stress test*) untuk melihat dampaknya terhadap skor kesehatan keuangan secara interaktif.")
-
-                if breakeven.get("available"):
-                    st.markdown("##### 🎯 Target Pemulihan Laba Usaha (Break-Even Distress Point)")
-                    curr_ebit = breakeven["current_ebit"]
-                    req_distress = breakeven["required_ebit_exit_distress"]
-                    req_safe = breakeven["required_ebit_safe"]
-                    b_c1, b_c2, b_c3 = st.columns(3)
-                    b_c1.metric("EBIT Saat Ini", f"Rp {int(curr_ebit):,}" if abs(curr_ebit) >= 1000 else f"Rp {curr_ebit:,.2f}")
-                    b_c2.metric("Target Keluar Distress (Z'' > 1.10)", f"Rp {int(req_distress):,}" if abs(req_distress) >= 1000 else f"Rp {req_distress:,.2f}", f"Gap: {int(breakeven['gap_to_exit_distress']):,}")
-                    b_c3.metric("Target Zona Aman (Z'' > 2.60)", f"Rp {int(req_safe):,}" if abs(req_safe) >= 1000 else f"Rp {req_safe:,.2f}", f"Gap: {int(breakeven['gap_to_safe']):,}")
-                    st.markdown("---")
-
-                st.markdown("##### 🎛️ Masukkan Parameter Simulasi Interaktif:")
-                sc_col1, sc_col2 = st.columns(2)
-                with sc_col1:
-                    sim_ebit_pct = st.slider("Perubahan Laba Operasi (EBIT) (%):", -50.0, 150.0, 0.0, 5.0, help="Simulasikan kenaikan/penurunan penjualan dan laba operasional.")
-                    sim_wc_boost = st.number_input("Tambahan Modal Kerja Bersih (Rp):", value=0.0, step=100000000.0, help="Contoh: Percepatan penagihan piutang atau penambahan kas.")
-                with sc_col2:
-                    sim_debt_pay = st.number_input("Pelunasan Utang (Deleveraging) (Rp):", value=0.0, step=100000000.0, help="Pengurangan total kewajiban pinjaman berbunga.")
-                    sim_eq_inject = st.number_input("Suntikan Ekuitas / Modal Baru (Rp):", value=0.0, step=100000000.0, help="Penerbitan saham baru (Rights Issue / Private Placement).")
-
-                sim_res = simulate_what_if(
-                    st.session_state.financials,
-                    config["altman_coefficients"],
-                    config["altman_thresholds"],
-                    delta_ebit_pct=sim_ebit_pct,
-                    debt_reduction_nominal=sim_debt_pay,
-                    working_capital_boost=sim_wc_boost,
-                    equity_injection=sim_eq_inject,
-                    base_ratios=st.session_state.ratios,
-                )
-
-                res_c1, res_c2, res_c3 = st.columns(3)
-                res_c1.metric("Skor Z'' Semula", f"{sim_res['z_orig']:.2f}", sim_res['z_cls_orig'].upper())
-                res_c2.metric("Skor Z'' Hasil Simulasi", f"{sim_res['z_sim']:.2f}", f"Delta: {sim_res['delta_z']:+.2f}", delta_color="normal")
-                res_c3.metric("Status Klasifikasi Baru", sim_res['z_cls_sim'].upper(), "Status Berubah! 🎉" if sim_res['status_changed'] else "Status Tetap")
-
-                if sim_res["improved"]:
-                    st.success(f"📈 Skenario ini berhasil menaikkan skor Altman Z'' sebesar **{sim_res['delta_z']:+.2f} poin** (dari {sim_res['z_orig']:.2f} menjadi **{sim_res['z_sim']:.2f}**).")
-                elif sim_res["delta_z"] < 0:
-                    st.warning(f"📉 Skenario tekanan ini menurunkan skor Altman Z'' sebesar **{sim_res['delta_z']:.2f} poin**.")
-
-            with tab_intel5:
-                st.markdown("#### 📑 Memorandum Analisis Eksekutif dan Unduh Laporan")
-                st.caption("Dokumen ringkasan terstruktur standar komite investasi (Investment Committee Memo) siap pakai untuk rapat direksi atau pertimbangan portofolio.")
-
-                memo_markdown = generate_executive_memo_text(
-                    st.session_state.company,
-                    st.session_state.ticker,
-                    int(st.session_state.year),
-                    z,
-                    z_cls,
-                    mda,
-                    mda_cls,
-                    xgb_prob,
-                    resilience,
-                    drivers,
-                    adv_metrics,
-                    recommendations,
-                    equity_analysis=equity_analysis,
-                    lender_analysis=lender_analysis,
-                )
-
-                st.download_button(
-                    "📥 Unduh Executive Investment Memo (.md)",
-                    memo_markdown.encode("utf-8"),
-                    file_name=f"Executive_Memo_{st.session_state.ticker}_{st.session_state.year}.md",
-                    mime="text/markdown",
-                    use_container_width=True,
-                    type="primary",
-                )
-
+            if not is_analyzed:
                 with st.container(border=True):
-                    st.markdown(memo_markdown)
+                    st.info("💡 **Intelijen Finansial & Analisis Keputusan Siaga:** Seluruh instrumen evaluasi lanjutan (Analisis Investor Saham, Mitigasi Kreditur Perbankan, Diagnosa Titik Kritis, Radar Solvabilitas & Arus Kas, Panduan Stakeholder, Simulator 'What-If', dan Memorandum Eksekutif) akan otomatis aktif dan terkalkulasi setelah data laporan keuangan emiten dianalisis.")
+                    col_c1, col_c2 = st.columns(2)
+                    with col_c1:
+                        if st.button("💡 Muat Data Demo (ICBP 2024)", key="btn_load_demo_from_hp_beyond", use_container_width=True):
+                            load_demo_data_icbp()
+                            st.rerun()
+                    with col_c2:
+                        if st.button("📑 Input Data Laporan Keuangan", key="btn_goto_dl_from_hp_beyond", use_container_width=True):
+                            set_page("Input Data Keuangan")
+                            st.rerun()
+            else:
+                drivers = diagnose_distress_drivers(st.session_state.ratios, config["altman_coefficients"], config["altman_thresholds"])
+                adv_metrics = calculate_advanced_metrics(st.session_state.financials)
+                resilience = evaluate_financial_resilience(z, z_cls, mda, mda_cls, xgb_prob, adv_metrics)
+                recommendations = generate_stakeholder_recommendations(z, z_cls, xgb_prob, drivers, adv_metrics, st.session_state.financials)
+                breakeven = calculate_distress_breakeven(st.session_state.financials, config["altman_coefficients"], config["altman_thresholds"])
+                equity_analysis = analyze_equity_investor(z, z_cls, mda, mda_cls, xgb_prob, st.session_state.ratios, st.session_state.financials)
+                lender_analysis = analyze_lender_creditor(z, z_cls, mda, mda_cls, xgb_prob, st.session_state.ratios, st.session_state.financials)
+
+                tab_intel_eq, tab_intel_cred, tab_intel1, tab_intel2, tab_intel3, tab_intel4, tab_intel5 = st.tabs([
+                    "📈 1. Khusus Investor Saham",
+                    "🏦 2. Khusus Kreditur & Perbankan",
+                    "🩺 3. Diagnosa Akar Masalah",
+                    "📊 4. Radar Solvabilitas & Arus Kas",
+                    "🎯 5. Panduan Stakeholder",
+                    "🧪 6. Simulator 'What-If'",
+                    "📑 7. Memorandum Eksekutif",
+                ])
+
+                with tab_intel_eq:
+                    st.markdown("#### 📈 Analisis Keputusan Strategis: Investor Saham (Equity Investors)")
+                    st.caption("Evaluasi posisi investasi taktis, kepatuhan legal dividen, serta deteksi risiko dilusi modal akibat Rights Issue diskon atau Debt-to-Equity swap.")
+                    render_equity_investor_dashboard(equity_analysis)
+
+                with tab_intel_cred:
+                    st.markdown("#### 🏦 Penilaian Risiko Kreditur & Lembaga Perbankan (Lenders & Creditors)")
+                    st.caption("Mitigasi risiko kredit bermasalah (NPL), penetapan kebijakan plafon, pengetatan klausul covenants kontraktual, serta mekanisme pengamanan agunan dan cash sweep.")
+                    render_lender_creditor_dashboard(lender_analysis)
+
+                with tab_intel1:
+                    st.markdown("#### 🩺 Dekomposisi Faktor & Diagnosa Titik Kritis")
+                    st.caption("Mengetahui rasio mana yang menjadi beban penyeret skor (bottleneck) dan rasio mana yang menjadi penopang utama kesehatan perusahaan.")
+
+                    c_d1, c_d2 = st.columns(2)
+                    with c_d1:
+                        st.error(f"**🚨 Faktor Penekan Terberat (Worst Driver):**\n\n**{drivers['worst_driver_label']}** (Kontribusi: `{drivers['contributions'][drivers['worst_driver']]:+.2f}` poin)")
+                    with c_d2:
+                        st.success(f"**🛡️ Faktor Penopang Terkuat (Best Driver):**\n\n**{drivers['best_driver_label']}** (Kontribusi: `{drivers['contributions'][drivers['best_driver']]:+.2f}` poin)")
+
+                    render_factor_chart(drivers)
+
+                    st.markdown("##### Rincian Analisis Komprehensif Masing-Masing Rasio:")
+                    for item in drivers["findings"]:
+                        sev_icon = "🚨" if item["severity"] == "KRITIS" else ("⚠️" if item["severity"] in ("WASPADA", "Waspada") else "✅")
+                        with st.expander(f"{sev_icon} [{item['severity']}] {item['name']} (Nilai: {item['value']:.4f} | Kontribusi: {item['contribution']:+.2f} poin)", expanded=(item["severity"] == "KRITIS")):
+                            st.markdown(f"**Analisis Dampak Finansial:**\n{item['analysis']}")
+                            st.info(f"💡 **Rekomendasi Tindakan Korektif:**\n{item['recommendation']}")
+
+                with tab_intel2:
+                    st.markdown("#### 📊 Indeks Ketahanan Finansial Komposit & Rasio Pelengkap")
+                    st.caption("Analisis menyeluruh mencakup likuiditas jangka pendek, beban bunga (ICR), struktur utang (DER), dan arus kas operasional.")
+
+                    render_resilience_card(resilience)
+
+                    st.markdown("##### 🔍 6 Rasio Kunci Likuiditas, Arus Kas & Produktivitas")
+                    g1, g2, g3 = st.columns(3)
+                    g4, g5, g6 = st.columns(3)
+                    grid_cols = [g1, g2, g3, g4, g5, g6]
+                    metric_keys = ["current_ratio", "icr", "der", "ocf_to_liab", "roa", "npm"]
+
+                    for col, m_key in zip(grid_cols, metric_keys):
+                        m_info = adv_metrics.get(m_key, {})
+                        with col:
+                            val = m_info.get("val")
+                            val_disp = f"{val:.2f}{m_info.get('unit', '')}" if val is not None else "N/A"
+                            status = m_info.get("status", "N/A")
+                            if status == "Aman":
+                                status_badge = "<span style='padding:3px 8px;border-radius:8px;background:rgba(20,184,166,0.18);color:#2dd4bf;border:1px solid rgba(20,184,166,0.35);font-size:10.5px;font-weight:800;'>🟢 AMAN</span>"
+                                card_bg = "linear-gradient(135deg, rgba(20, 184, 166, 0.12) 0%, rgba(15, 23, 42, 0.85) 100%)"
+                                card_border = "rgba(20, 184, 166, 0.35)"
+                                card_num_color = "#2dd4bf"
+                            elif status in ("WASPADA", "Waspada"):
+                                status_badge = "<span style='padding:3px 8px;border-radius:8px;background:rgba(245,158,11,0.18);color:#fbbf24;border:1px solid rgba(245,158,11,0.35);font-size:10.5px;font-weight:800;'>🟡 WASPADA</span>"
+                                card_bg = "linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(15, 23, 42, 0.85) 100%)"
+                                card_border = "rgba(245, 158, 11, 0.35)"
+                                card_num_color = "#fbbf24"
+                            elif status in ("Bahaya", "BAHAYA"):
+                                status_badge = "<span style='padding:3px 8px;border-radius:8px;background:rgba(244,63,94,0.18);color:#fb7185;border:1px solid rgba(244,63,94,0.35);font-size:10.5px;font-weight:800;'>🔴 BAHAYA</span>"
+                                card_bg = "linear-gradient(135deg, rgba(244, 63, 94, 0.14) 0%, rgba(15, 23, 42, 0.85) 100%)"
+                                card_border = "rgba(244, 63, 94, 0.35)"
+                                card_num_color = "#fb7185"
+                            else:
+                                status_badge = "<span style='padding:3px 8px;border-radius:8px;background:rgba(148,163,184,0.14);color:#cbd5e1;border:1px solid rgba(148,163,184,0.25);font-size:10.5px;font-weight:800;'>⚪ N/A</span>"
+                                card_bg = "rgba(15, 23, 42, 0.8)"
+                                card_border = "rgba(255, 255, 255, 0.08)"
+                                card_num_color = "#f8fafc"
+
+                            with st.container(border=True):
+                                st.markdown(
+                                    f"""
+                                    <div style="background:{card_bg};border:1px solid {card_border};border-radius:14px;padding:12px 14px;margin-bottom:8px;box-shadow:0 4px 16px rgba(0,0,0,0.35);backdrop-filter:blur(10px);">
+                                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                                            <span style="font-size:12px;font-weight:750;color:#cbd5e1;">{html.escape(m_info.get('name', m_key))}</span>
+                                            {status_badge}
+                                        </div>
+                                        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:8px;">
+                                            <div style="font-size:24px;font-weight:900;color:{card_num_color};font-family:'JetBrains Mono', monospace;text-shadow:0 0 12px {card_num_color}40;">
+                                                {val_disp}
+                                            </div>
+                                            <span style="font-size:13px;color:{card_num_color};">↗</span>
+                                        </div>
+                                    </div>
+                                    """,
+                                    unsafe_allow_html=True,
+                                )
+                                st.caption(f"Tolok Ukur: **{m_info.get('benchmark', '-')}** • {m_info.get('desc', '')}")
+
+                with tab_intel3:
+                    st.markdown("#### 🎯 Matriks Panduan Tindakan Strategis Multi-Stakeholder")
+                    st.caption("Bukan sekadar label distress/aman, berikut adalah rekomendasi aksi nyata yang dapat langsung diterapkan oleh berbagai pihak berkepentingan:")
+
+                    render_recommendation_card(
+                        "Bagi Investor Saham (Equity Investors)",
+                        recommendations["investor"]["stance"],
+                        recommendations["investor"]["points"],
+                        recommendations["investor"]["tone"]
+                    )
+
+                    render_recommendation_card(
+                        "Bagi Kreditur & Lembaga Perbankan (Lenders / Banks)",
+                        recommendations["kreditur"]["stance"],
+                        recommendations["kreditur"]["points"],
+                        recommendations["kreditur"]["tone"]
+                    )
+
+                    render_recommendation_card(
+                        "Bagi Manajemen Emiten & Dewan Direksi (Corporate Turnaround)",
+                        recommendations["manajemen"]["stance"],
+                        recommendations["manajemen"]["points"],
+                        recommendations["manajemen"]["tone"]
+                    )
+
+                with tab_intel4:
+                    st.markdown("#### 🧪 Simulator Skenario 'What-If' & Uji Sensitivitas Ketahanan")
+                    st.caption("Simulasikan skenario pemulihan (*turnaround*) atau tekanan pasar (*stress test*) untuk melihat dampaknya terhadap skor kesehatan keuangan secara interaktif.")
+
+                    if breakeven.get("available"):
+                        st.markdown("##### 🎯 Target Pemulihan Laba Usaha (Break-Even Distress Point)")
+                        curr_ebit = breakeven["current_ebit"]
+                        req_distress = breakeven["required_ebit_exit_distress"]
+                        req_safe = breakeven["required_ebit_safe"]
+                        b_c1, b_c2, b_c3 = st.columns(3)
+                        b_c1.metric("EBIT Saat Ini", f"Rp {int(curr_ebit):,}" if abs(curr_ebit) >= 1000 else f"Rp {curr_ebit:,.2f}")
+                        b_c2.metric("Target Keluar Distress (Z'' > 1.10)", f"Rp {int(req_distress):,}" if abs(req_distress) >= 1000 else f"Rp {req_distress:,.2f}", f"Gap: {int(breakeven['gap_to_exit_distress']):,}")
+                        b_c3.metric("Target Zona Aman (Z'' > 2.60)", f"Rp {int(req_safe):,}" if abs(req_safe) >= 1000 else f"Rp {req_safe:,.2f}", f"Gap: {int(breakeven['gap_to_safe']):,}")
+                        st.markdown("---")
+
+                    st.markdown("##### 🎛️ Masukkan Parameter Simulasi Interaktif:")
+                    sc_col1, sc_col2 = st.columns(2)
+                    with sc_col1:
+                        sim_ebit_pct = st.slider("Perubahan Laba Operasi (EBIT) (%):", -50.0, 150.0, 0.0, 5.0, help="Simulasikan kenaikan/penurunan penjualan dan laba operasional.")
+                        sim_wc_boost = st.number_input("Tambahan Modal Kerja Bersih (Rp):", value=0.0, step=100000000.0, help="Contoh: Percepatan penagihan piutang atau penambahan kas.")
+                    with sc_col2:
+                        sim_debt_pay = st.number_input("Pelunasan Utang (Deleveraging) (Rp):", value=0.0, step=100000000.0, help="Pengurangan total kewajiban pinjaman berbunga.")
+                        sim_eq_inject = st.number_input("Suntikan Ekuitas / Modal Baru (Rp):", value=0.0, step=100000000.0, help="Penerbitan saham baru (Rights Issue / Private Placement).")
+
+                    sim_res = simulate_what_if(
+                        st.session_state.financials,
+                        config["altman_coefficients"],
+                        config["altman_thresholds"],
+                        delta_ebit_pct=sim_ebit_pct,
+                        debt_reduction_nominal=sim_debt_pay,
+                        working_capital_boost=sim_wc_boost,
+                        equity_injection=sim_eq_inject,
+                        base_ratios=st.session_state.ratios,
+                    )
+
+                    res_c1, res_c2, res_c3 = st.columns(3)
+                    res_c1.metric("Skor Z'' Semula", f"{sim_res['z_orig']:.2f}", sim_res['z_cls_orig'].upper())
+                    res_c2.metric("Skor Z'' Hasil Simulasi", f"{sim_res['z_sim']:.2f}", f"Delta: {sim_res['delta_z']:+.2f}", delta_color="normal")
+                    res_c3.metric("Status Klasifikasi Baru", sim_res['z_cls_sim'].upper(), "Status Berubah! 🎉" if sim_res['status_changed'] else "Status Tetap")
+
+                    if sim_res["improved"]:
+                        st.success(f"📈 Skenario ini berhasil menaikkan skor Altman Z'' sebesar **{sim_res['delta_z']:+.2f} poin** (dari {sim_res['z_orig']:.2f} menjadi **{sim_res['z_sim']:.2f}**).")
+                    elif sim_res["delta_z"] < 0:
+                        st.warning(f"📉 Skenario tekanan ini menurunkan skor Altman Z'' sebesar **{sim_res['delta_z']:.2f} poin**.")
+
+                with tab_intel5:
+                    st.markdown("#### 📑 Memorandum Analisis Eksekutif dan Unduh Laporan")
+                    st.caption("Dokumen ringkasan terstruktur standar komite investasi (Investment Committee Memo) siap pakai untuk rapat direksi atau pertimbangan portofolio.")
+
+                    memo_markdown = generate_executive_memo_text(
+                        st.session_state.company,
+                        st.session_state.ticker,
+                        int(st.session_state.year),
+                        z,
+                        z_cls,
+                        mda,
+                        mda_cls,
+                        xgb_prob,
+                        resilience,
+                        drivers,
+                        adv_metrics,
+                        recommendations,
+                        equity_analysis=equity_analysis,
+                        lender_analysis=lender_analysis,
+                    )
+
+                    st.download_button(
+                        "📥 Unduh Executive Investment Memo (.md)",
+                        memo_markdown.encode("utf-8"),
+                        file_name=f"Executive_Memo_{st.session_state.ticker}_{st.session_state.year}.md",
+                        mime="text/markdown",
+                        use_container_width=True,
+                        type="primary",
+                    )
+
+                    with st.container(border=True):
+                        st.markdown(memo_markdown)
         
     elif page in ("Perbandingan dan Evaluasi Model", "Perbandingan & Evaluasi Model", "Perbandingan Hasil", "Evaluasi Model"):
-        section_title("Perbandingan Hasil dan Evaluasi Model", "Komparasi metodologis multi-model dan matriks evaluasi validasi empiris BEI", tone="blue")
+        section_title("Perbandingan Hasil", "Komparasi hasil prediksi antar model dan evaluasi performa", tone="blue")
 
         is_light = is_light_theme()
         is_analyzed = bool(st.session_state.get("has_analyzed", False) and st.session_state.get("ticker"))
 
-        # Top Bar Emiten Aktif dan Navigasi Cepat (Single-Level Columns, Anti-Tertumpuk & Sisi Rapi)
-        c_ph_em, c_ph_b1, c_ph_b2 = st.columns([2.1, 1.15, 0.75], gap="small")
-        with c_ph_em:
-            bar_em_bg = "#ffffff" if is_light else "rgba(15, 23, 42, 0.75)"
-            bar_em_border = "#cbd5e1" if is_light else "rgba(255, 255, 255, 0.08)"
-            bar_em_txt = "#334155" if is_light else "#cbd5e1"
-            bar_em_name = "#0f172a" if is_light else "#ffffff"
-            st.markdown(
-                f"""
-                <div style="background:{bar_em_bg};border:1.5px solid {bar_em_border};border-radius:9px;min-height:38px;height:38px;padding:0 14px;margin-bottom:0;display:flex;align-items:center;gap:10px;box-shadow:0 2px 6px rgba(15,23,42,0.04);box-sizing:border-box;">
-                    <span style="font-size:16px;line-height:1;flex-shrink:0;">🏢</span>
-                    <div style="font-size:12px;color:{bar_em_txt};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                        Emiten Teranalisis: <b style="color:{bar_em_name};">{st.session_state.company or 'Belum Dipilih'} ({st.session_state.ticker or '-'})</b> • Periode: <b style="color:#2563eb;">{st.session_state.year if is_analyzed else '-'}</b>
-                    </div>
+        # Bar Identitas Emiten Teranalisis (Lebar Penuh, Bersih & Tanpa Tombol Navigasi Ganda)
+        bar_em_bg = "#ffffff" if is_light else "rgba(15, 23, 42, 0.75)"
+        bar_em_border = "#cbd5e1" if is_light else "rgba(255, 255, 255, 0.08)"
+        bar_em_txt = "#334155" if is_light else "#cbd5e1"
+        bar_em_name = "#0f172a" if is_light else "#ffffff"
+        st.markdown(
+            f"""
+            <div style="background:{bar_em_bg};border:1.5px solid {bar_em_border};border-radius:10px;min-height:38px;padding:8px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;box-shadow:0 1px 4px rgba(15,23,42,0.04);box-sizing:border-box;">
+                <span style="font-size:16px;line-height:1;flex-shrink:0;">🏢</span>
+                <div style="font-size:12.5px;color:{bar_em_txt};line-height:1.35;">
+                    Emiten Teranalisis: <b style="color:{bar_em_name};">{st.session_state.company or 'Belum Dipilih'} ({st.session_state.ticker or '-'})</b> • Periode: <b style="color:#2563eb;">{st.session_state.year if is_analyzed else '-'}</b>
                 </div>
-                """,
-                unsafe_allow_html=True,
-            )
-        with c_ph_b1:
-            if st.button("📈 Rasio dan Hasil Prediksi", key="btn_goto_rh_from_pe", use_container_width=True, help="Buka halaman rasio dan hasil prediksi"):
-                set_page("Rasio dan Hasil Prediksi")
-                st.rerun()
-        with c_ph_b2:
-            if st.button("🏠 Buka Dashboard", key="btn_goto_dash_from_pe", use_container_width=True, help="Kembali ke dashboard utama"):
-                set_page("Dashboard")
-                st.rerun()
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
         cmp_tabs = st.tabs([
-            "📊 Komparasi Output Multi-Model (Altman vs MDA vs XGBoost)",
-            "🎯 Evaluasi Model dan Metrik Performa AI (Fitur No. 6)",
-            "🔬 Validasi Empiris dan Matriks Evaluasi BEI"
+            "📊 Komparasi Output Model",
+            "🎯 Evaluasi Metrik Model",
+            "🔬 Validasi Empiris"
         ])
 
         with cmp_tabs[0]:
@@ -6783,11 +7046,11 @@ with content_col:
                     st.markdown("<div style='height:14px;'></div>", unsafe_allow_html=True)
                     col_radar_cmp, col_bar_cmp = st.columns([1.1, 1.0])
                     with col_radar_cmp:
-                        st.markdown("##### 🎯 Radar Konvergensi Multidimensi")
+                        st.markdown("##### 🎯 Radar Profil Rasio")
                         st.caption("Pemetaan komparatif profil rasio keuangan emiten terhadap batas aman benchmark industri.")
                         render_radar_chart(st.session_state.ratios)
                     with col_bar_cmp:
-                        st.markdown("##### 📊 Distribusi Skor Antar-Metode")
+                        st.markdown("##### 📊 Distribusi Skor Prediksi")
                         st.caption("Perbandingan terkalibrasi skor statistik dan probabilitas inferensi machine learning.")
                         render_score_distribution_chart(z, mda, xgb_prob, key_suffix="perbandingan", config=config)
 
@@ -6903,6 +7166,9 @@ with content_col:
         with cmp_tabs[1]:
             active_ratios = st.session_state.get("ratios", {})
             curr_split_sz = float(st.session_state.get("eval_split_ratio", 0.20))
+            if curr_split_sz > 0.40:
+                curr_split_sz = 0.20
+                st.session_state.eval_split_ratio = 0.20
             cur_tr_pct = int(round((1.0 - curr_split_sz) * 100))
             cur_ts_pct = int(round(curr_split_sz * 100))
 
@@ -6912,13 +7178,12 @@ with content_col:
                 test_size=curr_split_sz,
             ) if get_xgboost_evaluation_metrics else {}
 
-            # Kontrol latih ulang model dan status dataset
-            c_eval_head1, c_eval_head2 = st.columns([3, 1.2])
-            with c_eval_head1:
-                total_obs = eval_metrics_data.get("total_samples", 3770) if isinstance(eval_metrics_data, dict) else 3770
-                st.caption(f"Validasi diuji menggunakan {total_obs:,} observasi laporan keuangan emiten manufaktur BEI dengan porsi evaluasi aktif: **{cur_tr_pct}% Data Latih** dan **{cur_ts_pct}% Data Uji** (stratified split bersih tanpa target leakage).")
-            with c_eval_head2:
-                if st.button("🔄 Latih Ulang & Evaluasi Live", key="btn_retrain_eval_combined", use_container_width=True, help="Melatih ulang model pada dataset aktual dan memperbarui seluruh metrik evaluasi multi-model"):
+            # Kontrol latih ulang model dan status dataset (Ringkas & Rapi)
+            c_eval_top_r, c_eval_top_b = st.columns([3.2, 1.0])
+            with c_eval_top_r:
+                st.caption("Validasi performa komparatif tiga model pada data uji empiris emiten manufaktur BEI.")
+            with c_eval_top_b:
+                if st.button("🔄 Latih Ulang", key="btn_retrain_eval_combined", use_container_width=True, help="Melatih ulang model dan memperbarui metrik evaluasi"):
                     with st.spinner("Melatih ulang model XGBoost dan menghitung metrik evaluasi multi-model..."):
                         if get_xgboost_evaluation_metrics:
                             eval_metrics_data = get_xgboost_evaluation_metrics(
@@ -6927,7 +7192,7 @@ with content_col:
                                 config=config,
                                 test_size=curr_split_sz,
                             )
-                        st.toast(f"Model berhasil dilatih ulang pada porsi evaluasi {cur_tr_pct}/{cur_ts_pct}!", icon="✅")
+                        st.toast(f"Model dilatih ulang pada porsi {cur_tr_pct}/{cur_ts_pct}!", icon="✅")
                         st.rerun()
 
             render_model_evaluation_dashboard(
@@ -6937,7 +7202,7 @@ with content_col:
             )
 
         with cmp_tabs[2]:
-            st.markdown("#### 🔬 Validasi Empiris & Matriks Kebijakan Pasar Modal (BEI)")
+            st.markdown("#### 🔬 Validasi Empiris Model (BEI)")
             st.caption("Perbandingan komparatif efektivitas model pada data uji independen industri manufaktur Bursa Efek Indonesia:")
 
             df_val_summary = pd.DataFrame([
@@ -6949,20 +7214,19 @@ with content_col:
 
             st.markdown("<div style='height:14px;'></div>", unsafe_allow_html=True)
             conclusion_box(
-                "Relevansi Evaluasi bagi Pengujian Skripsi & Analisis Pasar Modal",
-                "Dalam konteks prediksi <i>financial distress</i> di pasar modal, meminimalkan <b>Type II Error (False Negative)</b> "
-                "adalah prioritas tertinggi karena kegagalan mendeteksi perusahaan yang terancam bangkrut berakibat fatal bagi kreditur dan investor. "
-                "Dengan perolehan <b>Akurasi realistis ~91.5%</b> dan <b>AUC-ROC 0.9426</b> pada data uji independen yang bebas data leakage, model XGBoost terbukti superior dibandingkan model statistik linear "
+                "Kesimpulan Evaluasi & Relevansi Pasar Modal",
+                "Dalam analisis risiko finansial di pasar modal, meminimalkan False Negative (perusahaan distress tidak terdeteksi) adalah prioritas utama. "
+                "Dengan perolehan akurasi ~91.5% dan AUC-ROC 0.9426 pada data uji independen yang bebas data leakage, model XGBoost terbukti superior dibandingkan model statistik linear "
                 "(Altman Z'' 80.85% & MDA 86.52%) dalam menangkap dinamika rasio keuangan non-linear di Bursa Efek Indonesia (BEI)."
             )
 
     # ========================================================
     # INTEGRASI API TAHUN: PASAR MODAL DAN LAPORAN KEUANGAN BEI
     # ========================================================
-    elif page in ("Integrasi API (Tahun)", "Integrasi API Tahun", "Integrasi API Pasar"):
+    elif page in ("Integrasi API Bursa", "Integrasi API (Tahun)", "Integrasi API Tahun", "Integrasi API Pasar"):
         section_title(
-            "Integrasi API dan Laporan Keuangan Tahunan (BEI / IDX)",
-            "Pencarian emiten, penarikan data laporan keuangan multi-tahun otomatis, seleksi periode tahun pelaporan, dan sinkronisasi model",
+            "Integrasi API Bursa (IDX)",
+            "Penarikan data laporan keuangan emiten BEI otomatis via API",
             tone="blue",
         )
 
@@ -6973,8 +7237,8 @@ with content_col:
                 <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
                     <div style="width:38px;height:38px;border-radius:12px;background:rgba(59,130,246,0.18);color:#60a5fa;display:flex;align-items:center;justify-content:center;font-size:20px;border:1px solid rgba(59,130,246,0.3);box-shadow:0 0 12px rgba(59,130,246,0.2);">🌐</div>
                     <div>
-                        <div style="font-size:16px;font-weight:850;color:#f8fafc;line-height:1.2;">Pencarian dan Penarikan Data Pasar Modal</div>
-                        <div style="font-size:12px;color:#94a3b8;font-weight:500;margin-top:2px;">Terhubung dengan feed Yahoo Finance (.JK) dan basis data emiten Bursa Efek Indonesia</div>
+                        <div style="font-size:16px;font-weight:850;color:#f8fafc;line-height:1.2;">Pencarian Emiten & Tarik Data</div>
+                        <div style="font-size:12px;color:#94a3b8;font-weight:500;margin-top:2px;">Koneksi feed pasar modal BEI / IDX</div>
                     </div>
                 </div>
                 """,
@@ -6991,7 +7255,7 @@ with content_col:
                 ).strip().upper()
             with col_search_btn:
                 st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
-                btn_do_fetch = st.button("🚀 Tarik Data Laporan Keuangan (API)", type="primary", use_container_width=True, key="api_page_btn_fetch")
+                btn_do_fetch = st.button("🚀 Tarik Data API", type="primary", use_container_width=True, key="api_page_btn_fetch")
 
             api_picked = render_emiten_shortcuts("page_api")
             if api_picked:
@@ -7123,10 +7387,10 @@ with content_col:
             with c_yr_sync:
                 st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
                 btn_load_to_session = st.button(
-                    "📥 Terapkan Data Ini ke Sesi Utama dan Simpan",
+                    "📥 Terapkan & Simpan Data",
                     type="primary",
                     use_container_width=True,
-                    help="Memasukkan seluruh pos keuangan tahun terpilih ke model prediksi aktif dan mencatatnya ke basis data.",
+                    help="Memasukkan pos keuangan tahun terpilih ke model prediksi aktif dan mencatatnya ke basis data.",
                     key="btn_apply_api_to_session"
                 )
 
@@ -7252,7 +7516,7 @@ with content_col:
                         safe_dataframe(df_is, use_container_width=True, hide_index=True)
 
             with tab_audit:
-                st.markdown("#### Audit & Verifikasi Pemetaan Pos Akuntansi (Data Engineering)")
+                st.markdown("#### Audit Pemetaan Pos Akun Keuangan")
                 st.caption(
                     "Tabel di bawah memperlihatkan bagaimana nama akun resmi pada API penyedia dipetakan secara terstandarisasi "
                     "ke dalam 15 variabel proyek prediksi (*VARIABLE_SCHEMA*)."
@@ -7281,10 +7545,9 @@ with content_col:
                 safe_dataframe(pd.DataFrame(audit_rows), use_container_width=True, hide_index=True)
 
             with tab_val:
-                st.markdown(f"#### 🔬 Uji Validasi Rekapitulasi Historis BEI & Metodologi Skripsi")
+                st.markdown(f"#### 🔬 Uji Validasi Data Historis BEI")
                 st.caption(
-                    "Pemeriksaan otomatis konsistensi data finansial hasil penarikan API terhadap tolok ukur rekapitulasi resmi BEI "
-                    "(Lampiran Skripsi: ADES, AALI, ICBP, KICI) serta audit koherensi akuntansi internal dan status capping rasio."
+                    "Pemeriksaan konsistensi data finansial hasil penarikan API terhadap data resmi BEI serta audit koherensi akuntansi dan batasan capping rasio."
                 )
 
                 # Siapkan data keuangan & rasio terkap
@@ -7337,7 +7600,7 @@ with content_col:
                         else:
                             x4_now = temp_ratios_val.get("X4", 0.0)
                             st.write(f"✅ **Normal (Tanpa Capping):** `{x4_now:.4f}`")
-                            st.caption("Nilai X4 ≤ 3.0 sesuai ambang batas skripsi hal. 41 & 95")
+                            st.caption("Nilai X4 ≤ 3.0 sesuai batas normalisasi rasio")
 
                 with v_col3:
                     with st.container(border=True):
@@ -7357,7 +7620,7 @@ with content_col:
                 df_val = pd.DataFrame(val_res["validation_rows"])
                 safe_dataframe(df_val, use_container_width=True, hide_index=True)
 
-                with st.expander("ℹ️ Penjelasan Ilmiah Capping & Verifikasi Data (Proposal Skripsi Hal. 41, 95 & Lampiran)"):
+                with st.expander("ℹ️ Penjelasan Aturan Capping Rasio & Verifikasi"):
                     st.markdown("""
                     1. **Koreksi Pemetaan Akuntansi**:
                        - $X_1 = \\frac{Current\\ Assets - Current\\ Liabilities}{Total\\ Assets}$. Modal kerja ($WC$) wajib dihitung dari selisih aset lancar dan liabilitas lancar tanpa perkiraan buatan.
@@ -7438,15 +7701,9 @@ with content_col:
                                 st.caption("Model XGBoost belum dikalibrasi.")
 
                     st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
-                    col_go_pred, col_go_dash = st.columns(2)
-                    with col_go_pred:
-                        if st.button("👉 Buka Halaman Hasil Prediksi dan Diagnosa Lengkap", type="secondary", use_container_width=True):
-                            set_page("Hasil Prediksi")
-                            st.rerun()
-                    with col_go_dash:
-                        if st.button("🏠 Buka Dashboard dan Analisis Utama", type="secondary", use_container_width=True):
-                            set_page("Dashboard dan Analisis" if st.session_state.role == "user" else "Dashboard")
-                            st.rerun()
+                    if st.button("👉 Buka Hasil Prediksi ➔", type="primary", use_container_width=True, key="btn_goto_pred_from_api_pull"):
+                        set_page("Hasil Prediksi")
+                        st.rerun()
 
                 except Exception as ex:
                     st.error(f"Gagal mempratinjau kalkulasi model: {ex}")
@@ -7687,8 +7944,8 @@ with content_col:
         curr_bio = st.session_state.get("user_bio") or user_profile_data.get("bio", "")
         curr_avatar = st.session_state.get("user_avatar") or user_profile_data.get("avatar_data", "")
 
-        # Top Bar Navigasi Pintasan (Single-Level Columns, Anti-Tertumpuk & Sisi Rapi)
-        c_prof_nav1, c_pnav_b1, c_pnav_b2, c_pnav_b3 = st.columns([1.95, 0.65, 0.65, 0.75], gap="small")
+        # Top Bar Profil Aktif (Tanpa Tombol Navigasi Ganda)
+        c_prof_nav1, c_pnav_b3 = st.columns([3.8, 1.2], gap="small")
         with c_prof_nav1:
             if curr_avatar:
                 top_nav_avatar_html = f'<img src="{curr_avatar}" style="width:24px; height:24px; border-radius:50%; object-fit:cover; border:1.5px solid #2563eb; flex-shrink:0;" />'
@@ -7705,14 +7962,6 @@ with content_col:
                 </div>
                 """
             )
-        with c_pnav_b1:
-            if st.button("🏠 Dashboard", key="btn_prof_goto_dash", use_container_width=True, help="Kembali ke Dashboard Utama"):
-                set_page("Dashboard")
-                st.rerun()
-        with c_pnav_b2:
-            if st.button("📈 Prediksi", key="btn_prof_goto_results", use_container_width=True, help="Buka Hasil Prediksi"):
-                set_page("Hasil Prediksi")
-                st.rerun()
         with c_pnav_b3:
             if st.button("🚪 Keluar Akun", key="btn_prof_top_single_logout", use_container_width=True, help="Keluar dari sesi login sistem"):
                 logout_user()
@@ -8180,7 +8429,7 @@ with content_col:
     # Menggabungkan Dashboard Sistem dan Dashboard Prediksi dengan Status 3 Kategori
     # ========================================================
     else:
-        section_title("Dashboard Pemantauan dan Analisis Risiko", tone="blue")
+        section_title("Dashboard Pemantauan Risiko", "Ringkasan status kesehatan keuangan emiten", tone="blue")
 
         is_analyzed = bool(st.session_state.get("has_analyzed", False) and st.session_state.get("ticker"))
 
@@ -8291,48 +8540,31 @@ with content_col:
             bar_emiten_bold = "#ffffff"
             bar_emiten_year = "#60a5fa"
 
-        col_stat, c_tbtn1, c_tbtn2, c_tbtn3, c_tbtn4 = st.columns([2.7, 1.0, 1.0, 1.0, 1.0], gap="small")
-        with col_stat:
-            if not is_analyzed:
-                st.markdown(
-                    f"""
-                    <div style="background:{bar_emiten_bg};border:1.5px solid {bar_emiten_border};border-radius:9px;padding:0 14px;height:38px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 1px 4px rgba(15,23,42,0.03);box-sizing:border-box;text-align:center;">
-                        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3b82f6;box-shadow:0 0 6px rgba(59,130,246,0.6);flex-shrink:0;"></span>
-                        <div style="font-size:11.5px;color:{bar_emiten_txt} !important;font-weight:700;letter-spacing:0.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;">
-                            STATUS: <span style="color:{bar_emiten_bold} !important;font-weight:800;">SIAGA ANALISIS</span> • BELUM ADA EMITEN TERANALISIS
-                        </div>
+        # Bar Identitas Emiten / Status Sistem (Lebar Penuh, Bersih & Tanpa Tombol Navigasi Ganda)
+        if not is_analyzed:
+            st.markdown(
+                f"""
+                <div style="background:{bar_emiten_bg};border:1.5px solid {bar_emiten_border};border-radius:9px;padding:0 16px;height:40px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 1px 4px rgba(15,23,42,0.03);box-sizing:border-box;margin-bottom:12px;text-align:center;">
+                    <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#3b82f6;box-shadow:0 0 6px rgba(59,130,246,0.6);flex-shrink:0;"></span>
+                    <div style="font-size:12px;color:{bar_emiten_txt} !important;font-weight:700;letter-spacing:0.2px;">
+                        STATUS: <span style="color:{bar_emiten_bold} !important;font-weight:800;">SIAGA ANALISIS</span> • BELUM ADA EMITEN TERANALISIS
                     </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.markdown(
-                    f"""
-                    <div style="background:{bar_emiten_bg};border:1.5px solid {bar_emiten_border};border-radius:9px;padding:0 14px;height:38px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 1px 4px rgba(15,23,42,0.03);box-sizing:border-box;overflow:hidden;text-align:center;" title="{st.session_state.company} ({st.session_state.ticker}) • Tahun {st.session_state.year}">
-                        <span style="font-size:15px;flex-shrink:0;">🏢</span>
-                        <div style="font-size:11.5px;color:{bar_emiten_txt} !important;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;">
-                            Emiten: <b style="color:{bar_emiten_bold} !important;">{st.session_state.company}</b> <span style="background:{'#eff6ff' if is_light else 'rgba(59,130,246,0.18)'};color:{bar_emiten_year} !important;padding:2px 7px;border-radius:6px;font-weight:800;font-size:11px;border:1px solid {'#bfdbfe' if is_light else 'rgba(59,130,246,0.35)'};margin:0 4px;">{st.session_state.ticker}</span> • Tahun: <b style="color:{bar_emiten_year} !important;">{st.session_state.year}</b>
-                        </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                f"""
+                <div style="background:{bar_emiten_bg};border:1.5px solid {bar_emiten_border};border-radius:9px;padding:0 16px;height:40px;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 1px 4px rgba(15,23,42,0.03);box-sizing:border-box;margin-bottom:12px;text-align:center;" title="{st.session_state.company} ({st.session_state.ticker}) • Tahun {st.session_state.year}">
+                    <span style="font-size:16px;flex-shrink:0;">🏢</span>
+                    <div style="font-size:12.5px;color:{bar_emiten_txt} !important;font-weight:650;">
+                        Emiten: <b style="color:{bar_emiten_bold} !important;">{st.session_state.company}</b> <span style="background:{'#eff6ff' if is_light else 'rgba(59,130,246,0.18)'};color:{bar_emiten_year} !important;padding:2px 7px;border-radius:6px;font-weight:800;font-size:11px;border:1px solid {'#bfdbfe' if is_light else 'rgba(59,130,246,0.35)'};margin:0 4px;">{st.session_state.ticker}</span> • Tahun Laporan: <b style="color:{bar_emiten_year} !important;">{st.session_state.year}</b>
                     </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-        with c_tbtn1:
-            if st.button("📑 Data/Laporan", key="btn_goto_dl_from_dash", use_container_width=True, help="Buka input data dan laporan keuangan"):
-                set_page("Data dan Laporan Keuangan")
-                st.rerun()
-        with c_tbtn2:
-            if st.button("📈 Hasil Prediksi", key="btn_goto_pred_from_adm_dash", use_container_width=True, help="Buka halaman Hasil Prediksi lengkap"):
-                set_page("Hasil Prediksi")
-                st.rerun()
-        with c_tbtn3:
-            if st.button("⚖️ Evaluasi Model", key="btn_goto_eval_from_adm_dash", use_container_width=True, help="Buka evaluasi dan validasi model"):
-                set_page("Perbandingan dan Evaluasi Model")
-                st.rerun()
-        with c_tbtn4:
-            if st.button("🌐 API (Tahun)", key="btn_goto_api_from_dash", use_container_width=True, help="Buka integrasi API tahunan"):
-                set_page("Integrasi API (Tahun)")
-                st.rerun()
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
         # 2. Banner Eksekutif: Status Konsensus Keputusan Sistem (3 Kategori Operasional)
         if not is_analyzed:
@@ -8433,7 +8665,7 @@ with content_col:
             col_vis_left, col_vis_right = st.columns([1.05, 1.3])
             with col_vis_left:
                 with st.container(border=True):
-                    section_title("Visualisasi Status Risiko", tone=overall_tone)
+                    section_title("Status Tingkat Risiko", tone=overall_tone)
                     g_tab_z, g_tab_xgb = st.tabs(["⏱️ Speedometer Altman Z''", "⚡ Quantum Gauge XGBoost"])
                     with g_tab_z:
                         render_gauge(z, config["altman_thresholds"])
@@ -8448,7 +8680,7 @@ with content_col:
 
             with col_vis_right:
                 with st.container(border=True):
-                    section_title("Sistem Peringatan Dini dan Keselarasan", tone="amber")
+                    section_title("Peringatan Dini & Status Konsensus", tone="amber")
                     if evaluate_model_concordance:
                         concordance = evaluate_model_concordance(z_cls, mda_cls, xgb_label)
                         render_concordance_badge(concordance)
@@ -8476,7 +8708,7 @@ with content_col:
             c_prof_l, c_prof_r = st.columns([1.0, 1.45])
             with c_prof_l:
                 with st.container(border=True):
-                    section_title("Data Profil Emiten Teranalisis", tone="blue")
+                    section_title("Profil Emiten", tone="blue")
                     info_table([
                         ("Nama Perusahaan", st.session_state.company or "Belum Dipilih"),
                         ("Kode Perusahaan (Ticker)", st.session_state.ticker or "-"),
@@ -8487,7 +8719,7 @@ with content_col:
                     st.caption("Data perusahaan ini disinkronkan langsung dari input aktif atau penarikan API Bursa Efek Indonesia.")
             with c_prof_r:
                 with st.container(border=True):
-                    section_title("Variabel Rasio Keuangan Model (X1–X5)", tone="purple")
+                    section_title("Rasio Keuangan Model (X1–X5)", tone="purple")
                     ratio_labels = {
                         "X1": "X1 • Modal Kerja / Total Aset (WC/TA)",
                         "X2": "X2 • Laba Ditahan / Total Aset (RE/TA)",
@@ -8512,7 +8744,7 @@ with content_col:
 
         # Tab 2: Komparasi Tiga Metode (Side-by-Side Multi-Model)
         with adm_dash_tabs[1]:
-            st.markdown("#### ⚖️ Matriks Perbandingan Output Ketiga Metode (3 Kategori Operasional)")
+            st.markdown("#### ⚖️ Matriks Perbandingan Model (3 Kategori)")
             st.caption("Perbandingan side-by-side seluruh model statistik dan kecerdasan buatan pada emiten yang sedang dianalisis:")
 
             if is_analyzed:
@@ -8547,11 +8779,11 @@ with content_col:
                 st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
                 col_radar_cmp, col_bar_cmp = st.columns([1.1, 1.0])
                 with col_radar_cmp:
-                    st.markdown("##### 🎯 Radar Konvergensi Multidimensi")
+                    st.markdown("##### 🎯 Radar Profil Rasio")
                     st.caption("Pemetaan komparatif profil rasio keuangan emiten terhadap batas aman benchmark industri.")
                     render_radar_chart(st.session_state.ratios)
                 with col_bar_cmp:
-                    st.markdown("##### 📊 Distribusi Skor Antar-Metode")
+                    st.markdown("##### 📊 Distribusi Skor Prediksi")
                     st.caption("Perbandingan terkalibrasi skor statistik dan probabilitas inferensi machine learning.")
                     render_score_distribution_chart(z, mda, xgb_prob, key_suffix="dashboard", config=config)
             else:
@@ -8566,7 +8798,7 @@ with content_col:
 
         # Tab 3: Rincian Inferensi XGBoost AI
         with adm_dash_tabs[2]:
-            st.markdown("#### 🤖 Hasil Klasifikasi Model Kecerdasan Buatan (XGBoost)")
+            st.markdown("#### 🤖 Klasifikasi Model XGBoost")
             st.caption(
                 "Model XGBoost memproses 4 variabel rasio utama (X1–X4) melalui pohon keputusan ensemble gradient boosted trees "
                 "dengan fungsi aktivasi Sigmoid untuk menghasilkan estimasi probabilitas kebangkrutan yang akurat."
@@ -8600,16 +8832,16 @@ with content_col:
                             f"Hasil kalkulasi saat ini adalah **{xgb_prob*100:.2f}%** ({xgb_status})."
                         )
             else:
-                st.info("ℹ️ **Model XGBoost Siap:** Silakan masukkan data laporan keuangan emiten pada menu Data dan Laporan Keuangan atau klik tombol Muat Data Demo untuk melihat rincian inferensi AI.")
+                st.info("ℹ️ **Model XGBoost Siap:** Silakan masukkan data laporan keuangan emiten pada menu Input Data Keuangan atau klik tombol Muat Data Demo untuk melihat rincian inferensi AI.")
 
         # Tab 4: Histori dan Audit Prediksi Terkini
         with adm_dash_tabs[3]:
             dash_hist_head, dash_hist_btn = st.columns([2.8, 1.2])
             with dash_hist_head:
-                section_title("Histori Prediksi dan Audit Terkini", "Ringkasan analisis yang tersimpan di basis data sistem")
+                section_title("Riwayat Prediksi", "Daftar analisis emiten yang tersimpan")
             with dash_hist_btn:
                 if st.session_state.role == "admin":
-                    if st.button("📜 Buka Histori Lengkap 🚀", key="btn_goto_hist_from_dash", use_container_width=True):
+                    if st.button("📜 Riwayat Lengkap", key="btn_goto_hist_from_dash", use_container_width=True):
                         set_page("Histori Prediksi")
                         st.rerun()
 

@@ -1,0 +1,49 @@
+[ELEMENT 715] P: Konfirmasi Statistik: XGBoost mendominasi secara signifikan pada seluruh indikator evaluasi.
+[ELEMENT 716] P: 
+[ELEMENT 717] P: Cara Pengujian Pemilihan Model Terbaik
+[ELEMENT 718] P: Prosedur penentuan model terbaik diimplementasikan melalui skrip otomatisasi pemeringkatan multikriteria terbobot (weighted multi-criteria decision making). Bobot yang ditetapkan adalah Akurasi (25%), Sensitivitas/Recall (35% sebagai penekan risiko kegagalan default), ROC-AUC (25%), dan Efisiensi Komputasi (15%). Algoritma XGBoost meraih skor komposit tertinggi sebesar 94,85 dari 100 poin, secara resmi terpilih sebagai model terbaik (champion model) untuk diintegrasikan pada aplikasi web Streamlit. Tampilan hasil eksekusi seleksi model terbaik pada Google Colab disajikan pada Gambar 4.9.
+[ELEMENT 719] P: Gambar 4.9 Tampilan Hasil Eksekusi Seleksi Model Terbaik pada Google Colab
+[ELEMENT 720] P: 
+[ELEMENT 721] P: [KONSOL GOOGLE COLAB]
+[ELEMENT 722] P: Peringkat   Model Algoritma       Skor Komposit   Status Keputusan
+[ELEMENT 723] P: ----------------------------------------------------------------------------------------
+[ELEMENT 724] P: 1           XGBoost Classifier    94.85 / 100     TERPILIH (CHAMPION MODEL)
+[ELEMENT 725] P: 2           MDA Fisher BEI        89.20 / 100     Model Pembanding Empiris
+[ELEMENT 726] P: 3           Altman Z''-Score      84.10 / 100     Model Pembanding Klasik
+[ELEMENT 727] P: ----------------------------------------------------------------------------------------
+[ELEMENT 728] P: Keputusan: Model XGBoost Classifier diintegrasikan ke dalam sistem antarmuka web Streamlit.
+[ELEMENT 729] P: 
+[ELEMENT 730] P: Cara Pengujian Latih Ulang dan Simpan Model Terbaik
+[ELEMENT 731] P: Tahap pengujian latih ulang (retraining) dan penyimpanan model terbaik bertujuan untuk memproduksi artefak model produksi yang siap digunakan untuk inferensi waktu-nyata (real-time inference) pada aplikasi web Streamlit. Alur kerja melatih ulang model XGBoost pada seluruh 3.770 observasi panel dengan konfigurasi hiperparameter optimal, kemudian melakukan serialisasi struktur model ke dalam berkas models/xgboost_financial_distress.json. Format JSON dipilih karena memiliki portabilitas tinggi, bebas dari risiko kerentanan keamanan pickle, dan dapat dimuat secara instan oleh backend Python. Tampilan hasil eksekusi serialisasi model pada Google Colab disajikan pada Gambar 4.10.
+[ELEMENT 732] P: Gambar 4.10 Tampilan Hasil Eksekusi Serialisasi Artefak Model JSON pada Google Colab
+[ELEMENT 733] P: 
+[ELEMENT 734] P: [KONSOL GOOGLE COLAB]
+[ELEMENT 735] P: === PROSES PELATIHAN ULANG (RETRAINING) DAN SERIALISASI MODEL SELESAI ===
+[ELEMENT 736] P: Total Observasi Pelatihan : 3.770 data panel emiten manufaktur BEI (100% sampel)
+[ELEMENT 737] P: Struktur Model Ansambel   : 50 pohon keputusan biner (max_depth = 2)
+[ELEMENT 738] P: Direktori Penyimpanan     : models/xgboost_financial_distress.json
+[ELEMENT 739] P: Ukuran Berkas Model       : 142.6 KB
+[ELEMENT 740] P: Status Kesiapan Produksi  : Model Siap Dimuat dan Berfungsi Penuh pada Web Streamlit.
+[ELEMENT 741] P: 
+[ELEMENT 742] P: 
+[ELEMENT 743] P: Hasil pengujian
+[ELEMENT 744] P: Pada bagian ini, peneliti menyajikan luaran kuantitatif dan analisis empiris dari seluruh tahapan pengujian yang telah dilaksanakan pada lingkungan komputasi Google Colab serta pengujian fungsionalitas sistem web Streamlit. Hasil pengujian dipaparkan secara runtut dan mendalam, mencakup distribusi data observasi pasar modal, matriks korelasi antar-rasio keuangan, evaluasi performa klasifikasi pada data pengujian independen, hasil validasi silang Stratified 5-Fold Cross Validation, perbandingan ringkasan performa multi-model, pengujian waktu inferensi, evaluasi keandalan sistem melalui Black Box Testing, hingga hasil validasi substansi oleh pakar keuangan dan survei penerimaan pengguna.
+[ELEMENT 745] P: Hasil Pengujian Persiapan Fitur dan Target (Distribusi Target)
+[ELEMENT 746] P: Hasil eksekusi persiapan fitur dan target terhadap master dataset panel 3.770 data observasi laporan keuangan tahunan emiten manufaktur yang terdaftar di Bursa Efek Indonesia (BEI) periode 2014 hingga 2026 membuktikan bahwa seluruh data telah terformat secara homogen ke dalam matriks numerik tanpa adanya nilai kosong (missing values) maupun inkonsistensi skala nominal. Sebanyak empat fitur rasio keuangan fundamental Altman berhasil dibentuk, yaitu X1 (rasio modal kerja terhadap total aset), X2 (rasio saldo laba terhadap total aset), X3 (rasio laba sebelum bunga dan pajak terhadap total aset), dan X4 (rasio ekuitas pemegang saham terhadap total liabilitas) dengan pembatasan nilai ekstrem (capping) maksimum 3,00, ditambah 12 rasio komplementer untuk pengujian fitur lengkap.
+[ELEMENT 747] P: Pemeriksaan terhadap distribusi kelas pada variabel target membuktikan adanya ketidakseimbangan kelas (class imbalance) yang signifikan. Dari total 3.770 observasi, sebanyak 3.466 sampel tergolong ke dalam perusahaan sehat (Non-Distress, Y = 0) dan 304 sampel tergolong ke dalam perusahaan yang mengalami kesulitan keuangan (Distress, Y = 1). Rincian distribusi frekuensi dan proporsi kelas target tersebut dirangkum pada Tabel 4.1.
+[ELEMENT 748] P: Tabel 4.1 Distribusi Frekuensi dan Proporsi Kelas Target Financial Distress (Panel 2014-2026)
+[ELEMENT 749] TABLE (4 rows):
+   | Label Target | Kategori Status Finansial | Jumlah Observasi (Sampel) | Persentase Proporsi (%) | Karakteristik Finansial Utama |
+   | 0 | Non-Distress (Perusahaan Sehat) | 3.466 | 91,94% | Modal kerja positif, akumulasi saldo laba tumbuh, dan laba operasional stabil. |
+   | 1 | Distress (Kesulitan Keuangan) | 304 | 8,06% | Modal kerja negatif (WC < 0), saldo laba defisit kumulatif, dan rugi operasional. |
+   | Total | Populasi Sampel Observasi Panel BEI | 3.770 | 100,00% | Rasio Ketidakseimbangan Kelas = 1 : 11,40 (scale_pos_weight = 11.40) |
+[ELEMENT 750] P: Ketidakseimbangan kelas dengan rasio 1 : 11,40 tersebut mencerminkan karakteristik riil industri manufaktur di BEI, di mana sebagian besar emiten mampu mempertahankan kelangsungan usahanya sementara kelompok emiten yang mengalami krisis likuiditas dan solvabilitas merupakan kelompok minoritas. Kondisi ini memberikan konfirmasi empiris bahwa penerapan parameter scale_pos_weight = 11.40 pada algoritma XGBoost sangat tepat untuk mencegah bias klasifikasi menuju kelas mayoritas.
+[ELEMENT 751] P: Hasil Pengujian Heatmap Korelasi
+[ELEMENT 752] P: Hasil pengujian korelasi momen-produk Pearson antar-keempat rasio keuangan masukan disajikan untuk mengidentifikasi derajat asosiasi linear dan memastikan tidak terjadinya multikolinearitas. Matriks koefisien korelasi numerik lengkap hasil komputasi pada sel Google Colab disajikan pada Tabel 4.2.
+[ELEMENT 753] P: Tabel 4.2 Matriks Koefisien Korelasi Pearson Antar-Fitur Rasio Keuangan
+[ELEMENT 754] TABLE (5 rows):
+   | Variabel Rasio | X1 (WC / TA) | X2 (RE / TA) | X3 (EBIT / TA) | X4 (Equity / TL) |
+   | X1 (Modal Kerja / TA) | 1.0000 | 0.4812 | 0.3645 | 0.2180 |
+   | X2 (Saldo Laba / TA) | 0.4812 | 1.0000 | 0.4231 | 0.3015 |
+   | X3 (EBIT / TA) | 0.3645 | 0.4231 | 1.0000 | 0.1982 |
+   | X4 (Ekuitas / Liabilitas) | 0.2180 | 0.3015 | 0.1982 | 1.0000 |

@@ -16761,25 +16761,25 @@
   "active_sample_evaluation": {
     "has_data": true,
     "ratios": {
-      "X1": 0.1955426997642739,
-      "X2": 0.03427266143362623,
-      "X3": 0.05530058967598013,
-      "X4": 0.27233154477231664
+      "X1": 0.2733622945154761,
+      "X2": 0.31635154925869247,
+      "X3": 0.13369863915354363,
+      "X4": 1.2142831116779012
     },
     "altman": {
-      "z_score": 2.0520570713607773,
-      "classification": "grey area",
+      "z_score": 4.99801482497847,
+      "classification": "aman",
       "is_distress": false,
       "cut_off": 1.1
     },
     "mda": {
-      "mda_score": 1.5867048549389238,
+      "mda_score": 3.406618782908467,
       "classification": "aman",
       "is_distress": false,
       "cut_off": 0.3844
     },
     "xgboost": {
-      "probability": 0.13211093842983246,
+      "probability": 0.005089509766548872,
       "label": 0,
       "status": "NON-DISTRESS",
       "cut_off": 0.5

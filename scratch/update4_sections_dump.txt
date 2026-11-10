@@ -1,0 +1,46 @@
+
+[ELEMENT 449] P: ICBP     Indofood CBP            0.2215   0.3120   0.1415   0.8842    4.35    Safe Zone
+
+[ELEMENT 460] P: ICBP : Model 1968 = 3.24 (Safe Zone)      | Model 1995 = 4.35 (Safe Zone)
+
+[ELEMENT 491] P: ICBP     Indofood CBP            4.35    Safe Zone        3.10    Non-Distress   0 (Non-Distress)
+
+[ELEMENT 586] P: Pengujian evaluasi detail dirancang untuk membangun fungsi pelaporan metrik kinerja klasifikasi biner yang seragam untuk menguji seluruh algoritma penelitian. Alur sistem mengonversi hasil prediksi dan label faktual menjadi tabel kontingensi 2x2 (confusion matrix), mengekstrak kuantitas True Positive (TP), True Negative (TN), False Positive (FP), dan False Negative (FN), serta menghitung parameter Akurasi, Sensitivitas (Recall), Spesifisitas, Presisi, skor F1 harmonik, Youden's J Index, dan luas area ROC-AUC. Tampilan eksekusi pendefinisian fungsi evaluasi pada Google Colab disajikan pada Gambar 4.3.
+
+[ELEMENT 587] P: Gambar 4.3 Tampilan Hasil Eksekusi Fungsi Evaluasi Biner pada Google Colab
+
+[ELEMENT 678] P: Pada bagian ini, peneliti menyajikan luaran kuantitatif dan analisis empiris dari seluruh tahapan pengujian yang telah dilaksanakan pada lingkungan komputasi Google Colab serta pengujian fungsionalitas sistem web Streamlit. Hasil pengujian dipaparkan secara runtut dan mendalam, mencakup distribusi data observasi pasar modal, matriks korelasi antar-rasio keuangan, evaluasi performa klasifikasi pada data pengujian independen, hasil validasi silang Stratified 5-Fold Cross Validation, perbandingan ringkasan performa multi-model, pengujian waktu inferensi, evaluasi keandalan sistem melalui Black Box Testing, hingga hasil validasi substansi oleh pakar keuangan dan survei penerimaan pengguna.
+
+[ELEMENT 691] P: Pengujian performa detail model Extreme Gradient Boosting (XGBoost) dievaluasi terhadap data pengujian independen (testing set hold-out 20%) sebanyak 754 sampel observasi laporan keuangan yang tidak pernah dilihat sebelumnya selama proses pelatihan. Dari 754 observasi uji tersebut, komposisi aktual terdiri atas 693 sampel emiten sehat (Non-Distress) dan 61 sampel emiten krisis (Distress). Hasil klasifikasi biner dan rincian metrik diagnostik yang dicapai oleh model XGBoost disajikan pada Tabel 4.3.
+
+[ELEMENT 692] P: Tabel 4.3 Matriks Konfusi dan Evaluasi Detail Model XGBoost pada Data Pengujian (754 Sampel)
+
+[ELEMENT 694] P: Capaian metrik pada Tabel 4.3 membuktikan keunggulan luar biasa model XGBoost, khususnya dalam menekan kesalahan tipe II (False Negative) menjadi hanya 2 sampel (1,42% dari total pengujian). Dalam industri keuangan dan perbankan, meminimalkan False Negative adalah kriteria keberhasilan tertinggi karena kegagalan mengidentifikasi emiten yang akan bangkrut berakibat langsung pada timbulnya kredit macet dan kerugian modal total.
+
+[ELEMENT 713] P: Hasil Black Box Testing Sistem Web Streamlit
+
+[ELEMENT 714] P: Pengujian fungsionalitas antarmuka sistem web pendukung keputusan dilakukan menggunakan metode Black Box Testing untuk memastikan bahwa seluruh komponen antarmuka, alur autentikasi, ekstraksi berkas, kalkulasi rasio, dan visualisasi diagnosis beroperasi sesuai dengan spesifikasi kebutuhan yang telah dirancang. Pengujian mencakup 15 skenario pengujian utama yang mewakili seluruh alur operasional pengguna, sebagaimana disajikan pada Tabel 4.7.
+
+[ELEMENT 715] P: Tabel 4.7 Hasil Pengujian Black Box Testing Sistem Web Streamlit
+
+[ELEMENT 717] P: Berdasarkan Tabel 4.7, seluruh 15 skenario pengujian Black Box berstatus Valid (100% tingkat keberhasilan). Hal ini membuktikan bahwa sistem bebas dari cacat fungsional (functional bugs) dan siap digunakan secara andal oleh pengguna akhir.
+
+[ELEMENT 718] P: Validasi Ahli dan Hasil Kuesioner Pengguna
+
+[ELEMENT 719] P: Pengujian validasi substansi dilakukan oleh dua orang pakar (expert judgment) yang terdiri dari praktisi Analis Keuangan Pasar Modal dan Akuntan Publik. Evaluasi ahli mencakup aspek keselarasan formula akuntansi, ketepatan interpretasi pemicu risiko finansial, dan relevansi manajerial simulator titik impas. Hasil penilaian ahli disajikan pada Tabel 4.8.
+
+[ELEMENT 720] P: Tabel 4.8 Hasil Evaluasi Validasi Ahli Keuangan
+
+[ELEMENT 722] P: Selain validasi pakar, pengujian penerimaan pengguna (User Acceptance Test) dilakukan kepada 20 responden yang terdiri dari analis keuangan, investor pasar modal, akademisi, dan mahasiswa tingkat akhir. Pengujian menggunakan instrumen kuesioner dengan skala Likert 5 poin (1: Sangat Tidak Setuju hingga 5: Sangat Setuju) yang mengukur aspek kemudahan penggunaan, kejelasan visualisasi, kecepatan pemrosesan, dan kegunaan laporan. Hasil rekapitulasi kuesioner dirangkum pada Tabel 4.9.
+
+[ELEMENT 723] P: Tabel 4.9 Rekapitulasi Hasil Kuesioner Akseptansi Pengguna (n=20 Responden)
+
+[ELEMENT 744] P: Pembahasan Black Box Testing Sistem Web Streamlit
+
+[ELEMENT 745] P: Hasil pengujian kotak hitam (Black Box Testing) terhadap 15 skenario fungsional sistem web Streamlit yang mencatatkan tingkat keberhasilan 100% (seluruh pengujian berstatus Valid) membuktikan bahwa perangkat lunak yang dikembangkan telah memenuhi seluruh spesifikasi kebutuhan teknis yang dirancang pada Bab III. Sistem terbukti andal dalam menangani berbagai variasi masukan pengguna, mulai dari autentikasi kredensial, registrasi akun terproteksi passcode, hingga pengolahan laporan keuangan multi-kanal.
+
+[ELEMENT 747] P: Pembahasan Validasi Ahli dan Kuesioner Responden
+
+[ELEMENT 751] P: DAFTAR PUSTAKA
+
+[ELEMENT 991] P: Macro F1:  0.943 (94.3%)
