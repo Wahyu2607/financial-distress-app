@@ -5,7 +5,10 @@ import re
 import textwrap
 import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
+try:
+    import plotly.graph_objects as go
+except ImportError:
+    go = None
 import streamlit as st
 
 
@@ -2759,8 +2762,9 @@ def render_warning_factors_checklist(factors: dict):
 
 def render_concordance_badge(concordance: dict):
     """
-    Merender lencana kesesuaian skor antar-model (Concordance Status):
-    'perbandingan score yang di dapat, sesuai atau tidak'
+    Merender Kartu Intelijen Konsensus Tri-Model & Tingkat Keamanan/Peringatan bagi Investor & Kreditur.
+    Menampilkan status konfirmasi silang 3 model (Altman Z'', MDA Fisher, XGBoost AI),
+    mendeteksi skenario divergensi (Early Warning Trigger), serta memberikan panduan keputusan taktis.
     """
     if not concordance:
         return
@@ -2769,43 +2773,192 @@ def render_concordance_badge(concordance: dict):
     is_conc = concordance.get("is_concordant", False)
     status_text = concordance.get("status_text", "")
     agreement = concordance.get("agreement", "")
+    tier = concordance.get("tier", "TIER 1")
+    tier_name = concordance.get("tier_name", "Konsensus Tri-Model")
+    safety_level = concordance.get("safety_level", "NORMAL")
+    warning_tier = concordance.get("warning_tier", "⚪ Kondisi Normal")
+    tone = concordance.get("tone", "green")
+    badge_icon = concordance.get("badge_icon", "🛡️")
+    summary = concordance.get("summary", "")
+    confidence_score = concordance.get("confidence_score", "")
 
-    if is_light:
-        bg = "#ecfdf5" if is_conc else "#fffbeb"
-        border = "#34d399" if is_conc else "#f59e0b"
-        text_color = "#065f46" if is_conc else "#92400e"
-        sub_text_col = "#0f172a"
-        footnote_col = "#334155"
-    else:
-        bg = "rgba(16, 185, 129, 0.15)" if is_conc else "rgba(245, 158, 11, 0.15)"
-        border = "rgba(16, 185, 129, 0.35)" if is_conc else "rgba(245, 158, 11, 0.35)"
-        text_color = "#34d399" if is_conc else "#fbbf24"
-        sub_text_col = "#cbd5e1"
-        footnote_col = "#94a3b8"
+    # Skema warna adaptif sesuai tone konsensus
+    if tone in ("green", "emerald"):
+        border_c = "#10b981" if is_light else "rgba(16, 185, 129, 0.45)"
+        bg_c = "#ecfdf5" if is_light else "rgba(6, 78, 59, 0.22)"
+        badge_bg = "#d1fae5" if is_light else "rgba(16, 185, 129, 0.25)"
+        text_c = "#065f46" if is_light else "#6ee7b7"
+        header_c = "#047857" if is_light else "#34d399"
+    elif tone in ("yellow", "amber"):
+        border_c = "#f59e0b" if is_light else "rgba(245, 158, 11, 0.45)"
+        bg_c = "#fffbeb" if is_light else "rgba(120, 53, 15, 0.22)"
+        badge_bg = "#fef3c7" if is_light else "rgba(245, 158, 11, 0.25)"
+        text_c = "#92400e" if is_light else "#fcd34d"
+        header_c = "#b45309" if is_light else "#fbbf24"
+    elif tone in ("orange",):
+        border_c = "#f97316" if is_light else "rgba(249, 115, 22, 0.55)"
+        bg_c = "#fff7ed" if is_light else "rgba(124, 45, 18, 0.28)"
+        badge_bg = "#ffedd5" if is_light else "rgba(249, 115, 22, 0.28)"
+        text_c = "#9a3412" if is_light else "#fdba74"
+        header_c = "#c2410c" if is_light else "#fb923c"
+    else:  # red / darkred
+        border_c = "#ef4444" if is_light else "rgba(239, 68, 68, 0.50)"
+        bg_c = "#fef2f2" if is_light else "rgba(127, 29, 29, 0.25)"
+        badge_bg = "#fee2e2" if is_light else "rgba(239, 68, 68, 0.28)"
+        text_c = "#991b1b" if is_light else "#fca5a5"
+        header_c = "#b91c1c" if is_light else "#f87171"
 
-    icon = "✅" if is_conc else "⚠️"
+    body_text_c = "#1e293b" if is_light else "#e2e8f0"
+    sub_c = "#475569" if is_light else "#94a3b8"
 
-    st.markdown(
-        f"""
-        <div style="background:{bg}; border:1.5px solid {border}; border-radius:12px; padding:10px 16px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; box-shadow:0 2px 6px rgba(15,23,42,0.03);">
-            <div style="display:flex; align-items:center; gap:10px;">
-                <span style="font-size:18px;">{icon}</span>
-                <div>
-                    <span style="font-size:13px; font-weight:850; color:{text_color} !important; letter-spacing:0.4px;">
-                        Kesesuaian Antar-Model (Concordance): {status_text}
-                    </span>
-                    <div style="font-size:12px; color:{sub_text_col} !important; font-weight:700; margin-top:2px;">
-                        {agreement} &bull; Altman: <b>{concordance.get('z_stat')}</b> | MDA: <b>{concordance.get('mda_stat')}</b> | XGBoost: <b>{concordance.get('xgb_stat')}</b>
-                    </div>
-                </div>
-            </div>
-            <span style="font-size:11px; color:{footnote_col} !important; font-weight:700; font-style:italic;">
-                *Analisis Konsensus Tri-Model
-            </span>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    # Status badge tiap model individual
+    def _chip(name, stat):
+        stat_up = str(stat or "").upper()
+        if stat_up == "SAFE":
+            ch_bg = "#dcfce7" if is_light else "rgba(34, 197, 94, 0.2)"
+            ch_fg = "#15803d" if is_light else "#4ade80"
+            ch_icon = "🟢"
+        elif stat_up == "GREY AREA":
+            ch_bg = "#fef9c3" if is_light else "rgba(234, 179, 8, 0.2)"
+            ch_fg = "#a16207" if is_light else "#fde047"
+            ch_icon = "🟡"
+        elif stat_up == "DISTRESS":
+            ch_bg = "#fee2e2" if is_light else "rgba(239, 68, 68, 0.2)"
+            ch_fg = "#b91c1c" if is_light else "#f87171"
+            ch_icon = "🔴"
+        else:
+            ch_bg = "#f1f5f9" if is_light else "rgba(148, 163, 184, 0.2)"
+            ch_fg = "#64748b" if is_light else "#cbd5e1"
+            ch_icon = "⚪"
+        return f"""<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:12px;background:{ch_bg};color:{ch_fg};font-size:11px;font-weight:750;border:1px solid {ch_fg}40;">{ch_icon} {name}: <b>{stat_up}</b></span>"""
+
+    chip_altman = _chip("Altman Z''", concordance.get("z_norm", concordance.get("z_stat")))
+    chip_mda = _chip("MDA Fisher", concordance.get("mda_norm", concordance.get("mda_stat")))
+    chip_xgb = _chip("XGBoost AI", concordance.get("xgb_norm", concordance.get("xgb_stat")))
+
+    # Blok divergensi khusus jika ada skenario perbedaan hasil
+    div_html = ""
+    if concordance.get("divergence_scenario"):
+        div_bg = "#fff7ed" if is_light else "rgba(234, 88, 12, 0.15)"
+        div_border = "#fb923c" if is_light else "rgba(251, 146, 60, 0.45)"
+        div_title_c = "#9a3412" if is_light else "#fdba74"
+        div_html = (
+            f'<div style="background:{div_bg};border-left:4px solid {div_border};padding:8px 12px;border-radius:6px;margin-top:10px;margin-bottom:6px;">'
+            f'<div style="font-size:11.5px;font-weight:800;color:{div_title_c};">⚡ {html.escape(concordance.get("divergence_scenario", ""))}</div>'
+            f'<div style="font-size:11px;color:{body_text_c};margin-top:2px;line-height:1.45;">{html.escape(concordance.get("divergence_explanation", ""))}</div>'
+            f'</div>'
+        )
+
+    main_html = (
+        f'<div style="background:{bg_c};border:1.5px solid {border_c};border-radius:14px;padding:14px 18px;margin-bottom:18px;box-shadow:0 3px 10px rgba(15,23,42,0.04);">'
+        f'<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;border-bottom:1px solid {border_c}40;padding-bottom:10px;">'
+        f'<div style="display:flex;align-items:center;gap:10px;">'
+        f'<span style="font-size:22px;line-height:1;">{badge_icon}</span>'
+        f'<div>'
+        f'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+        f'<span style="background:{badge_bg};color:{header_c};font-size:11px;font-weight:900;padding:2px 8px;border-radius:8px;letter-spacing:0.5px;border:1px solid {border_c};">{tier}</span>'
+        f'<span style="font-size:13.5px;font-weight:850;color:{header_c};letter-spacing:0.3px;">{html.escape(tier_name)}</span>'
+        f'</div>'
+        f'<div style="font-size:11.5px;color:{sub_c};font-weight:600;margin-top:3px;">'
+        f'Keamanan: <b style="color:{text_c};">{safety_level}</b> &bull; Keyakinan: <b style="color:{body_text_c};">{confidence_score}</b>'
+        f'</div>'
+        f'</div>'
+        f'</div>'
+        f'<div style="display:flex;align-items:center;gap:8px;">'
+        f'<span style="background:{badge_bg};color:{text_c};font-size:11px;font-weight:800;padding:4px 10px;border-radius:14px;border:1px solid {border_c};">{warning_tier}</span>'
+        f'</div>'
+        f'</div>'
+        f'<div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+        f'<span style="font-size:11px;font-weight:750;color:{sub_c};">Konfirmasi Tri-Model:</span>'
+        f'{chip_altman}{chip_mda}{chip_xgb}'
+        f'</div>'
+        f'<div style="font-size:12px;color:{body_text_c};margin-top:8px;line-height:1.5;">{html.escape(summary)}</div>'
+        f'{div_html}'
+        f'</div>'
     )
+    st.markdown(main_html, unsafe_allow_html=True)
+
+    # Accordion panduan taktis bagi pemangku kepentingan
+    with st.expander("💼 Panduan Keputusan Taktis untuk Investor & Kreditur (Hasil Triangulasi Model)", expanded=False):
+        c_inv, c_crd, c_mgmt = st.columns([1, 1, 1])
+        with c_inv:
+            inv_html = (
+                f'<div style="background:{"#f8fafc" if is_light else "rgba(30,41,59,0.5)"};padding:10px 12px;border-radius:10px;border:1px solid {"#e2e8f0" if is_light else "rgba(255,255,255,0.08)"};min-height:130px;">'
+                f'<div style="font-size:12px;font-weight:850;color:#2563eb;display:flex;align-items:center;gap:6px;margin-bottom:6px;"><span>📈</span> Investor Saham</div>'
+                f'<div style="font-size:11.5px;color:{body_text_c};line-height:1.45;">{concordance.get("investor_action", "-")}</div>'
+                f'</div>'
+            )
+            st.markdown(inv_html, unsafe_allow_html=True)
+        with c_crd:
+            crd_html = (
+                f'<div style="background:{"#f8fafc" if is_light else "rgba(30,41,59,0.5)"};padding:10px 12px;border-radius:10px;border:1px solid {"#e2e8f0" if is_light else "rgba(255,255,255,0.08)"};min-height:130px;">'
+                f'<div style="font-size:12px;font-weight:850;color:#059669;display:flex;align-items:center;gap:6px;margin-bottom:6px;"><span>🏦</span> Kreditur & Perbankan</div>'
+                f'<div style="font-size:11.5px;color:{body_text_c};line-height:1.45;">{concordance.get("creditor_action", "-")}</div>'
+                f'</div>'
+            )
+            st.markdown(crd_html, unsafe_allow_html=True)
+        with c_mgmt:
+            mgmt_html = (
+                f'<div style="background:{"#f8fafc" if is_light else "rgba(30,41,59,0.5)"};padding:10px 12px;border-radius:10px;border:1px solid {"#e2e8f0" if is_light else "rgba(255,255,255,0.08)"};min-height:130px;">'
+                f'<div style="font-size:12px;font-weight:850;color:#7c3aed;display:flex;align-items:center;gap:6px;margin-bottom:6px;"><span>🛠️</span> Manajemen Emiten</div>'
+                f'<div style="font-size:11.5px;color:{body_text_c};line-height:1.45;">{concordance.get("management_action", "-")}</div>'
+                f'</div>'
+            )
+            st.markdown(mgmt_html, unsafe_allow_html=True)
+
+
+def render_tri_model_consensus_reference_table():
+    """
+    Menampilkan tabel matriks acuan 5 Tingkat Konsensus & Peringatan Tri-Model
+    yang dirancang khusus bagi investor, kreditur, dan analis pasar modal.
+    """
+    is_light = is_light_theme()
+
+    tiers_data = [
+        ("TIER 1", "🛡️ Konsensus Penuh Aman (Strong Safe)", "🟢 Semua AMAN (Altman Safe, MDA Safe, XGBoost Safe)", "SANGAT TINGGI (98%+)", "⚪ Kondisi Normal (Nihil)", "Akumulasi investasi aman; nasabah kreditur prima; kelangsungan dividen terjaga."),
+        ("TIER 2", "⚖️ Keamanan Moderat (Moderate Safe)", "🟢🟡 Mayoritas AMAN (2 Model Safe, 1 Grey Area)", "MODERAT (85% - 90%)", "🟡 Peringatan Ringan (Watchlist)", "Pertahankan posisi (Hold); pantau ketat laporan kuartalan; buffer modal mulai menipis."),
+        ("TIER 3", "🚨 Peringatan Dini / Sinyal Divergen", "🟠 DIVERGEN (Contoh: Altman Safe, namun XGBoost Distress)", "WAS-WAS (Audit Mendalam)", "🟠 PERINGATAN DINI KRITIS (Trigger)", "JANGAN TERBURU-BURU BELI! AI mendeteksi anomali arus kas/beban bunga tersembunyi; pasang stop-loss ketat."),
+        ("TIER 4", "⚠️ Peringatan Tinggi (High Risk)", "🔴 Mayoritas DISTRESS (2 Model Distress, 1 Grey/Safe)", "RENDAH (High Risk)", "🔴 Peringatan Tinggi (High Alert)", "Kurangi kepemilikan saham (Reduce/Exit); tolak penambahan kredit baru; risiko capital loss tinggi."),
+        ("TIER 5", "🔥 Bahaya Kritis (Critical Default)", "🔴 Semua DISTRESS (Altman Distress, MDA Distress, XGBoost Distress)", "KRITIS (Konfirmasi Mutlak)", "🚨 BAHAYA MAKSIMAL (Default)", "HINDARI / JUAL TOTAL; ancaman suspensi bursa, delisting, gagal bayar utang (PKPU) mutlak nyata."),
+    ]
+
+    card_bg = "#ffffff" if is_light else "rgba(15, 23, 42, 0.7)"
+    card_border = "#cbd5e1" if is_light else "rgba(255, 255, 255, 0.12)"
+    text_c = "#0f172a" if is_light else "#f8fafc"
+    sub_c = "#475569" if is_light else "#94a3b8"
+
+    rows_html = ""
+    for t_id, t_name, t_cond, t_safe, t_warn, t_act in tiers_data:
+        t_color = "#10b981" if "TIER 1" in t_id else ("#eab308" if "TIER 2" in t_id else ("#f97316" if "TIER 3" in t_id else ("#ef4444" if "TIER 4" in t_id else "#b91c1c")))
+        rows_html += (
+            f'<tr style="border-bottom:1px solid {"#e2e8f0" if is_light else "rgba(255,255,255,0.06)"};">'
+            f'<td style="padding:10px 12px;font-weight:900;color:{t_color};font-size:12px;white-space:nowrap;">{t_id}</td>'
+            f'<td style="padding:10px 12px;font-weight:750;color:{text_c};font-size:12px;">{t_name}</td>'
+            f'<td style="padding:10px 12px;font-size:11.5px;color:{sub_c};">{t_cond}</td>'
+            f'<td style="padding:10px 12px;font-weight:800;font-size:11.5px;color:{t_color};">{t_safe}</td>'
+            f'<td style="padding:10px 12px;font-size:11.5px;font-weight:750;color:{text_c};">{t_warn}</td>'
+            f'<td style="padding:10px 12px;font-size:11.5px;color:{sub_c};line-height:1.4;">{t_act}</td>'
+            f'</tr>'
+        )
+
+    table_html = (
+        f'<div style="background:{card_bg};border:1.5px solid {card_border};border-radius:12px;padding:12px;box-shadow:0 2px 8px rgba(15,23,42,0.04);overflow-x:auto;">'
+        f'<table style="width:100%;border-collapse:collapse;text-align:left;">'
+        f'<thead>'
+        f'<tr style="background:{"#f1f5f9" if is_light else "rgba(30,41,59,0.85)"};border-bottom:2px solid {card_border};">'
+        f'<th style="padding:10px 12px;font-size:11.5px;font-weight:850;color:{text_c};">Tingkat</th>'
+        f'<th style="padding:10px 12px;font-size:11.5px;font-weight:850;color:{text_c};">Nama Status Konsensus</th>'
+        f'<th style="padding:10px 12px;font-size:11.5px;font-weight:850;color:{text_c};">Kombinasi Kondisi 3 Model</th>'
+        f'<th style="padding:10px 12px;font-size:11.5px;font-weight:850;color:{text_c};">Tingkat Keamanan</th>'
+        f'<th style="padding:10px 12px;font-size:11.5px;font-weight:850;color:{text_c};">Tingkat Peringatan</th>'
+        f'<th style="padding:10px 12px;font-size:11.5px;font-weight:850;color:{text_c};">Panduan Keputusan Investor & Kreditur</th>'
+        f'</tr>'
+        f'</thead>'
+        f'<tbody>{rows_html}</tbody>'
+        f'</table>'
+        f'</div>'
+    )
+    st.markdown(table_html, unsafe_allow_html=True)
 
 
 def _is_numeric_cell_value(val) -> bool:
@@ -3519,7 +3672,6 @@ def render_proposal_mockup_dashboard(session_data: dict, config: dict):
                             <span style="color:{text_muted} !important;">🔴 Z &lt; 1.81: DISTRESS</span>
                         </div>
                     </div>
-
                     <!-- Ringkasan Tambahan Hasil 3 Model pada Area Speedometer -->
                     <div style="background:{'rgba(241, 245, 249, 0.7)' if is_light else 'rgba(15, 23, 42, 0.5)'}; border:1px solid {card_border}; border-radius:10px; padding:8px 10px; margin-top:8px; font-size:11px;">
                         <div style="font-size:10px; font-weight:800; color:{text_muted} !important; text-transform:uppercase; margin-bottom:5px; border-bottom:1px solid {card_border}; padding-bottom:3px; display:flex; justify-content:space-between;">

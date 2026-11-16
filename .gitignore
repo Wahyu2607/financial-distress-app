@@ -29,3 +29,5 @@ financial_distress.db
 Thumbs.db
 ~$*
 *.tmp
+*.bak
+*_temp/

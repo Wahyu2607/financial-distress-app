@@ -287,6 +287,7 @@ from src.ui import (
     render_batch_screening_results,
     render_warning_factors_checklist,
     render_concordance_badge,
+    render_tri_model_consensus_reference_table,
     render_multi_model_benchmark_section,
     render_proposal_mockup_dashboard,
     render_score_distribution_chart,
@@ -7043,6 +7044,10 @@ with content_col:
                         unsafe_allow_html=True,
                     )
 
+                    if evaluate_model_concordance:
+                        concordance = evaluate_model_concordance(z_cls, mda_cls, xgb_label)
+                        render_concordance_badge(concordance)
+
                     st.markdown("<div style='height:14px;'></div>", unsafe_allow_html=True)
                     col_radar_cmp, col_bar_cmp = st.columns([1.1, 1.0])
                     with col_radar_cmp:
@@ -7053,6 +7058,9 @@ with content_col:
                         st.markdown("##### 📊 Distribusi Skor Prediksi")
                         st.caption("Perbandingan terkalibrasi skor statistik dan probabilitas inferensi machine learning.")
                         render_score_distribution_chart(z, mda, xgb_prob, key_suffix="perbandingan", config=config)
+
+                    with st.expander("📖 Panduan Interpretasi Triangulasi 3 Model untuk Investor & Kreditur (5 Tingkat Konsensus)", expanded=False):
+                        render_tri_model_consensus_reference_table()
 
             else:
                 xgb_thresh_str = f"Safe < {xgb_th_cfg.get('safe', 0.35)*100:.0f}% | Distress > {xgb_th_cfg.get('distress', 0.65)*100:.0f}%"
@@ -7091,6 +7099,8 @@ with content_col:
                     )
                     st.markdown("<div style='height:14px;'></div>", unsafe_allow_html=True)
                     st.info("ℹ️ **Grafik & Radar Siaga:** Radar konvergensi multidimensi dan grafik distribusi skor akan aktif secara otomatis setelah data laporan keuangan emiten dianalisis.")
+                with st.expander("📖 Panduan Interpretasi Triangulasi 3 Model untuk Investor & Kreditur (5 Tingkat Konsensus)", expanded=False):
+                    render_tri_model_consensus_reference_table()
 
             st.markdown("<div style='height:16px;'></div>", unsafe_allow_html=True)
             box_teor_bg = "#ffffff" if is_light else "rgba(30, 41, 59, 0.7)"
@@ -7206,18 +7216,21 @@ with content_col:
             st.caption("Perbandingan komparatif efektivitas model pada data uji independen industri manufaktur Bursa Efek Indonesia:")
 
             df_val_summary = pd.DataFrame([
-                {"Pendekatan Model": "📐 Altman Z''-Score (1995)", "Akurasi Empiris": "80.85%", "Kekuatan": "Sangat mudah dihitung manual", "Kelemahan": "Asumsi linear kaku, sensitif terhadap outlier utang", "Rekomendasi": "Skrining awal cepat"},
-                {"Pendekatan Model": "📊 Z''-Score Koefisien Baru (MDA)", "Akurasi Empiris": "86.52%", "Kekuatan": "Dikalibrasi khusus BEI (704 observasi)", "Kelemahan": "Tidak menangkap interaksi rasio non-linear", "Rekomendasi": "Benchmark statistik lokal"},
-                {"Pendekatan Model": "🤖 XGBoost Machine Learning", "Akurasi Empiris": "91.49% (AUC 0.9426)", "Kekuatan": "Menangkap pola non-linear & interaksi kompleks", "Kelemahan": "Memerlukan pipeline komputasi", "Rekomendasi": "Peringatan dini (Early Warning)"},
+                {"Pendekatan Model": "📐 Altman Z''-Score (1995)", "Akurasi Empiris": "95.76% (AUC 0.9000)", "Kekuatan": "Standar neraca global baku, sangat mudah dipahami pasar", "Kelemahan": "Asumsi linear kaku, titik buta pada anomali arus kas", "Fungsi Utama": "Skrining awal fundamental neraca"},
+                {"Pendekatan Model": "📊 Z''-Score Koefisien Baru (MDA)", "Akurasi Empiris": "96.02% (AUC 0.9167)", "Kekuatan": "Dikalibrasi khusus struktur modal industri BEI", "Kelemahan": "Tidak menangkap dinamika interaksi non-linear", "Fungsi Utama": "Konfirmasi kalibrasi risiko lokal"},
+                {"Pendekatan Model": "🤖 XGBoost AI - Pengujian 1 (4 Rasio)", "Akurasi Empiris": "96.42% (AUC 0.9400)", "Kekuatan": "Deteksi probabilistik non-linear, sinyal peringatan dini kuat", "Kelemahan": "Memerlukan pipeline komputasi ensemble", "Fungsi Utama": "Radar peringatan dini (Early Warning)"},
+                {"Pendekatan Model": "🤖 XGBoost AI - Pengujian 2 (16 Fitur)", "Akurasi Empiris": "95.62% (AUC 0.9845)", "Kekuatan": "Diskriminasi komprehensif (Likuiditas + Solvabilitas + Pertumbuhan)", "Kelemahan": "Variabel input lebih banyak", "Fungsi Utama": "Audit mendalam & deteksi multidimensi"},
             ])
             safe_dataframe(df_val_summary, use_container_width=True, hide_index=True)
 
             st.markdown("<div style='height:14px;'></div>", unsafe_allow_html=True)
             conclusion_box(
-                "Kesimpulan Evaluasi & Relevansi Pasar Modal",
-                "Dalam analisis risiko finansial di pasar modal, meminimalkan False Negative (perusahaan distress tidak terdeteksi) adalah prioritas utama. "
-                "Dengan perolehan akurasi ~91.5% dan AUC-ROC 0.9426 pada data uji independen yang bebas data leakage, model XGBoost terbukti superior dibandingkan model statistik linear "
-                "(Altman Z'' 80.85% & MDA 86.52%) dalam menangkap dinamika rasio keuangan non-linear di Bursa Efek Indonesia (BEI)."
+                "Kesimpulan Evaluasi & Relevansi Keputusan Investor / Pasar Modal",
+                "Penyajian ketiga model (Altman Z'', MDA Fisher, dan XGBoost) di dashboard ini bukan sekadar untuk kepentingan akademis, "
+                "melainkan dirancang sebagai instrumen Sistem Pendukung Keputusan (DSS) bagi investor saham dan kreditur perbankan untuk saling mengonfirmasi hasil (cross-validation). "
+                "Ketika ketiga model menyatakan emiten pada level aman, 'tingkat aman'-nya sangat kuat (High Confidence 98%+). "
+                "Namun, jika salah satu model memberikan hasil yang berbeda (misalnya XGBoost mendeteksi sinyal distress pada akurasi 96.42% & AUC 0.9400 sementara Altman masih terlihat aman), "
+                "sistem secara otomatis mengaktifkan status Early Warning Trigger agar investor waspada terhadap potensi risiko tersembunyi sebelum krisis terbuka terjadi di pasar modal."
             )
 
     # ========================================================

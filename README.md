@@ -79,8 +79,8 @@ python -m unittest tests/test_calculations.py
 ### 7. Menjalankan Pipeline di Google Colab / Jupyter Notebook
 Untuk keperluan eksperimen, analisis statistik mandiri, pelatihan ulang (*retraining*), dan visualisasi terpisah dari UI Streamlit:
 - Buka [Google Colab](https://colab.research.google.com/)
-- Pilih menu **Upload** dan unggah berkas [`financial_distress_model.ipynb`](file:///c:/Users/ACER/Downloads/financial_distress_streamlit/financial_distress_model.ipynb)
-- Jalankan sel secara berurutan (*Run All*) untuk mengeksekusi pipeline preprocessing, ketiga model (Altman, MDA, XGBoost), komparasi benchmark, dan modul backend intelijen finansial.
+- Pilih menu **Upload** dan unggah berkas notebook dari direktori [`skripsi_research/notebooks/`](file:///c:/Users/ACER/Downloads/financial_distress_streamlit/skripsi_research/notebooks) (direkomendasikan [`financial_distress_kfold3_colab.ipynb`](file:///c:/Users/ACER/Downloads/financial_distress_streamlit/skripsi_research/notebooks/financial_distress_kfold3_colab.ipynb) untuk eksperimen Stratified 3-Fold Cross-Validation, atau [`financial_distress_model.ipynb`](file:///c:/Users/ACER/Downloads/financial_distress_streamlit/skripsi_research/notebooks/financial_distress_model.ipynb)).
+- Jalankan sel secara berurutan (*Run All*) untuk mengeksekusi pipeline preprocessing, seluruh model (Altman, MDA, XGBoost, Random Forest, Logistic Regression), komparasi benchmark, dan modul backend intelijen finansial.
 
 ---
 
@@ -148,13 +148,14 @@ Sesuai rancangan sistem Bab III Gambar 3.2 (Hal. 88 & 95) dan Lampiran 5 (Hal. 1
 
 ```text
 financial_distress_streamlit/
-├── app.py                      # Berkas aplikasi utama Streamlit (Routing, Page Controller)
-├── financial_distress_model.ipynb # Notebook Google Colab: Preprocessing, Multi-Model, Evaluasi & Backend
+├── app.py                      # Berkas aplikasi utama Streamlit (Routing, Page Controller & View)
 ├── config.json                 # Konfigurasi parameter model global (koefisien, cut-off)
+├── config_hybrid.json          # Parameter konfigurasi MDA hybrid
 ├── requirements.txt            # Daftar pustaka dan dependensi Python
 ├── README.md                   # Dokumentasi teknis & akademik sistem
+├── .env.example                # Template variabel lingkungan
 │
-├── src/                        # Modul Arsitektur Sistem
+├── src/                        # Modul Logika Bisnis & Backend Antarmuka
 │   ├── calculations.py         # Logika komputasi finansial, Altman, MDA, XGBoost, & Batch
 │   ├── database.py             # Manajemen SQLite/PostgreSQL & PBKDF2 Password Hashing
 │   ├── financial_api.py        # Pipeline integrasi data Yahoo Finance & feed pasar modal
@@ -162,15 +163,33 @@ financial_distress_streamlit/
 │   ├── styles.py               # Injeksi tema visual CSS Dark Glassmorphism FinTech
 │   └── ui.py                   # Komponen rendering UI (Gauge, Radar, ROC, Confusion Matrix)
 │
-├── data/                       # Data Empiris Skripsi
-│   └── datakeuangan.xlsx       # Dataset master 704 data observasi emiten manufaktur BEI
+├── backend/                    # Layanan REST API (FastAPI) & Otentikasi Terpisah
+├── data/                       # Data Empiris Skripsi (Excel & CSV Panel Manufaktur BEI)
+│   ├── datakeuangan.xlsx       # Dataset master 704 data observasi emiten manufaktur BEI
+│   └── dataset_manufaktur_tahunan_15_variabel_2014_2026.xlsx # Dataset panel 15 variabel
 │
 ├── models/                     # Artefak Pemodelan Machine Learning
 │   ├── xgb_model.json          # Bobot pohon model XGBoost yang telah dilatih
 │   └── xgb_evaluation.json     # Laporan metrik evaluasi model (CM, ROC Curve, Report)
 │
-└── tests/                      # Pengujian Perangkat Lunak
-    └── test_calculations.py    # Unit tests formula matematis & integritas sistem
+├── scripts/                    # Skrip Operasional & Utilitas Aplikasi
+│   ├── bootstrap_admin.py      # Inisialisasi kredensial administrator awal
+│   ├── train_models.py         # Skrip pelatihan ulang & pembaruan cache evaluasi
+│   ├── train_xgboost.py        # Skrip evaluasi komparasi multi-model XGBoost
+│   ├── generate_annual_2014_2026.py # Pembuat dataset panel tahunan
+│   └── ...                     # Skrip dataset & metadata emiten
+│
+├── tests/                      # Pengujian Perangkat Lunak Otomatis
+│   ├── test_calculations.py    # Unit tests formula matematis & integritas sistem
+│   └── test_theory.py          # Verifikasi formulasi teori datakeuangan
+│
+└── skripsi_research/           # [TERPISAH] Naskah Skripsi, Riset, & Eksperimen
+    ├── docs/                   # Dokumen Word naskah skripsi (update6) & instrumen UAT
+    ├── notebooks/              # Google Colab / Jupyter Notebooks (kfold3, bab3_bab4, model)
+    ├── reports/                # Visualisasi grafik & plot untuk naskah skripsi
+    ├── prototypes/             # Prototipe UI/UX mandiri (HTML & React JSX)
+    ├── scripts_naskah/         # Skrip otomatisasi injeksi teks/tabel ke Word Docx
+    └── scratch/                # Berkas scratchpad & eksperimen sementara
 ```
 
 ---
